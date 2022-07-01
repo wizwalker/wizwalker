@@ -57,7 +57,7 @@ class SceneManager(MemoryObject):
         return await self.read_value_from_offset(0x198, "float")
 
     async def write_fog_color_blue(self, blue: float):
-        await self.write_value_to_offset(0x194, blue, "float")
+        await self.write_value_to_offset(0x198, blue, "float")
 
 
 class DynamicSceneManager(DynamicMemoryObject, SceneManager):
