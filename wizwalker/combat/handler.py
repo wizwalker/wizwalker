@@ -89,12 +89,22 @@ class CombatHandler:
         """
         # can't use wait_for_value bc of the special in_combat condition
         # so we don't get stuck waiting if combat ends
-        while await self.in_combat():
-            new_round_number = await self.round_number()
-            if new_round_number > current_round:
-                return
+        # while await self.in_combat():
+        #     new_round_number = await self.round_number()
+        #     if new_round_number > current_round:
+        #         return
 
-            await asyncio.sleep(sleep_time)
+        #     await asyncio.sleep(sleep_time)
+
+        while not await self.client.duel.duel_phase() == DuelPhase.execution:
+            if(await self.client.duel.duel_phase() == DuelPhase.ended):
+                break
+            await asyncio.sleep(0.5)
+
+        while (await self.client.duel.duel_phase() == DuelPhase.execution):
+            if(await self.client.duel.duel_phase() == DuelPhase.ended):
+                break
+            await asyncio.sleep(0.5)
 
     async def in_combat(self) -> bool:
         """

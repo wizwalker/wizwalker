@@ -317,6 +317,11 @@ class HookHandler(MemoryReader):
             raise HookNotActive("Duel")
 
         try:
+            if((await self.read_typed(addr+4, "unsigned int")) != 0):
+                curr_battle_state = await self.read_typed(addr+4, "unsigned int")
+                global_battle_state = await self.read_typed(addr, "unsigned int")
+                if(curr_battle_state != global_battle_state):
+                    await self.write_typed(addr, curr_battle_state, "int")
             return await self.read_typed(addr, "unsigned int")
         except pymem.exception.MemoryReadError:
             raise HookNotReady("Duel")
