@@ -275,7 +275,7 @@ class DuelHook(SimpleHook):
                 b"\x50"  # push rax
                 b"\x48\x89\xc8"  # mov rax,rcx
                 b"\x48\xA3" + packed_exports[0][1] +  # movabs [current_duel_addr],rax
-                b"\x48\x8B\x80\xC0\x00\x00\x00"  # mov rax,[rax+C0]
+                b"\x48\x8B\x80\xC4\x00\x00\x00"  # mov rax,[rax+C4]
                 b"\x48\xA3" + packed_exports[1][1] +  # movabs [current_duel_phase],rax
                 b"\x58"  # pop rax
                 # original code
