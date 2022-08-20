@@ -275,7 +275,7 @@ class DuelHook(SimpleHook):
                 b"\x50"  # push rax
                 b"\x48\x89\xc8"  # mov rax,rcx
                 b"\x48\xA3" + packed_exports[0][1] +  # movabs [current_duel_addr],rax
-                b"\x48\x8B\x80\xC0\x00\x00\x00"  # mov rax,[rax+C0]
+                b"\x48\x8B\x80\xC4\x00\x00\x00"  # mov rax,[rax+C4]
                 b"\x48\xA3" + packed_exports[1][1] +  # movabs [current_duel_phase],rax
                 b"\x58"  # pop rax
                 # original code
@@ -619,6 +619,7 @@ class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
         self.mouse_pos_addr = None
 
         self.toggle_bool_addrs = ()
+        self.set_cursor_pos = None
 
     async def hook(self):
         """
@@ -673,6 +674,12 @@ class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
         await self.write_bytes(bool_one_address, b"\x01")
         await self.write_bytes(bool_two_address, b"\x01")
 
+        set_cursor_pos = await self.get_address_from_symbol("user32.dll", "SetCursorPos")
+        self.set_cursor_pos = (set_cursor_pos, await self.read_bytes(set_cursor_pos, 6))
+
+        # ret + 5 noops
+        await self.write_bytes(set_cursor_pos, b"\xC3" + (b"\x90" * 5))
+
     async def set_mouse_pos_addr(self):
         self.mouse_pos_addr = await self.allocate(8)
 
@@ -713,3 +720,7 @@ class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
         await self.free_mouse_pos_addr()
         for bool_addr in self.toggle_bool_addrs:
             await self.write_bytes(bool_addr, b"\x00")
+
+        if self.set_cursor_pos:
+            set_cursor_pos, set_cursor_pos_bytes = self.set_cursor_pos
+            await self.write_bytes(set_cursor_pos, set_cursor_pos_bytes)

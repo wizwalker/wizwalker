@@ -312,6 +312,11 @@ class MagicSchool(Enum):
     cantrips = 1760873841
 
 
+class FogMode(Enum):
+  fog = 1
+  filter = 2
+
+
 class AccountPermissions(IntFlag):
     no_permissions = 0b0
     can_chat = 0b1

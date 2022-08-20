@@ -10,6 +10,7 @@ from .camera_controller import (
 from .client_object import DynamicClientObject
 from .character_registry import DynamicCharacterRegistry
 from .enums import AccountPermissions
+from .gamebryo_presenter import DynamicGamebryoPresenter
 
 
 # note: not defined
@@ -228,6 +229,23 @@ class GameClient(MemoryObject):
         )
         await self.write_value_to_offset(offset, has_membership, "bool")
 
+    async def gamebryo_presenter(self) -> DynamicGamebryoPresenter:
+        """
+        Thing used for rendering
+        """
+        offset = await self.pattern_scan_offset_cached(
+            rb".......\x48\x8B\x01\xFF\x50\x40\x84\xC0\x75.\xE8",
+            3,
+            "gamebryo_presenter",
+            0x21FB8
+        )
+
+        addr = await self.read_value_from_offset(offset, "unsigned long long")
+
+        if addr == 0:
+            return None
+
+        return DynamicGamebryoPresenter(self.hook_handler, addr)
 
 class CurrentGameClient(GameClient):
     _base_address = None
