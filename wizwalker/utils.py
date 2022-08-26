@@ -836,3 +836,56 @@ async def _send_keydown_forever(window_handle: int, key: Keycode):
     while True:
         user32.SendMessageW(window_handle, 0x100, key.value, 0)
         await asyncio.sleep(0.05)
+
+# TODO: Can replace this with more generic one if needed, but only here for camera maths
+def multiply3x3matrices(a: list[float], b: list[float]):
+    result = [0.0] * 9
+
+    for i in range(3):
+        for j in range(3):
+            for k in range(3):
+                result[i * 3 + j] += a[i * 3 + k] * b[k * 3 + j]
+
+    return result
+
+def pitch_matrix(pitch: float):
+    result = [0.0] * 9
+
+    s = math.sin(pitch)
+    c = math.cos(pitch)
+
+    result[0] = c
+    result[1] = s
+    result[3] = -s
+    result[4] = c
+    result[8] = 1.0
+
+    return result
+
+def roll_matrix(roll: float):
+    result = [0.0] * 9
+
+    s = math.sin(roll)
+    c = math.cos(roll)
+
+    result[0] = 1.0
+    result[4] = c
+    result[5] = s
+    result[7] = -s
+    result[8] = c
+
+    return result
+
+def yaw_matrix(yaw: float):
+    result = [0.0] * 9
+
+    s = math.sin(yaw)
+    c = math.cos(yaw)
+
+    result[0] = c
+    result[2] = -s
+    result[4] = 1.0
+    result[6] = s
+    result[8] = c
+
+    return result

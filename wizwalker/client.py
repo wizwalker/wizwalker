@@ -583,7 +583,7 @@ class Client:
 
         return self._je_instruction_forward_backwards
 
-    async def camera_swap(self):
+    async def camera_swap(self, seamless_freecam=True):
         """
         Swaps the current camera controller
         """
@@ -591,9 +591,9 @@ class Client:
             await self.camera_elastic()
 
         else:
-            await self.camera_freecam()
+            await self.camera_freecam(seamless_from_elastic=seamless_freecam)
 
-    async def camera_freecam(self):
+    async def camera_freecam(self, seamless_from_elastic=True):
         """
         Switches to the freecam camera controller
         """
@@ -608,6 +608,13 @@ class Client:
         free_address = await free.read_base_address()
 
         await self._switch_camera(free_address, elastic_address)
+
+        if seamless_from_elastic:
+            await free.write_position(await elastic.position())
+            await free.write_pitch(await elastic.pitch())
+            await free.write_yaw(await elastic.yaw())
+            await free.write_roll(await elastic.roll())
+            await free.update_orientation()
 
     async def camera_elastic(self):
         """
