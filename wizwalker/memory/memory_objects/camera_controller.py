@@ -1,7 +1,9 @@
 from typing import Optional, Union
 
+from wizwalker import utils
 from wizwalker import XYZ
 from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
+from wizwalker.memory.memory_objects.gamebryo_camera import DynamicGamebryoCamera
 
 from .client_object import DynamicClientObject, ClientObject
 
@@ -35,6 +37,26 @@ class CameraController(MemoryObject):
 
     async def write_yaw(self, yaw: float):
         await self.write_value_to_offset(128, yaw, "float")
+
+    async def gamebryo_camera(self) -> Optional[DynamicGamebryoCamera]:
+        addr = await self.read_value_from_offset(136, "long long")
+
+        if addr == 0:
+            return None
+
+        return DynamicGamebryoCamera(self.hook_handler, addr)
+
+    async def update_orientation(self):
+        """
+        Utility function that sets the camera's matrix using pitch, yaw and roll
+        """
+        gcam = await self.gamebryo_camera()
+        view = await gcam.cam_view()
+        mat = await gcam.base_matrix()
+        mat = utils.multiply3x3matrices(mat, utils.yaw_matrix(await self.yaw()))
+        mat = utils.multiply3x3matrices(mat, utils.pitch_matrix(await self.pitch()))
+        mat = utils.multiply3x3matrices(mat, utils.roll_matrix(await self.roll()))
+        await view.write_view_matrix(mat)
 
 
 class FreeCameraController(CameraController):
