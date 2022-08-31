@@ -18,7 +18,7 @@ class ClientHandler:
         self.client_cls = client_cls
 
         self._managed_handles = []
-        self.clients = []
+        self.clients: List[Client] = []
 
     async def __aenter__(self):
         return self
