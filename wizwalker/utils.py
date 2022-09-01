@@ -88,6 +88,22 @@ class XYZ:
         return self.yaw(other)
 
 
+class PRY:
+    def __init__(self, pitch: float, roll: float, yaw: float):
+        self.pitch = pitch
+        self.roll = roll
+        self.yaw = yaw
+
+    def __str__(self):
+        return f"<PRY (Pitch: {self.pitch}, roll: {self.yaw}, yaw: {self.roll})>"
+
+    def __repr__(self):
+        return str(self)
+
+    def __iter__(self):
+        return iter((self.pitch, self.yaw, self.roll))
+
+
 class Rectangle:
     def __init__(self, x1: int, y1: int, x2: int, y2: int):
         self.x1 = x1
@@ -889,3 +905,9 @@ def yaw_matrix(yaw: float):
     result[8] = c
 
     return result
+
+def make_ypr_matrix(base, orientation: PRY):
+    base = multiply3x3matrices(base, yaw_matrix(orientation.yaw))
+    base = multiply3x3matrices(base, pitch_matrix(orientation.pitch))
+    base = multiply3x3matrices(base, roll_matrix(orientation.roll))
+    return base

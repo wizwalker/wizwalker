@@ -611,10 +611,7 @@ class Client:
 
         if seamless_from_elastic:
             await free.write_position(await elastic.position())
-            await free.write_pitch(await elastic.pitch())
-            await free.write_yaw(await elastic.yaw())
-            await free.write_roll(await elastic.roll())
-            await free.update_orientation()
+            await free.update_orientation(await elastic.orientation())
 
     async def camera_elastic(self):
         """

@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 from wizwalker import utils
-from wizwalker import XYZ
+from wizwalker import XYZ, PRY
 from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
 from wizwalker.memory.memory_objects.gamebryo_camera import DynamicGamebryoCamera
 
@@ -19,6 +19,12 @@ class CameraController(MemoryObject):
 
     async def write_position(self, position: XYZ):
         await self.write_xyz(108, position)
+
+    async def orientation(self) -> PRY:
+        return await self.read_pry(120)
+
+    async def write_orientation(self, orientation: PRY):
+        await self.write_pry(120, orientation)
 
     async def pitch(self) -> float:
         return await self.read_value_from_offset(120, "float")
@@ -46,16 +52,18 @@ class CameraController(MemoryObject):
 
         return DynamicGamebryoCamera(self.hook_handler, addr)
 
-    async def update_orientation(self):
+    async def update_orientation(self, orientation: PRY = None):
         """
         Utility function that sets the camera's matrix using pitch, yaw and roll
         """
         gcam = await self.gamebryo_camera()
         view = await gcam.cam_view()
         mat = await gcam.base_matrix()
-        mat = utils.multiply3x3matrices(mat, utils.yaw_matrix(await self.yaw()))
-        mat = utils.multiply3x3matrices(mat, utils.pitch_matrix(await self.pitch()))
-        mat = utils.multiply3x3matrices(mat, utils.roll_matrix(await self.roll()))
+        if orientation is None:
+            orientation = await self.orientation()
+        else:
+            await self.write_orientation(orientation)
+        mat = utils.make_ypr_matrix(mat, orientation)
         await view.write_view_matrix(mat)
 
 
