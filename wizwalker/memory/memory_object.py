@@ -10,7 +10,7 @@ from wizwalker.errors import (
     PatternFailed,
     PatternMultipleResults
 )
-from wizwalker.utils import XYZ, PRY
+from wizwalker.utils import XYZ, Orient
 from .handler import HookHandler
 from .memory_reader import MemoryReader
 
@@ -233,12 +233,12 @@ class MemoryObject(MemoryReader):
     async def write_xyz(self, offset: int, xyz: XYZ):
         await self.write_vector(offset, (xyz.x, xyz.y, xyz.z))
 
-    async def read_pry(self, offset: int) -> PRY:
+    async def read_orient(self, offset: int) -> Orient:
         p, r, y = await self.read_vector(offset)
-        return PRY(p, r, y)
+        return Orient(p, r, y)
 
-    async def write_pry(self, offset, pry: PRY):
-        await self.write_vector(offset, (pry.pitch, pry.roll, pry.yaw))
+    async def write_orient(self, offset, orient: Orient):
+        await self.write_vector(offset, (orient.pitch, orient.roll, orient.yaw))
 
     async def read_enum(self, offset, enum: Type[Enum]):
         value = await self.read_value_from_offset(offset, "int")

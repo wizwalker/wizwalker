@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 from wizwalker import utils
-from wizwalker import XYZ, PRY
+from wizwalker import XYZ, Orient
 from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
 from wizwalker.memory.memory_objects.gamebryo_camera import DynamicGamebryoCamera
 
@@ -20,11 +20,11 @@ class CameraController(MemoryObject):
     async def write_position(self, position: XYZ):
         await self.write_xyz(108, position)
 
-    async def orientation(self) -> PRY:
-        return await self.read_pry(120)
+    async def orientation(self) -> Orient:
+        return await self.read_orient(120)
 
-    async def write_orientation(self, orientation: PRY):
-        await self.write_pry(120, orientation)
+    async def write_orientation(self, orientation: Orient):
+        await self.write_orient(120, orientation)
 
     async def pitch(self) -> float:
         return await self.read_value_from_offset(120, "float")
@@ -52,7 +52,7 @@ class CameraController(MemoryObject):
 
         return DynamicGamebryoCamera(self.hook_handler, addr)
 
-    async def update_orientation(self, orientation: PRY = None):
+    async def update_orientation(self, orientation: Orient = None):
         """
         Utility function that sets the camera's matrix using pitch, yaw and roll
         """
