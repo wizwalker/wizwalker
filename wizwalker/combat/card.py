@@ -130,7 +130,7 @@ class CombatCard:
         Raises:
             ExceptionalTimeout: if passed timeout; getting graphical spell took too long
         """
-        return await wizwalker.utils.maybe_wait_for_value_with_timeout(self.get_graphical_spell, timeout=timeout)
+        return await wizwalker.utils.maybe_wait_for_value_with_timeout(self.get_graphical_spell, inverse_value=True, timeout=timeout)
 
     async def get_spell_effects(
         self,
