@@ -436,9 +436,6 @@ async def maybe_wait_for_value_with_timeout(
                 elif value is None and inverse_value and res is not None:
                     return res
 
-                else:
-                    return res
-
             except Exception as e:
                 if ignore_exceptions:
                     possible_exception = e
