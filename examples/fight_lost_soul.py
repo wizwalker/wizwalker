@@ -28,10 +28,10 @@ async def main():
     try:
         print("Preparing")
         await client.activate_hooks()
-        await client.mouse_handler.activate_mouseless()
         print("Ready for battle")
 
-        await LostSoulDestroyer(client).wait_for_combat()
+        async with client.mouse_handler:
+          await LostSoulDestroyer(client).wait_for_combat()
     finally:
         print("Closing")
         await handler.close()

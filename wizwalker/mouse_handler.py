@@ -4,6 +4,7 @@ import ctypes.wintypes
 
 import wizwalker
 from wizwalker import user32
+from wizwalker.memory.hooks import MouselessCursorMoveHook
 
 
 class MouseHandler:
@@ -14,18 +15,49 @@ class MouseHandler:
     def __init__(self, client: "wizwalker.Client"):
         self.client = client
         self.click_lock = None
+        # only for context managing
+        self._ref_lock = None
+        self._ref_count = 0
+
+    async def __aenter__(self):
+        if self._ref_lock is None:
+            self._ref_lock = asyncio.Lock()
+
+        async with self._ref_lock:
+            if self._ref_count == 0 and not self.client.hook_handler._check_if_hook_active(MouselessCursorMoveHook):
+                await self._activate_mouseless()
+            self._ref_count += 1
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self._ref_lock is None: # may god have mercy if this happens during exit
+            self._ref_lock = asyncio.Lock()
+
+        async with self._ref_lock:
+            self._ref_count -= 1
+            if self._ref_count == 0 and self.client.hook_handler._check_if_hook_active(MouselessCursorMoveHook):
+                await self._deactivate_mouseless()
+    
+    async def _activate_mouseless(self):
+        await self.client.hook_handler.activate_mouseless_cursor_hook()
+
+    async def _deactivate_mouseless(self):
+        await self.client.hook_handler.deactivate_mouseless_cursor_hook()
 
     async def activate_mouseless(self):
         """
         Activates the mouseless hook
         """
-        await self.client.hook_handler.activate_mouseless_cursor_hook()
+        if self._ref_lock is not None or self._ref_count > 0:
+            raise RuntimeError("You can't mix managed mouseless with unmanaged mouseless")
+        await self._activate_mouseless()
 
     async def deactivate_mouseless(self):
         """
         Deactivates the mouseless hook
         """
-        await self.client.hook_handler.deactivate_mouseless_cursor_hook()
+        if self._ref_lock is not None or self._ref_count > 0:
+            raise RuntimeError("You can't mix managed mouseless with unmanaged mouseless")
+        await self._deactivate_mouseless()
 
     async def set_mouse_position_to_window(
         self, window: "wizwalker.memory.window.DynamicWindow", **kwargs
