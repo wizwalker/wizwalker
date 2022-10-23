@@ -1,7 +1,9 @@
 from typing import List, Optional
 
+from wizwalker.errors import MemoryReadError
 from wizwalker.utils import XYZ
-from wizwalker.memory.memory_object import PropertyClass
+from wizwalker.memory import HookHandler
+from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
 from .combat_participant import DynamicCombatParticipant
 from .enums import DuelExecutionOrder, DuelPhase, SigilInitiativeSwitchMode
 from .combat_resolver import DynamicCombatResolver
@@ -340,12 +342,36 @@ class Duel(PropertyClass):
         await self.write_value_to_offset(536, hide_noncombatant_distance, "float")
 
 
+class DynamicDuel(DynamicMemoryObject, Duel):
+    pass
+
+
 class CurrentDuel(Duel):
+    def __init__(self, hook_handler: HookHandler):
+        super().__init__(hook_handler)
+        self._duel_manager_addr = None
+
     async def read_base_address(self) -> int:
-        return await self.hook_handler.read_current_duel_base()
+        if not self._duel_manager_addr:
+            mov_instruction_addr = await self.hook_handler.pattern_scan(
+                rb".......\xE8....\x90.......\x48\x85\xC9\x74.\x0F\x28\x45",
+                module="WizardGraphicalClient.exe"
+            )
+            rip_offset = await self.hook_handler.read_typed(
+                mov_instruction_addr + 3, "int"
+            )
+            self._duel_manager_addr = mov_instruction_addr + 7 + rip_offset
+        # avoid circular import
+        from .client_duel_manager import DynamicClientDuelManager
+        duel_manager = DynamicClientDuelManager(self.hook_handler, await self.read_typed(self._duel_manager_addr, "long long"))
+        for duel in (await duel_manager.duelmap()).values():
+            for part in await duel.participant_list():
+                if await part.owner_id_full() == await self.hook_handler.client.client_object.global_id_full():
+                    return await duel.read_base_address()
+        return 0
 
     async def duel_phase(self) -> DuelPhase:
-        # read_current_duel_phase
-        # return await self.read_enum(192, DuelPhase)
-        duel_phase = await self.hook_handler.read_current_duel_phase()
-        return DuelPhase(duel_phase)
+        try:
+            return await super().duel_phase()
+        except MemoryReadError:
+            return DuelPhase.ended

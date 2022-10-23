@@ -5,8 +5,9 @@ from .client_object import (
     CurrentClientObject,
     DynamicClientObject,
 )
+from .client_duel_manager import DynamicClientDuelManager, ClientDuelManager
 from .combat_participant import CombatParticipant, DynamicCombatParticipant
-from .duel import CurrentDuel, Duel
+from .duel import CurrentDuel, Duel, DynamicDuel
 from .enums import *
 from .game_stats import CurrentGameStats
 from .quest_position import CurrentQuestPosition

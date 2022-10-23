@@ -1,6 +1,7 @@
 import asyncio
 import struct
 from typing import Any
+import warnings
 
 import pymem
 import pymem.exception
@@ -9,7 +10,6 @@ from loguru import logger
 from wizwalker import HookAlreadyActivated, HookNotActive, HookNotReady
 from .hooks import (
     ClientHook,
-    DuelHook,
     MouselessCursorMoveHook,
     PlayerHook,
     PlayerStatHook,
@@ -186,8 +186,6 @@ class HookHandler(MemoryReader):
             timeout: How long to wait for hook values to be written (None for no timeout)
         """
         await self.activate_player_hook(wait_for_ready=False)
-        # duel is only written to on battle join
-        await self.activate_duel_hook()
         # quest hook is not written if the quest arrow is off
         await self.activate_quest_hook()
         await self.activate_player_stat_hook(wait_for_ready=False)
@@ -262,64 +260,29 @@ class HookHandler(MemoryReader):
         self, *, wait_for_ready: bool = False, timeout: float = None
     ):
         """
-        Activate duel hook
-
-        Keyword Args:
-            wait_for_ready: Wait for hook values to be written
-            timeout: How long to wait for hook values to be written (None for no timeout)
+        Deprecated
         """
-        if self._check_if_hook_active(DuelHook):
-            raise HookAlreadyActivated("Duel")
-
-        await self._check_for_autobot()
-
-        duel_hook = DuelHook(self)
-        await duel_hook.hook()
-
-        self._active_hooks.append(duel_hook)
-        self._base_addrs["current_duel"] = duel_hook.current_duel_addr
-        self._base_addrs["current_duel_phase"] = duel_hook.current_duel_phase
-
-        if wait_for_ready:
-            await self._wait_for_value(duel_hook.current_duel_addr, timeout)
+        warnings.warn(DeprecationWarning("The duel hook is deprecated as it is unneeded. activate_duel_hook will remain as a noop until 2.0"))
 
     async def deactivate_duel_hook(self):
         """
-        Deactivate duel hook
+        Deprecated
         """
-        if not self._check_if_hook_active(DuelHook):
-            raise HookNotActive("Duel")
-
-        hook = self._get_hook_by_type(DuelHook)
-        self._active_hooks.remove(hook)
-        await hook.unhook()
-
-        del self._base_addrs["current_duel"]
+        warnings.warn(DeprecationWarning("The duel hook is deprecated as it is unneeded. deactivate_duel_hook will remain as a noop until 2.0"))
 
     async def read_current_duel_base(self) -> int:
         """
-        Read current duel base address
-
-        Returns:
-            The current duel base address
+        Deprecated
         """
-        return await self._read_hook_base_addr("current_duel", "Duel")
+        warnings.warn(DeprecationWarning("The duel hook is deprecated as it is unneeded. read_current_duel_base will remain as a noop until 2.0"))
+        return 0
 
     async def read_current_duel_phase(self) -> int:
         """
-        Read current cached duel phase
-
-        Returns:
-            The current duel phase
+        Deprecated
         """
-        addr = self._base_addrs.get("current_duel_phase")
-        if addr is None:
-            raise HookNotActive("Duel")
-
-        try:
-            return await self.read_typed(addr, "unsigned int")
-        except pymem.exception.MemoryReadError:
-            raise HookNotReady("Duel")
+        warnings.warn(DeprecationWarning("The duel hook is deprecated as it is unneeded. read_current_duel_phase will remain as a noop until 2.0"))
+        return 0
 
     async def activate_quest_hook(
         self, *, wait_for_ready: bool = False, timeout: float = None
