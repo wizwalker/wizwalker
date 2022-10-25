@@ -17,12 +17,26 @@ class Window(PropertyClass):
         raise NotImplementedError()
 
     async def debug_print_ui_tree(self, depth: int = 0):
-        print(
-            f"{'-' * depth} [{await self.name()}] {await self.maybe_read_type_name()}"
-        )
+        # Deprecated: depth
+        print(await self.get_ui_tree_stringified())
 
+    async def get_ui_tree_stringified(self, indent_str = "-") -> str:
+        async def traverse_tree(branch, depth):
+            nonlocal indent_str
+            if type(branch) == str:
+                return f"{indent_str * depth} {branch}\n"
+            else:
+                result = ""
+                for x in branch:
+                    result += await traverse_tree(x, depth + 1)
+                return result
+        return await traverse_tree(await self.get_ui_tree_strings(), 0)
+
+    async def get_ui_tree_strings(self) -> list:
+        result = [f"[{await self.name()}] {await self.maybe_read_type_name()}"]
         for child in await utils.wait_for_non_error(self.children):
-            await child.debug_print_ui_tree(depth + 1)
+            result.append(await child.get_ui_tree_strings())
+        return result
 
     async def debug_paint(self):
         rect = await self.scale_to_client()
