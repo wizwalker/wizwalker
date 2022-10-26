@@ -49,6 +49,8 @@ class HookHandler(MemoryReader):
         self._active_hooks = []
         self._base_addrs = {}
 
+        self._hook_cache = {}
+
     async def _get_open_autobot_address(self, size: int) -> int:
         if self._autobot_pos + size > self.AUTOBOT_SIZE:
             raise RuntimeError("Somehow went over autobot size")
@@ -585,7 +587,7 @@ class HookHandler(MemoryReader):
 
         await self._check_for_autobot()
 
-        mouseless_cursor_hook = MouselessCursorMoveHook(self)
+        mouseless_cursor_hook = MouselessCursorMoveHook(self, self._hook_cache)
         await mouseless_cursor_hook.hook()
 
         self._active_hooks.append(mouseless_cursor_hook)

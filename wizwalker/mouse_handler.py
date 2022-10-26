@@ -15,6 +15,7 @@ class MouseHandler:
     def __init__(self, client: "wizwalker.Client"):
         self.client = client
         self.click_lock = None
+        self.click_predelay = 0.02
         # only for context managing
         self._ref_lock = None
         self._ref_count = 0
@@ -152,6 +153,7 @@ class MouseHandler:
         async with self.click_lock:
             # TODO: test passing use_post
             await self.set_mouse_position(x, y)
+            await asyncio.sleep(self.click_predelay)
             # mouse button down
             send_method(self.client.window_handle, button_down_message, 1, 0)
             if sleep_duration > 0:

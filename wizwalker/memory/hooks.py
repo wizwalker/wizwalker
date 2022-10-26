@@ -22,9 +22,10 @@ def pack_to_int_or_longlong(num: int) -> bytes:
 
 
 class MemoryHook(MemoryReader):
-    def __init__(self, hook_handler):
+    def __init__(self, hook_handler, hook_cache = {}):
         super().__init__(hook_handler.process)
         self.hook_handler = hook_handler
+        self._hook_cache = hook_cache
         self.jump_original_bytecode = None
 
         self.hook_address = None
@@ -35,6 +36,22 @@ class MemoryHook(MemoryReader):
 
         # so we can dealloc it on unhook
         self._allocated_addresses = []
+
+    def _get_my_cache(self):
+        if self._hook_cache is None:
+            self._hook_cache = {type(self): {}}
+        if type(self) not in self._hook_cache:
+            self._hook_cache[type(self)] = {}
+        return self._hook_cache[type(self)]
+    
+    def _is_cached(self, name):
+        return name in self._get_my_cache()
+
+    def _cache(self, name, value):
+        self._get_my_cache()[name] = value
+
+    def _get_cached(self, name):
+        return self._get_my_cache()[name]
 
     async def alloc(self, size: int) -> int:
         """
@@ -579,8 +596,8 @@ class User32GetClassInfoBaseHook(AutoBotBaseHook):
 
 
 class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
-    def __init__(self, memory_handler):
-        super().__init__(memory_handler)
+    def __init__(self, memory_handler, hook_cache = {}):
+        super().__init__(memory_handler, hook_cache=hook_cache)
         self.mouse_pos_addr = None
 
         self.toggle_bool_addrs = ()
@@ -620,13 +637,26 @@ class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
         await self.posthook()
 
     async def posthook(self):
-        bool_one_address = await self.pattern_scan(
-            rb"\x00\xFF\x50\x18\x66\xC7", module="WizardGraphicalClient.exe"
-        )
-        bool_two_address = await self.pattern_scan(
-            rb"\xC6\x86...\x00.\x33\xFF",
-            module="WizardGraphicalClient.exe",
-        )
+        bool_one_address = None
+        if not self._is_cached("bool_one_address"):
+            if a := await self.pattern_scan(
+                rb"\x00\xFF\x50\x18\x66\xC7", module="WizardGraphicalClient.exe"
+            ):
+                self._cache("bool_one_address", a)
+                bool_one_address = a
+        else:
+            bool_one_address = self._get_cached("bool_one_address")
+
+        bool_two_address = None
+        if not self._is_cached("bool_two_address"):
+            if a := await self.pattern_scan(
+                rb"\xC6\x86...\x00.\x33\xFF",
+                module="WizardGraphicalClient.exe",
+            ):
+                self._cache("bool_two_address", a)
+                bool_two_address = a
+        else:
+            bool_two_address = self._get_cached("bool_two_address")
 
         if bool_one_address is None or bool_two_address is None:
             raise RuntimeError("toogle bool address pattern failed")
@@ -639,23 +669,35 @@ class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
         await self.write_bytes(bool_one_address, b"\x01")
         await self.write_bytes(bool_two_address, b"\x01")
 
-        set_cursor_pos = await self.get_address_from_symbol("user32.dll", "SetCursorPos")
+        set_cursor_pos = None
+        if not self._is_cached("SetCursorPos"):
+            if a := await self.get_address_from_symbol("user32.dll", "SetCursorPos"):
+                self._cache("SetCursorPos", a)
+                set_cursor_pos = a
+        else:
+            set_cursor_pos = self._get_cached("SetCursorPos")
         self.set_cursor_pos = (set_cursor_pos, await self.read_bytes(set_cursor_pos, 6))
 
         # ret + 5 noops
         await self.write_bytes(set_cursor_pos, b"\xC3" + (b"\x90" * 5))
 
     async def set_mouse_pos_addr(self):
-        self.mouse_pos_addr = await self.allocate(8)
-
-    async def free_mouse_pos_addr(self):
-        await self.free(self.mouse_pos_addr)
+        if not self._is_cached("mouse_pos_addr"):
+            self.mouse_pos_addr = await self.allocate(8)
+            self._cache("mouse_pos_addr", self.mouse_pos_addr)
+        else:
+            self.mouse_pos_addr = self._get_cached("mouse_pos_addr")
 
     async def get_jump_address(self) -> int:
         """
         gets the address to write jump at
         """
-        return await self.get_address_from_symbol("user32.dll", "GetCursorPos")
+        if not self._is_cached("GetCursorPos"):
+            if a := await self.get_address_from_symbol("user32.dll", "GetCursorPos"):
+                self._cache("GetCursorPos", a)
+                return a
+        else:
+            return self._get_cached("GetCursorPos")
 
     async def get_jump_bytecode(self) -> bytes:
         # distance = end - start
@@ -682,7 +724,6 @@ class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
 
     async def unhook(self):
         await super().unhook()
-        await self.free_mouse_pos_addr()
         for bool_addr in self.toggle_bool_addrs:
             await self.write_bytes(bool_addr, b"\x00")
 
