@@ -5,7 +5,7 @@ from warnings import warn
 from .member import CombatMember
 from .card import CombatCard
 from ..memory import DuelPhase, EffectTarget, SpellEffects, WindowFlags
-from wizwalker import utils, WizWalkerMemoryError, MemoryInvalidated
+from wizwalker import utils, WizWalkerMemoryError, MemoryInvalidated, MemoryReadError, ReadingEnumFailed
 
 
 class CombatHandler:
@@ -30,7 +30,13 @@ class CombatHandler:
         """
         while await self.in_combat():
             await self.wait_for_planning_phase()
+            try:
+                if await self.client.duel.duel_phase() != DuelPhase.planning:
+                    break
+            except (ReadingEnumFailed, MemoryReadError):
+                break
             round_number = await self.round_number()
+            await asyncio.sleep(0.2) # make sure game manages to display UI in time
             # TODO: handle this taking longer than planning timer time
             await self.handle_round()
             await self.wait_until_next_round(round_number)
