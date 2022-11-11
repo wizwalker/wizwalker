@@ -300,7 +300,6 @@ class DeckListControlSpellEntry(DynamicMemoryObject):
 
         return DynamicGraphicalSpell(self.hook_handler, addr)
 
-
 class SpellListControlSpellEntry(DynamicMemoryObject):
     async def graphical_spell(self) -> Optional[DynamicGraphicalSpell]:
         addr = await self.read_value_from_offset(0, "unsigned long long")
@@ -327,7 +326,7 @@ class SpellListControlSpellEntry(DynamicMemoryObject):
         return struct.unpack("<" + type_str * size, vector_bytes)
 
     async def window_rectangle(self) -> Rectangle:
-        rect_addr = await self.read_value_from_offset(0x18, "unsigned long long")
+        rect_addr = await self.read_value_from_offset(0x8, "unsigned long long")
 
         rect = await self._read_vector(rect_addr, 4, "int")
         return Rectangle(*rect)
@@ -336,7 +335,10 @@ class SpellListControlSpellEntry(DynamicMemoryObject):
 class DeckListControl(Window):
     async def read_base_address(self) -> int:
         raise NotImplementedError()
-
+    
+    async def max_deck_space(self):
+        return await self.read_value_from_offset(0x27C, "unsigned int")
+    
     async def spell_entries(self) -> List[DeckListControlSpellEntry]:
         return await self.read_inlined_vector(0x280, 0x28, DeckListControlSpellEntry)
 
@@ -346,7 +348,7 @@ class DeckListControl(Window):
     async def card_size_vertical(self) -> int:
         return await self.read_value_from_offset(0x2A8, "unsigned int")
 
-    async def card_spacing(self) -> int:
+    async def card_spacing_horizontal_adjust(self) -> int:
         return await self.read_value_from_offset(0x2AC, "unsigned int")
 
     async def card_spacing_vertical_adjust(self) -> int:
@@ -360,11 +362,23 @@ class SpellListControl(Window):
     async def spell_entries(self) -> List[SpellListControlSpellEntry]:
         return await self.read_inlined_vector(0x278, 0x20, SpellListControlSpellEntry)
 
+    async def card_page(self) -> int:
+        return await self.read_value_from_offset(0x2C0, "unsigned int")
+    
+    async def write_card_page(self, page: int):
+        return await self.write_value_to_offset(0x2C0, (page*6), "unsigned int")
+        
     async def card_size_horizontal(self) -> int:
         return await self.read_value_from_offset(0x2C4, "unsigned int")
 
     async def card_size_vertical(self) -> int:
         return await self.read_value_from_offset(0x2C8, "unsigned int")
+    
+    async def card_spacing_horizontal_adjust(self) -> int:
+        return await self.read_value_from_offset(0x2CC, "unsigned int")
+
+    async def card_spacing_vertical_adjust(self) -> int:
+        return await self.read_value_from_offset(0x2D0, "unsigned int")
 
 
 class DynamicWindow(DynamicMemoryObject, Window):
