@@ -4,10 +4,15 @@ if TYPE_CHECKING:
     from wizwalker import Client
 
 import asyncio
+from wizwalker.memory.memory_reader import MemoryReadError
 from wizwalker.extensions.scripting.utils import _maybe_get_named_window
 from wizwalker.memory.memory_objects.spell import *
-from wizwalker.memory.memory_objects.window import *
-from math import ceil
+from wizwalker.memory.memory_objects.window import (DynamicDeckListControl,
+                                                    DynamicSpellListControl,
+                                                    SpellListControl,
+                                                    DeckListControl,
+                                                    DeckListControlSpellEntry,
+                                                    SpellListControlSpellEntry)
 
 """
 async with DeckBuilder(client) as db:
