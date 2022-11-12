@@ -841,7 +841,6 @@ class DeckBuilder:
 
     async def change_all_item_card(self):
         all_cards = await self.get_item_card_names()
-        cards = [*set(all_cards)]
-        for card in cards:
+        for card in all_cards:
             await self.item_remove_add_by_name(card, None)
 
