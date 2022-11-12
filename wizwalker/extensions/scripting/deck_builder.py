@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Optional, Callable, List
+from math import ceil
 
 if TYPE_CHECKING:
     from wizwalker import Client
@@ -170,19 +171,25 @@ class DeckBuilder:
         self.client = client
 
         self._deck_config_window = None
+        self.n_spell_list = None
+        self.t_spell_list = None
 
     async def open(self):
         pass
 
+
     async def close(self):
         pass
+
 
     async def __aenter__(self):
         await self.open()
         return self
 
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
+
 
     def starr_calculate_icon_position(
             card_number: int,
@@ -198,13 +205,23 @@ class DeckBuilder:
             (vertical_spacing * ((card_number - 1) // number_of_rows))
         return x, y
 
-    async def open_deck_page(self):
-        spellbook = await _maybe_get_named_window(self.client.root_window, "btnSpellbook")
-        async with self.client.mouse_handler:
-            await self.client.mouse_handler.click_window(spellbook)
 
-        await asyncio.sleep(1)
-        self._deck_config_window = await _maybe_get_named_window(self.client.root_window, "DeckConfiguration")
+    async def open_deck_page(self):
+        """
+        Opens deck page
+        """
+        try:
+            self._deck_config_window = await _maybe_get_named_window(self.client.root_window, "DeckConfiguration")
+        except ValueError:
+            self._deck_config_window = None
+
+        if not self._deck_config_window:
+            spellbook = await _maybe_get_named_window(self.client.root_window, "btnSpellbook")
+            async with self.client.mouse_handler:
+                await self.client.mouse_handler.click_window(spellbook)
+            self._deck_config_window = await _maybe_get_named_window(self.client.root_window, "DeckConfiguration")
+        
+
         deck_button = await _maybe_get_named_window(self._deck_config_window, "Deck")
 
         async with self.client.mouse_handler:
@@ -231,6 +248,20 @@ class DeckBuilder:
             raise ValueError(f"Couldn't find a card named {name}")
 
 
+    async def deck_list_get_card_named(self, name: str) -> DeckListControlSpellEntry:
+            """
+            Args:
+                name: The name (display name) of the card to find
+            Returns: The first Card with name
+            """
+            possible = await self.deck_list_get_cards_with_name(name)
+
+            if possible:
+                return possible[0]
+
+            raise ValueError(f"Couldn't find a card named {name}")
+
+
     async def spell_list_get_cards_with_predicate(self, pred: Callable) -> List[SpellListControlSpellEntry]:
             """
             Return cards that match a predicate
@@ -239,7 +270,7 @@ class DeckBuilder:
                 pred: The predicate function
             """
             cards = []
-            spell_list = await self.get_spell_cards()
+            spell_list = await self.get_valid_spell_cards()
             for spell in spell_list:
                 if await pred(spell):
                     cards.append(spell)
@@ -247,7 +278,24 @@ class DeckBuilder:
             return cards
 
 
-    async def get_spell_cards(self):
+
+    async def deck_list_get_cards_with_predicate(self, pred: Callable) -> List[DeckListControlSpellEntry]:
+            """
+            Return cards that match a predicate
+
+            Args:
+                pred: The predicate function
+            """
+            cards = []
+            deck_list = await self.get_valid_deck_cards()
+            for spell in deck_list:
+                if await pred(spell):
+                    cards.append(spell)
+
+            return cards
+        
+        
+    async def get_valid_spell_cards(self):
         if not self._deck_config_window:
             self._deck_config_window = await _maybe_get_named_window(self.client.root_window, "DeckConfiguration")
 
@@ -265,35 +313,65 @@ class DeckBuilder:
                     pass
                 except AttributeError:
                     pass
+                except ValueError:
+                    pass
                 else:
                     list_of_SpellListControl.append(spell)
 
         return list_of_SpellListControl
 
 
-    async def get_spell_card_names(self):
-        
-        spell_list = await self.get_spell_cards()
-        names = []
-        for spell in spell_list:
-            graphical = await spell.graphical_spell()
-            template = await graphical.spell_template()
-            names.append(await template.name())
+    async def get_valid_deck_cards(self):
+            if not self._deck_config_window:
+                self._deck_config_window = await _maybe_get_named_window(self.client.root_window, "DeckConfiguration")
 
-        return names
+            CardsInDeck_window = await _maybe_get_named_window(self.client.root_window, "CardsInDeck")
+            DeckListControl = DynamicDeckListControl(self.client.hook_handler, await CardsInDeck_window.read_base_address())
+            list_of_DeckListControl = []
+            list_of_spells = await DeckListControl.spell_entries()
+            for spell in list_of_spells:
+                graphical = await spell.graphical_spell()
+                if graphical:
+                    try:
+                        template = await graphical.spell_template()
+                        _ = await template.name()
+                    except MemoryReadError:
+                        pass
+                    except AttributeError:
+                        pass
+                    else:
+                        list_of_DeckListControl.append(spell)
+
+            return list_of_DeckListControl
+
 
     async def spell_list_get_cards_with_name(self, name: str) -> List[SpellListControlSpellEntry]:
             """
             Args:
                 name: The name (debug name) of the cards to find
 
-            Returns: list of possible CombatCards with the name
+            Returns: list of possible SpellListControlSpellEntry with the name
             """
             
             async def _pred(card):
-                return name.lower() == (await (await (await card.graphical_spell()).spell_template()).name()).lower()
+                return name.lower() == (await self.client.cache_handler.get_langcode_name((await (await (await card.graphical_spell()).spell_template()).display_name()))).lower()
 
             return await self.spell_list_get_cards_with_predicate(_pred)
+
+
+    async def deck_list_get_cards_with_name(self, name: str) -> List[DeckListControlSpellEntry]:
+            """
+            Args:
+                name: The name (debug name) of the cards to find
+
+            Returns: list of possible DeckListControlSpellEntry with the name
+            """
+            
+            async def _pred(card):
+                return name.lower() == (await self.client.cache_handler.get_langcode_name((await (await (await card.graphical_spell()).spell_template()).display_name()))).lower()
+
+
+            return await self.deck_list_get_cards_with_predicate(_pred)
 
 
     async def get_item_card_names(self) -> list[str]:
@@ -319,8 +397,16 @@ class DeckBuilder:
         return list_of_name
 
 
-    async def get_card_index(self, card_name) -> int:
-        cards_names = await self.get_spell_card_names()
+    async def get_card_index(self, card_name: str, tc: bool) -> int:
+        cards_names = None
+        if tc:
+            if not self.t_spell_list:
+                self.t_spell_list = await self.get_spell_card_names()
+            cards_names = self.t_spell_list
+        else:
+            if not self.n_spell_list:
+                self.n_spell_list = await self.get_spell_card_names()
+            cards_names  = self.n_spell_list
         cards_lower = [c.lower() for c in cards_names]
         card_placement = cards_lower.index(card_name.lower())
 
@@ -352,7 +438,7 @@ class DeckBuilder:
     async def click_card(self, x: int, y: int):
         async with self.client.mouse_handler:
             await self.client.mouse_handler.click(x,y)
-        await asyncio.sleep(0.2)
+
 
 
     async def click_card_spell_list(self, card_num: int, number_of_copies: Optional[int]):
@@ -367,33 +453,44 @@ class DeckBuilder:
         SpellList = await _maybe_get_named_window(self.client.root_window, "SpellList")
         SpellListControl = DynamicSpellListControl(self.client.hook_handler, await SpellList.read_base_address())
         await SpellListControl.write_card_page(card_index)
-        await asyncio.sleep(0.15)
 
 
-    async def add_by_name(self, name: str, number_of_copies: Optional[int]):
+
+    async def add_by_name(self, name: str, number_of_copies: Optional[int], tc = False):
         """
-        builder.add_card_by_name("unicorn", number_of_copies: int | None)
+        builder.add_card_by_name("unicorn", number_of_copies: int | None, tc: bool = False )
         -> number_of_copies = None: add max copies
         -> raises: ValueError(already at max copies)
         -> raises: ValueError(card not found)
         """
-
         card = await self.spell_list_get_card_named(name)
+
+        if number_of_copies == None:
+            number_of_copies = (await card.max_copies()) - (await card.current_copies())
+
         if await card.max_copies() == await card.current_copies():
             raise ValueError(f"already at max copies for {name}")
         elif await card.max_copies() < (await card.current_copies()) + (number_of_copies):
             raise ValueError(f"number of copies is greater than the card allows")
 
-        card_index, card_num = await self.get_card_index(name) 
+        card_index, card_num = await self.get_card_index(name, tc) 
         await self.go_to_card_page(card_index)
+
         await self.click_card_spell_list(card_num, number_of_copies)
 
 
     async def get_deck_card_index(self, card_name: str) -> int:
-            cards_names = await self.get_deck_card_names()
-            cards_lower = [c.lower() for c in cards_names]
-            card_placement = cards_lower.index(card_name.lower())
-            return card_placement + 1
+        cards_names = await self.get_deck_card_names(False)
+        cards_lower = [c.lower() for c in cards_names]
+        card_placement = cards_lower.index(card_name.lower())
+        return card_placement + 1
+
+
+    async def deck_card_number_of_copies(self, card_name: str) -> int:
+        cards_names = await self.get_deck_card_names(False)
+        cards_lower = [c.lower() for c in cards_names]
+        duplicate_cards = [i for i in cards_lower if i == card_name.lower()]
+        return len(duplicate_cards)
 
 
     async def get_item_card_index(self, card_name: str) -> list[int]:
@@ -403,7 +500,13 @@ class DeckBuilder:
         return card_placement
 
 
-    async def get_deck_card_names(self) -> list[str]:
+    async def get_deck_card_names(self, tc: bool) -> list[str]:
+        """
+        get deck card names
+        
+        Args:
+                tc: True if your reading deck tc's
+        """
         if not self._deck_config_window:
             self._deck_config_window = await _maybe_get_named_window(self.client.root_window, "DeckConfiguration")
 
@@ -416,14 +519,45 @@ class DeckBuilder:
             if graphical:
                 try:
                     template = await graphical.spell_template()
-                    name = await template.name()
+                    if tc:
+                        if not "tc" in (await template.name()).lower():
+                            break
+                    display_name = await template.display_name()
+                    name = await self.client.cache_handler.get_langcode_name(display_name)
                 except MemoryReadError:
                     pass
                 except AttributeError:
                     pass
+                except ValueError:
+                    pass
                 else:
                     list_of_name.append(name)
         return list_of_name
+
+
+    async def get_spell_card_names(self) -> list[str]:
+            if not self._deck_config_window:
+                self._deck_config_window = await _maybe_get_named_window(self.client.root_window, "DeckConfiguration")
+            SpellList_window = await _maybe_get_named_window(self.client.root_window, "SpellList")
+            SpellListControl = DynamicSpellListControl(self.client.hook_handler, await SpellList_window.read_base_address())
+            list_of_spells = await SpellListControl.spell_entries()
+            list_of_name = []
+            for spell in list_of_spells:
+                graphical = await spell.graphical_spell()
+                if graphical:
+                    try:
+                        template = await graphical.spell_template()
+                        display_name = await template.display_name()
+                        name = await self.client.cache_handler.get_langcode_name(display_name)
+                    except MemoryReadError:
+                        pass
+                    except AttributeError:
+                        pass
+                    except ValueError:
+                        pass
+                    else:
+                        list_of_name.append(name)
+            return list_of_name
 
 
     def calc_icon_pos(self, 
@@ -482,10 +616,18 @@ class DeckBuilder:
 
 
     async def remove_by_name(self, name: str, number_of_copies: Optional[int]):
+        """
+        builder.remove_by_name("unicorn", number_of_copies: int | None)
+        -> number_of_copies = None: remove all copies
+        """
+        
         CardsInDeck_window = await _maybe_get_named_window(self.client.root_window, "CardsInDeck")
         DeckListControl = DynamicDeckListControl(self.client.hook_handler, await CardsInDeck_window.read_base_address())
+        if number_of_copies == None:
+            number_of_copies = await self.deck_card_number_of_copies(name)
+    
+        card_number = await self.get_deck_card_index(name)
         for _ in range(number_of_copies):
-            card_number = await self.get_deck_card_index(name)
             x, y = await self.get_deck_xy(card_number, DeckListControl)
             await self.click_card(x, y)
 
@@ -521,7 +663,7 @@ class DeckBuilder:
         Close_Button = await _maybe_get_named_window(self.client.root_window, "Close_Button")
         async with self.client.mouse_handler:
             await self.client.mouse_handler.click_window(Close_Button)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
 
 
     async def clear_tc_deck(self):
@@ -529,7 +671,7 @@ class DeckBuilder:
         for _ in range(2): # trys twice just to make sure
             await self.click_tc_button()
 
-            unwanted_cards = await self.get_deck_card_names()
+            unwanted_cards = await self.get_deck_card_names(True)
             for card in unwanted_cards:
                 try:
                     await self.remove_by_name(card, 1)
@@ -538,7 +680,6 @@ class DeckBuilder:
 
             #close and reopen
             await self.close_deck_page()
-
             await self.open_deck_page()
 
 
@@ -546,7 +687,7 @@ class DeckBuilder:
         TreasureCardButton = await _maybe_get_named_window(self._deck_config_window, "TreasureCardButton")
         async with self.client.mouse_handler:
             await self.client.mouse_handler.click_window(TreasureCardButton)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
 
 
     async def get_deck_preset(self) -> dict:
@@ -559,7 +700,7 @@ class DeckBuilder:
         }
         """
 
-        def dict_maker(list: list, tc: bool):
+        def dict_maker(_list: list):
             d = {}
 
             def checkKey(dic: dict, key: str):
@@ -568,9 +709,7 @@ class DeckBuilder:
                 else:
                     return False
 
-            for card in list:
-                if tc and not "tc" in card.lower():
-                    break
+            for card in _list:
                 if checkKey(d, card):
                     d[card] = d[card] + 1
                 else:
@@ -579,13 +718,14 @@ class DeckBuilder:
 
         saved_deck= {}
 
-        list_normal = await self.get_deck_card_names()
-        normal =  dict_maker(list_normal, False)
+        list_normal = await self.get_deck_card_names(False)
+        normal =  dict_maker(list_normal)
 
         await self.click_tc_button()
 
-        list_tc = await self.get_deck_card_names()
-        tc = dict_maker(list_tc, True)
+        list_tc = await self.get_deck_card_names(True)
+
+        tc = dict_maker(list_tc)
 
         await self.click_tc_button()
 
@@ -611,23 +751,31 @@ class DeckBuilder:
             for section in deck_section:
                 if section == "tc":
                     await self.click_tc_button()
-                for card in (preset[section]).keys():
-                    try:
-                        await self.add_by_name(card, (preset[section])[card])
-                    except:
-                        pass
-                if section == "tc":
+                    for card in (preset[section]).keys():
+                        
+                        try:
+                            await self.add_by_name(card, (preset[section])[card], True)
+                        except:
+                            pass
                     await self.click_tc_button()
+                elif section == "normal":
+                    for card in (preset[section]).keys():
+                        
+                        try:
+                            await self.add_by_name(card, (preset[section])[card])
+                        except:
+                            pass
         else:	
             for section in deck_section:
                 if section == "tc":
                     await self.click_tc_button()
-                preset[section] = deck
-                for card in deck.keys():
-                    if "tc" in card.lower():
-                        await self.add_by_name(card, deck[card])
-                if section == "tc":
+                    for card in (preset[section]).keys():
+                        await self.add_by_name(card, (preset[section])[card], True)
+
                     await self.click_tc_button()
+                elif section == "normal":
+                    for card in (preset[section]).keys():
+                        await self.add_by_name(card, (preset[section])[card])
 
 
     async def get_item_card_names(self):
@@ -665,8 +813,8 @@ class DeckBuilder:
             if graphical:
                 try:
                     template = await graphical.spell_template()
-                    named = await template.name()
-                    if name.lower() == named.lower():
+                    named = await template.display_name
+                    if name.lower() == await self.client.cache_handler.get_langcode_name(named) :
                         list_of_name.append(spell)
                 except MemoryReadError:
                     pass
