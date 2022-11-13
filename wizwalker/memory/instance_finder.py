@@ -2,7 +2,6 @@ import regex
 import struct
 from collections import defaultdict
 
-from .memory_reader import MemoryReader
 from wizwalker import MemoryReadError, PatternFailed
 
 

@@ -2,11 +2,8 @@ from typing import List, Optional
 
 from wizwalker import XYZ
 from wizwalker.memory.memory_object import PropertyClass
-from wizwalker.memory.memory_objects import DynamicActorBody
-from .game_stats import DynamicGameStats
-from .game_object_template import DynamicWizGameObjectTemplate
-from .behavior_instance import DynamicBehaviorInstance
-from .client_zone import DynamicClientZone
+from .behavior_instance import BehaviorInstance
+from .actor_body import ActorBody
 
 
 class ClientObject(PropertyClass):
@@ -18,7 +15,7 @@ class ClientObject(PropertyClass):
         raise NotImplementedError()
 
     # TODO: test if this is actually active behaviors
-    async def inactive_behaviors(self) -> List[DynamicBehaviorInstance]:
+    async def inactive_behaviors(self) -> List[BehaviorInstance]:
         """
         This client object's inactive behaviors
 
@@ -28,12 +25,12 @@ class ClientObject(PropertyClass):
         behaviors = []
         for addr in await self.read_shared_vector(224):
             if addr != 0:
-                behaviors.append(DynamicBehaviorInstance(self.hook_handler, addr))
+                behaviors.append(BehaviorInstance(self.hook_handler, addr))
 
         return behaviors
 
     # helper method
-    async def actor_body(self) -> Optional[DynamicActorBody]:
+    async def actor_body(self) -> Optional[ActorBody]:
         for behavior in await self.inactive_behaviors():
             if await behavior.behavior_name() == "AnimationBehavior":
                 addr = await behavior.read_value_from_offset(0x70, "unsigned long long")
@@ -115,7 +112,7 @@ class ClientObject(PropertyClass):
         return DynamicClientZone(self.hook_handler, addr)
 
     # note: not defined
-    async def object_template(self) -> Optional[DynamicWizGameObjectTemplate]:
+    async def object_template(self) -> Optional[WizGameObjectTemplate]:
         """
         This client object's template object
 

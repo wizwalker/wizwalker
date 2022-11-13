@@ -1,6 +1,8 @@
 import os
 import struct
-from typing import Type, TypeVar
+from typing import Any, Generic, Type, TypeVar
+
+from addon_primitives import *
 
 import ctypes
 from ctypes import wintypes
@@ -67,11 +69,17 @@ type_dict = {
     "char": struct.Struct("<c"),
 
     # special
-    "pointer": struct.Struct("<Q")
+    "pointer": struct.Struct("<Q"),
+    "xyz": struct.Struct("<fff"),
+    "orient": struct.Struct("<fff"),
+    "rect": struct.Struct("<iiii")
 }
 
 
 class ViewBackend:
+    def backend_to_propagate(self):
+        return None
+
     def address(self) -> int:
         raise NotImplementedError()
 
@@ -90,12 +98,19 @@ class ViewBackend:
     def read_primitive(self, typename: str, offset=0) -> int | float | bool | str:
         t = type_dict[typename]
         assert offset + t.size <= self.size()
-        return t.unpack(self.read_bytes(t.size, offset=offset))[0]
+        vals = t.unpack(self.read_bytes(t.size, offset=offset))
+        if len(vals) == 1:
+            return vals[0]
+        else:
+            return vals
 
     def write_primitive(self, typename: str, value, offset: int) -> None:
         t = type_dict[typename]
         assert offset + t.size <= self.size()
-        self.write_bytes(t.pack(value), offset=offset)
+        if not hasattr(value, "__iter__"):
+            self.write_bytes(t.pack(value), offset=offset)
+        else:
+            self.write_bytes(t.pack(*value), offset=offset)
 
     def read_primitive_array(self, typename: str, count: int, offset: int) -> list[int | float | bool | str]:
         t = type_dict[typename]
@@ -141,19 +156,62 @@ class ExternalOwnedPointerBackend(ExternalPointerBackend):
         super().__init__(handle, address, size)
         self._by_allocator = allocator
 
+    def backend_to_propagate(self):
+        return ExternalUnownedPointerBackend
+
 class ExternalUnownedPointerBackend(ExternalPointerBackend):
-    pass
+    def backend_to_propagate(self):
+        return ExternalUnownedPointerBackend
+
+class MemType:
+    view: "MemoryView" = None
+    offset: int = 0
+
+    def __init__(self, offset) -> None:
+        self.offset = offset
+
+    def read(self) -> Any:
+        raise NotImplementedError()
+
+    def write(self, value: Any):
+        raise NotImplementedError
+
+MPT = TypeVar("MPT", int, float, str, bool, XYZ, Orient, Rectangle)
+class MemPrimitive(MemType, Generic[MPT]):
+    typename: str = ""
+
+    def __init__(self, offset) -> None:
+        self.offset = offset
+
+    def read(self) -> MPT:
+        return self.view.read_primitive(self.typename, self.offset)
+
+    def write(self, value: MPT):
+        self.view.write_primitive(self.typename, value, self.offset)
 
 
+T = TypeVar("T", bound="MemoryView")
 class MemoryView:
     ## Forwarded functions for convenience so objects that inherit from it can use them directly
 
     def __init__(self, backend: ViewBackend) -> None:
         self.backend = backend
 
+        for name, field in vars(type(self)).items():
+            if issubclass(type(field), MemType):
+                self.__getattribute__(name).view = self
+
     @staticmethod
     def obj_size() -> int:
         raise NotImplementedError()
+
+    def from_address(self, cls: Type[T], address: int, size: int) -> T:
+        assert self.backend.backend_to_propagate()
+        return cls(self.backend.backend_to_propagate()(
+            self.backend.process_handle,
+            address,
+            size
+        ))
 
     def read_bytes(self, count: int, offset=0) -> bytes:
         return self.backend.read_bytes(count, offset)
@@ -167,16 +225,75 @@ class MemoryView:
     def write_primitive(self, typename: str, value, offset=0) -> None:
         self.backend.write_primitive(typename, value, offset)
 
+    def read_xyz(self, offset=0) -> XYZ:
+        return XYZ(*self.read_primitive("xyz", offset))
+
+    def write_xyz(self, value: XYZ, offset=0) -> None:
+        self.write_primitive("xyz", value, offset)
+
+    def read_orient(self, offset=0) -> Orient:
+        return Orient(*self.read_primitive("orient", offset))
+
+    def write_orient(self, value: Orient, offset=0) -> None:
+        self.write_primitive("orient", value, offset)
+
+    def read_rect(self, offset=0) -> Rectangle:
+        return Rectangle(*self.read_primitive("rect", offset))
+
+    def write_rect(self, value: Rectangle, offset=0) -> None:
+        self.write_primitive("rect", value, offset)
+
     def read_primitive_array(self, typename: str, count=1, offset=0) -> list[int | float | bool | str]:
         return self.backend.read_primitive_array(typename, count, offset)
 
     def write_primitive_array(self, typename: str, values, offset=0):
         self.backend.write_primitive_array(typename, values, offset)
 
+    def read_memview(self, size: int, offset=0) -> "MemoryView":
+        assert self.backend.backend_to_propagate()
+        return MemoryView(self.backend.backend_to_propagate()(
+            self.backend.process_handle,
+            self.backend.address() + offset,
+            size
+        ))
+
+    def read_memview_ptr(self, size: int, offset=0) -> "MemoryView":
+        assert self.backend.backend_to_propagate()
+        addr = self.read_primitive("pointer", offset)
+        return MemoryView(self.backend.backend_to_propagate()(
+            self.backend.process_handle,
+            addr,
+            size
+        ))
+
+    def write_addr(self, x: "MemoryView", offset=0):
+        self.write_primitive("pointer", x.backend.address(), offset)
+
+    def get_memprimitive(self, cls: Type[T], offset=0) -> T:
+        return cls(self, offset)
+
+    def read_typeview(self, cls: Type[T], offset=0) -> T:
+        assert self.backend.backend_to_propagate()
+        return cls(self.backend.backend_to_propagate()(
+            self.backend._process_handle,
+            self.backend.address() + offset,
+            cls.obj_size()
+        ))
+
+    def read_typeview_ptr(self, cls: Type[T], offset=0) -> T:
+        assert self.backend.backend_to_propagate()
+        addr = self.read_primitive("pointer", offset)
+        return cls(self.backend.backend_to_propagate()(
+            self.backend.process_handle,
+            addr,
+            cls.obj_size()
+        ))
+
+
+
 class AllocatorError(RuntimeError):
     pass
 
-T = TypeVar("T", bound="MemoryView")
 class BaseAllocator:
     def __init__(self) -> None:
         ## Not thread safe!
@@ -335,8 +452,23 @@ class CaveAllocator(ProcessAllocator):
         # TODO: Maybe just marking as dead would be better
         del ptr
 
+
 if __name__ == "__main__":
     def _main():
+        class MemXYZ(MemPrimitive[XYZ]):
+            typename: str = "xyz"
+
+        class TestType(MemoryView):
+            def __init__(self, backend: ViewBackend) -> None:
+                super().__init__(backend)
+            
+            @staticmethod
+            def obj_size() -> int:
+                return 12
+
+            position = MemXYZ(0)
+
+
         pid = os.getpid()
         # PROCESS_ALL_ACCESS
         handle = ctypes.windll.kernel32.OpenProcess(0xF0000 | 0x100000 | 0xFFFF, 0, pid)
@@ -346,6 +478,13 @@ if __name__ == "__main__":
             handle, type_dict["pointer"].unpack(ctypes.pointer(x))[0], 8
         ))
         print(hex(x_view.read_primitive("int64")))
+
+        allocator = ProcessAllocator(handle)
+        testview = allocator.alloc(16)
+        testtypeview = testview.read_typeview(TestType)
+        print(testtypeview.position.read())
+        testtypeview.position.write(XYZ(10.0, 20.0, 30.0))
+        print(testtypeview.position.read())
 
         ctypes.windll.kernel32.CloseHandle(handle)
 

@@ -1,17 +1,14 @@
 from typing import Optional
 
+from wizwalker.memory import memanagers
 from wizwalker.memory.memory_object import PropertyClass
-from .behavior_template import DynamicBehaviorTemplate
+from .behavior_template import BehaviorTemplate
 
 
-class BehaviorInstance(PropertyClass):
+class BehaviorInstance(memanagers.MemoryView):
     """
     Base class for behavior instances
     """
-
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
     # note: helper method
     async def behavior_name(self) -> Optional[str]:
         template = await self.behavior_template()
@@ -37,10 +34,10 @@ class BehaviorInstance(PropertyClass):
         await self.write_value_to_offset(104, behavior_template_name_id, "unsigned int")
 
     # note: not defined
-    async def behavior_template(self) -> Optional[DynamicBehaviorTemplate]:
-        addr = await self.read_value_from_offset(0x58, "unsigned long long")
+    async def behavior_template(self) -> Optional[BehaviorTemplate]:
+        addr = await self.read_primitive("pointer", 0x58)
 
         if addr == 0:
             return None
 
-        return DynamicBehaviorTemplate(self.hook_handler, addr)
+        return BehaviorTemplate(self.hook_handler, addr)

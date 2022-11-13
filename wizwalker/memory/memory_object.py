@@ -374,10 +374,7 @@ class MemoryObject:
         return mapped_return
 
 
-class PropertyClass(MemoryObject):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
+class PropertyClass(memanagers.MemoryView):
     async def maybe_read_type_name(self) -> str:
         try:
             return await self.read_type_name()
@@ -385,18 +382,18 @@ class PropertyClass(MemoryObject):
             return ""
 
     async def read_type_name(self) -> str:
-        vtable = await self.read_value_from_offset(0, "long long")
+        vtable = self.read_memview(8)
         # first function
-        get_class_name = await self.read_typed(vtable, "long long")
+        get_class_name = vtable.read_memview(5)
         # sometimes is a function with a jmp, sometimes just a body pointer
-        maybe_jmp = await self.read_bytes(get_class_name, 5)
+        maybe_jmp = get_class_name.read_bytes(5)
         # 233 is 0xE9 (jmp)
         if maybe_jmp[0] == 233:
             offset = struct.unpack("<i", maybe_jmp[1:])[0]
             # 5 is length of this jmp instruction
-            actual_get_class_name = get_class_name + offset + 5
+            actual_get_class_name = get_class_name.backend.address() + offset + 5
         else:
-            actual_get_class_name = get_class_name
+            actual_get_class_name = get_class_name.backend.address()
 
         # 63 is the length of the function up to the lea instruction
         lea_instruction = actual_get_class_name + 63
