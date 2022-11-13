@@ -129,10 +129,11 @@ class ViewBackend:
         self.write_bytes(arr_bytes, offset)
 
 class ExternalPointerBackend(ViewBackend):
-    def __init__(self, handle: int, address: int, size: int) -> None:
+    def __init__(self, handle: int, address: int, size: int, allocator) -> None:
         self._process_handle = handle
         self._address = address
         self._size = size
+        self._allocator = allocator
 
     def address(self) -> int:
         return self._address
@@ -152,10 +153,6 @@ class ExternalPointerBackend(ViewBackend):
 
 
 class ExternalOwnedPointerBackend(ExternalPointerBackend):
-    def __init__(self, handle: int, address: int, size: int, allocator: "BaseAllocator") -> None:
-        super().__init__(handle, address, size)
-        self._by_allocator = allocator
-
     def backend_to_propagate(self):
         return ExternalUnownedPointerBackend
 
@@ -163,17 +160,18 @@ class ExternalUnownedPointerBackend(ExternalPointerBackend):
     def backend_to_propagate(self):
         return ExternalUnownedPointerBackend
 
-class MemType:
+MTT = TypeVar("MTT")
+class MemType(Generic[MTT]):
     view: "MemoryView" = None
     offset: int = 0
 
     def __init__(self, offset) -> None:
         self.offset = offset
 
-    def read(self) -> Any:
+    def read(self) -> MTT:
         raise NotImplementedError()
 
-    def write(self, value: Any):
+    def write(self, value: MTT):
         raise NotImplementedError
 
 MPT = TypeVar("MPT", int, float, str, bool, XYZ, Orient, Rectangle)
@@ -208,7 +206,7 @@ class MemoryView:
     def from_address(self, cls: Type[T], address: int, size: int) -> T:
         assert self.backend.backend_to_propagate()
         return cls(self.backend.backend_to_propagate()(
-            self.backend.process_handle,
+            self.backend._process_handle,
             address,
             size
         ))
@@ -252,18 +250,20 @@ class MemoryView:
     def read_memview(self, size: int, offset=0) -> "MemoryView":
         assert self.backend.backend_to_propagate()
         return MemoryView(self.backend.backend_to_propagate()(
-            self.backend.process_handle,
+            self.backend._process_handle,
             self.backend.address() + offset,
-            size
+            size,
+            self.backend._allocator
         ))
 
     def read_memview_ptr(self, size: int, offset=0) -> "MemoryView":
         assert self.backend.backend_to_propagate()
         addr = self.read_primitive("pointer", offset)
         return MemoryView(self.backend.backend_to_propagate()(
-            self.backend.process_handle,
+            self.backend._process_handle,
             addr,
-            size
+            size,
+            self.backend._allocator
         ))
 
     def write_addr(self, x: "MemoryView", offset=0):
@@ -277,16 +277,18 @@ class MemoryView:
         return cls(self.backend.backend_to_propagate()(
             self.backend._process_handle,
             self.backend.address() + offset,
-            cls.obj_size()
+            cls.obj_size(),
+            self.backend._allocator
         ))
 
     def read_typeview_ptr(self, cls: Type[T], offset=0) -> T:
         assert self.backend.backend_to_propagate()
         addr = self.read_primitive("pointer", offset)
         return cls(self.backend.backend_to_propagate()(
-            self.backend.process_handle,
+            self.backend._process_handle,
             addr,
-            cls.obj_size()
+            cls.obj_size(),
+            self.backend._allocator
         ))
 
 
@@ -454,37 +456,35 @@ class CaveAllocator(ProcessAllocator):
 
 
 if __name__ == "__main__":
+    from memtypes import *
     def _main():
-        class MemXYZ(MemPrimitive[XYZ]):
-            typename: str = "xyz"
-
         class TestType(MemoryView):
             def __init__(self, backend: ViewBackend) -> None:
                 super().__init__(backend)
             
             @staticmethod
             def obj_size() -> int:
-                return 12
+                return 32
 
-            position = MemXYZ(0)
+            name = MemCppString(0)
 
 
         pid = os.getpid()
         # PROCESS_ALL_ACCESS
         handle = ctypes.windll.kernel32.OpenProcess(0xF0000 | 0x100000 | 0xFFFF, 0, pid)
 
+        allocator = ProcessAllocator(handle)
+
         x = ctypes.c_uint64(0xBE1211)
         x_view = MemoryView(ExternalUnownedPointerBackend(
-            handle, type_dict["pointer"].unpack(ctypes.pointer(x))[0], 8
+            handle, type_dict["pointer"].unpack(ctypes.pointer(x))[0], 8, allocator
         ))
         print(hex(x_view.read_primitive("int64")))
 
-        allocator = ProcessAllocator(handle)
         testview = allocator.alloc(16)
         testtypeview = testview.read_typeview(TestType)
-        print(testtypeview.position.read())
-        testtypeview.position.write(XYZ(10.0, 20.0, 30.0))
-        print(testtypeview.position.read())
+        testtypeview.name.write("test123456789test")
+        print(testtypeview.name.read())
 
         ctypes.windll.kernel32.CloseHandle(handle)
 

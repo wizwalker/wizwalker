@@ -1,6 +1,7 @@
 from typing import Optional
 
 from wizwalker.memory import memanagers
+from wizwalker.memory.memtypes import *
 from wizwalker.memory.memory_object import PropertyClass
 from .behavior_template import BehaviorTemplate
 
@@ -9,35 +10,27 @@ class BehaviorInstance(memanagers.MemoryView):
     """
     Base class for behavior instances
     """
-    # note: helper method
-    async def behavior_name(self) -> Optional[str]:
-        template = await self.behavior_template()
+    @staticmethod
+    def obj_size() -> int:
+        return 108
 
-        if template is None:
-            return None
+    behavior_template_name_id = MemUInt32(104)
 
-        return await template.behavior_name()
+    # TODO: Make work
+    # # note: helper method
+    # async def behavior_name(self) -> Optional[str]:
+    #     template = await self.behavior_template()
 
-    async def behavior_template_name_id(self) -> int:
-        """
-        This behavior's template name id
-        """
-        return await self.read_value_from_offset(104, "unsigned int")
+    #     if template is None:
+    #         return None
 
-    async def write_behavior_template_name_id(self, behavior_template_name_id: int):
-        """
-        Write this behavior's template name id
+    #     return await template.behavior_name()
 
-        Args:
-            behavior_template_name_id: The behavior template name to write
-        """
-        await self.write_value_to_offset(104, behavior_template_name_id, "unsigned int")
+    # # note: not defined
+    # async def behavior_template(self) -> Optional[BehaviorTemplate]:
+    #     addr = await self.read_primitive("pointer", 0x58)
 
-    # note: not defined
-    async def behavior_template(self) -> Optional[BehaviorTemplate]:
-        addr = await self.read_primitive("pointer", 0x58)
+    #     if addr == 0:
+    #         return None
 
-        if addr == 0:
-            return None
-
-        return BehaviorTemplate(self.hook_handler, addr)
+    #     return BehaviorTemplate(self.hook_handler, addr)

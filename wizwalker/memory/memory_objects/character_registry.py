@@ -1,12 +1,12 @@
-from typing import List
-
 from wizwalker.memory.memory_object import PropertyClass
+from wizwalker.memory.memtypes import *
 
 
 class CharacterRegistry(PropertyClass):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
+    @staticmethod
+    def obj_size() -> int:
+        return 340
+    
     # async def displayed_tips(self) -> List[int]:
     #     sub_object_addrs = await self.read_linked_list(112)
     #
@@ -18,14 +18,5 @@ class CharacterRegistry(PropertyClass):
 
     # todo add the useless properties
 
-    async def active_quest_id(self) -> int:
-        return await self.read_value_from_offset(304, "unsigned long long")
-
-    async def write_active_quest_id(self, active_quest_id: int):
-        await self.write_value_to_offset(304, active_quest_id, "unsigned long long")
-
-    async def active_goal_id(self) -> int:
-        return await self.read_value_from_offset(336, "unsigned int")
-
-    async def write_active_goal_id(self, active_goal_id: int):
-        await self.write_value_to_offset(336, active_goal_id, "unsigned int")
+    active_quest_id = MemUInt64(304)
+    active_goal_id = MemUInt32(336)

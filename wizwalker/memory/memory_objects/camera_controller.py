@@ -1,127 +1,82 @@
 from typing import Optional, Union
 
 from wizwalker import utils
-from wizwalker import XYZ, Orient
 from wizwalker.memory.memory_object import MemoryObject
-from wizwalker.memory.memory_objects.gamebryo_camera import DynamicGamebryoCamera
+from wizwalker.memory.memanagers import MemoryView
+from wizwalker.memory.memtypes import *
+from wizwalker.memory.memory_objects.gamebryo_camera import GamebryoCamera
 
-from .client_object import DynamicClientObject, ClientObject
+from .client_object import ClientObject
 
 
-class CameraController(MemoryObject):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
+class CameraController(MemoryView):
     # TODO: camera 0x88 offset
 
-    async def position(self) -> XYZ:
-        return await self.read_xyz(108)
+    @staticmethod
+    def obj_size() -> int:
+        return 144
 
-    async def write_position(self, position: XYZ):
-        await self.write_xyz(108, position)
+    position = MemXYZ(108)
 
-    async def orientation(self) -> Orient:
-        return await self.read_orient(120)
+    orientation = MemOrient(120)
+    pitch = MemFloat32(120)
+    roll = MemFloat32(124)
+    yaw = MemFloat32(128)
 
-    async def write_orientation(self, orientation: Orient):
-        await self.write_orient(120, orientation)
+    # TODO: Make work
+    # async def gamebryo_camera(self) -> Optional[DynamicGamebryoCamera]:
+    #     addr = await self.read_value_from_offset(136, "long long")
 
-    async def pitch(self) -> float:
-        return await self.read_value_from_offset(120, "float")
+    #     if addr == 0:
+    #         return None
 
-    async def write_pitch(self, pitch: float):
-        await self.write_value_to_offset(120, pitch, "float")
+    #     return DynamicGamebryoCamera(self.hook_handler, addr)
 
-    async def roll(self) -> float:
-        return await self.read_value_from_offset(124, "float")
-
-    async def write_roll(self, roll: float):
-        await self.write_value_to_offset(124, roll, "float")
-
-    async def yaw(self) -> float:
-        return await self.read_value_from_offset(128, "float")
-
-    async def write_yaw(self, yaw: float):
-        await self.write_value_to_offset(128, yaw, "float")
-
-    async def gamebryo_camera(self) -> Optional[DynamicGamebryoCamera]:
-        addr = await self.read_value_from_offset(136, "long long")
-
-        if addr == 0:
-            return None
-
-        return DynamicGamebryoCamera(self.hook_handler, addr)
-
-    async def update_orientation(self, orientation: Orient = None):
-        """
-        Utility function that sets the camera's matrix using pitch, yaw and roll
-        """
-        gcam = await self.gamebryo_camera()
-        view = await gcam.cam_view()
-        mat = await gcam.base_matrix()
-        if orientation is None:
-            orientation = await self.orientation()
-        else:
-            await self.write_orientation(orientation)
-        mat = utils.make_ypr_matrix(mat, orientation)
-        await view.write_view_matrix(mat)
+    # async def update_orientation(self, orientation: Orient = None):
+    #     """
+    #     Utility function that sets the camera's matrix using pitch, yaw and roll
+    #     """
+    #     gcam = await self.gamebryo_camera()
+    #     view = await gcam.cam_view()
+    #     mat = await gcam.base_matrix()
+    #     if orientation is None:
+    #         orientation = await self.orientation()
+    #     else:
+    #         await self.write_orientation(orientation)
+    #     mat = utils.make_ypr_matrix(mat, orientation)
+    #     await view.write_view_matrix(mat)
 
 
 class FreeCameraController(CameraController):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
+    pass
 
 
 class ElasticCameraController(CameraController):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
+    @staticmethod
+    def obj_size() -> int:
+        return 612
 
-    async def attached_client_object(self) -> Optional[DynamicClientObject]:
-        addr = await self.read_value_from_offset(264, "unsigned long long")
+    # TODO: Make work
+    # async def attached_client_object(self) -> Optional[DynamicClientObject]:
+    #     addr = await self.read_value_from_offset(264, "unsigned long long")
 
-        if addr == 0:
-            return None
+    #     if addr == 0:
+    #         return None
 
-        return DynamicClientObject(self.hook_handler, addr)
+    #     return DynamicClientObject(self.hook_handler, addr)
 
-    async def write_attached_client_object(self, attached_client_object: Union[ClientObject, int]):
-        if isinstance(attached_client_object, ClientObject):
-            attached_client_object = await attached_client_object.read_base_address()
+    # async def write_attached_client_object(self, attached_client_object: Union[ClientObject, int]):
+    #     if isinstance(attached_client_object, ClientObject):
+    #         attached_client_object = await attached_client_object.read_base_address()
 
-        await self.write_value_to_offset(264, attached_client_object, "unsigned long long")
+    #     await self.write_value_to_offset(264, attached_client_object, "unsigned long long")
 
-    async def check_collisions(self) -> bool:
-        return await self.read_value_from_offset(608, "bool")
+    distance = MemFloat32(300)
+    distance_target = MemFloat32(304)
 
-    async def write_check_collisions(self, check_collisions: bool):
-        await self.write_value_to_offset(608, check_collisions, "bool")
+    zoom_resolution = MemFloat32(324)
 
-    async def distance(self) -> float:
-        return await self.read_value_from_offset(300, "float")
+    max_distance = MemFloat32(328)
+    min_distance = MemFloat32(332)
 
-    async def write_distance(self, distance: float):
-        await self.write_value_to_offset(300, distance, "float")
-
-    async def distance_target(self) -> float:
-        return await self.read_value_from_offset(304, "float")
-
-    async def write_distance_target(self, distance_target: float):
-        await self.write_value_to_offset(304, distance_target, "float")
-
-    async def zoom_resolution(self) -> float:
-        return await self.read_value_from_offset(324, "float")
-
-    async def write_zoom_resolution(self, zoom_resolution: float):
-        await self.write_value_to_offset(324, zoom_resolution, "float")
-
-    async def max_distance(self) -> float:
-        return await self.read_value_from_offset(328, "float")
-
-    async def write_max_distance(self, max_distance: float):
-        await self.write_value_to_offset(328, max_distance, "float")
-
-    async def min_distance(self) -> float:
-        return await self.read_value_from_offset(332, "float")
-
-    async def write_min_distance(self, min_distance: float):
-        await self.write_value_to_offset(332, min_distance, "float")
+    check_collision = MemBool(608)

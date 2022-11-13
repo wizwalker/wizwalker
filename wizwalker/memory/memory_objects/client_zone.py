@@ -1,40 +1,16 @@
 from wizwalker.memory.memory_object import PropertyClass
+from wizwalker.memory.memtypes import *
 
 
 class ClientZone(PropertyClass):
     """
     Base class for ClientZones
     """
+    @staticmethod
+    def obj_size() -> int:
+        108
 
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
+    zone_id = MemInt64(72)
 
-    async def zone_id(self) -> int:
-        """
-        This client zone's zone id
-        """
-        return await self.read_value_from_offset(72, "long long")
+    zone_name = MemCppString(88)
 
-    async def write_zone_id(self, zone_id: int):
-        """
-        Write this client zone's zone id
-
-        Args:
-            zone_id: The zone id to write
-        """
-        await self.write_value_to_offset(72, zone_id, "long long")
-
-    async def zone_name(self) -> str:
-        """
-        This client zone's zone name
-        """
-        return await self.read_string_from_offset(88)
-
-    async def write_zone_name(self, zone_name: str):
-        """
-        Write this client zone's zone name
-
-        Args:
-            zone_name: The zone name to write
-        """
-        await self.write_string_to_offset(88, zone_name)

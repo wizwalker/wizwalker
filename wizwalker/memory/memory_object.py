@@ -140,63 +140,6 @@ class MemoryObject:
         base_address = await self.read_base_address()
         await self.write_wide_string(base_address + offset, string, encoding)
 
-    async def read_string(self, address: int, encoding: str = "utf-8") -> str:
-        string_len = await self.read_typed(address + 16, "int")
-
-        if not 1 <= string_len <= MAX_STRING:
-            return ""
-
-        # strings larger than 16 bytes are pointers
-        if string_len >= 16:
-            string_address = await self.read_typed(address, "long long")
-        else:
-            string_address = address
-
-        try:
-            return (await self.read_bytes(string_address, string_len)).decode(encoding)
-        except UnicodeDecodeError:
-            return ""
-
-    async def read_string_from_offset(
-        self, offset: int, encoding: str = "utf-8"
-    ) -> str:
-        base_address = await self.read_base_address()
-        return await self.read_string(base_address + offset, encoding)
-
-    async def write_string(self, address: int, string: str, encoding: str = "utf-8"):
-        string_len_addr = address + 16
-        encoded = string.encode(encoding)
-        # len(encoded) instead of string bc it can be larger in some encodings
-        string_len = len(encoded)
-
-        current_string_len = await self.read_typed(address + 16, "int")
-
-        # we need to create a pointer to the string data
-        if string_len >= 15 > current_string_len:
-            # +1 for 0 byte after
-            pointer_address = await self.allocate(string_len + 1)
-
-            # need 0 byte for some c++ null termination standard
-            await self.write_bytes(pointer_address, encoded + b"\x00")
-            await self.write_typed(address, pointer_address, "long long")
-
-        # string is already a pointer
-        elif string_len >= 15 and current_string_len >= 15:
-            pointer_address = await self.read_typed(address, "long long")
-            await self.write_bytes(pointer_address, encoded + b"\x00")
-
-        # normal buffer string
-        else:
-            await self.write_bytes(address, encoded + b"\x00")
-
-        await self.write_typed(string_len_addr, string_len, "int")
-
-    async def write_string_to_offset(
-        self, offset: int, string: str, encoding: str = "utf-8"
-    ):
-        base_address = await self.read_base_address()
-        await self.write_string(base_address + offset, string, encoding)
-
     async def read_xyz(self, offset: int) -> XYZ:
         x, y, z = await self.read_vector(offset)
         return XYZ(x, y, z)
