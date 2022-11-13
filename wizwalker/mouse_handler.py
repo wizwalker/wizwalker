@@ -63,7 +63,7 @@ class MouseHandler:
         await self._deactivate_mouseless()
 
     async def set_mouse_position_to_window(
-        self, window: "wizwalker.memory.window.DynamicWindow", **kwargs
+        self, window: "wizwalker.memory.window.Window", **kwargs
     ):
         """
         Set the mouse position to a window
@@ -78,7 +78,7 @@ class MouseHandler:
         await self.set_mouse_position(*center, **kwargs)
 
     async def click_window(
-        self, window: "wizwalker.memory.window.DynamicWindow", **kwargs
+        self, window: "wizwalker.memory.window.Window", **kwargs
     ):
         """
         Click a window

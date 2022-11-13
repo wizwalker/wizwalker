@@ -3,10 +3,9 @@ import struct
 from typing import Any
 import warnings
 
-import pymem
-import pymem.exception
 from loguru import logger
 
+from . import memanagers, memutils
 from wizwalker import HookAlreadyActivated, HookNotActive, HookNotReady
 from .hooks import (
     ClientHook,
@@ -18,11 +17,10 @@ from .hooks import (
     RenderContextHook,
     MovementTeleportHook,
 )
-from .memory_reader import MemoryReader
 
 
 # noinspection PyUnresolvedReferences
-class HookHandler(MemoryReader):
+class HookHandler:
     """
     Manages hooks
     """
@@ -36,60 +34,50 @@ class HookHandler(MemoryReader):
     # rounded down
     AUTOBOT_SIZE = 3900
 
-    def __init__(self, process: pymem.Pymem, client):
-        super().__init__(process)
-
+    def __init__(self, allocator: memanagers.ProcessAllocator, client):
         self.client = client
 
-        self._autobot_address = None
+        self._allocator = allocator
+
+        self._autobot_allocator = None
+        self._autobot_view = None
         self._autobot_lock = None
         self._original_autobot_bytes = b""
-        self._autobot_pos = 0
 
         self._active_hooks = []
         self._base_addrs = {}
 
         self._hook_cache = {}
 
-    async def _get_open_autobot_address(self, size: int) -> int:
-        if self._autobot_pos + size > self.AUTOBOT_SIZE:
-            raise RuntimeError("Somehow went over autobot size")
-
-        addr = self._autobot_address + self._autobot_pos
-        self._autobot_pos += size
-
-        logger.debug(
-            f"Allocating autobot address {addr}; autobot position is now {self._autobot_pos}"
-        )
-        return addr
-
-    async def _get_autobot_address(self):
-        addr = await self.pattern_scan(
-            self.AUTOBOT_PATTERN, module="WizardGraphicalClient.exe"
-        )
-        if addr is None:
-            raise RuntimeError("Pattern scan failed for autobot pattern")
-
-        self._autobot_address = addr
-
     # noinspection PyTypeChecker
     async def _prepare_autobot(self):
-        if self._autobot_address is None:
-            await self._get_autobot_address()
+        if self._autobot_allocator is None:
+            cave_addr = await memutils.pattern_scan(
+                self._allocator.process_handle,
+                self.AUTOBOT_PATTERN,
+                module="WizardGraphicalClient.exe"
+            )
+            if cave_addr is None:
+                raise RuntimeError("Pattern scan failed for autobot pattern")
+            self._autobot_allocator = memanagers.CaveAllocator(cave_addr, self.AUTOBOT_SIZE, self._allocator.process_handle)
+            self._autobot_view = self._autobot_allocator.unsafe_view()
 
             # we only need to write back the pattern
-            self._original_autobot_bytes = await self.read_bytes(
-                self._autobot_address, len(self.AUTOBOT_PATTERN)
+            self._original_autobot_bytes = self._autobot_view.read_bytes(
+                len(self.AUTOBOT_PATTERN)
             )
             logger.debug(
                 f"Got original bytes {self._original_autobot_bytes} from autobot"
             )
-            await self.write_bytes(self._autobot_address, b"\x00" * self.AUTOBOT_SIZE)
+            self._autobot_view.write_bytes(
+                b"\x00" * self.AUTOBOT_SIZE
+            )
 
     async def _rewrite_autobot(self):
-        if self._autobot_address is not None:
-            compare_bytes = await self.read_bytes(
-                self._autobot_address, len(self.AUTOBOT_PATTERN)
+        if self._autobot_allocator is not None:
+            print("fixing autobot")
+            compare_bytes = self._autobot_view.read_bytes(
+                len(self.AUTOBOT_PATTERN)
             )
             # Give some time for execution point to leave hooks
             await asyncio.sleep(0.5)
@@ -99,24 +87,21 @@ class HookHandler(MemoryReader):
                 logger.debug(
                     f"Rewriting bytes {self._original_autobot_bytes} to autobot"
                 )
-                await self.write_bytes(
-                    self._autobot_address, self._original_autobot_bytes
+                self._autobot_view.write_bytes(
+                    self._original_autobot_bytes
                 )
-
-    async def _allocate_autobot_bytes(self, size: int) -> int:
-        address = await self._get_open_autobot_address(size)
-
-        return address
+            print("fixed autobot")
 
     async def close(self):
         for hook in self._active_hooks:
             await hook.unhook()
 
-        await self._rewrite_autobot()
+        async with self._autobot_lock:
+            await self._rewrite_autobot()
 
         self._active_hooks = []
-        self._autobot_pos = 0
-        self._autobot_address = None
+        self._autobot_allocator = None
+        self._autobot_view = None
         self._base_addrs = {}
 
     async def _check_for_autobot(self):
@@ -564,7 +549,7 @@ class HookHandler(MemoryReader):
 
         del self._base_addrs["teleport_helper"]
 
-    async def read_teleport_helper(self) -> int:
+    def read_teleport_helper(self) -> int:
         """
         Read teleport helper base address
 

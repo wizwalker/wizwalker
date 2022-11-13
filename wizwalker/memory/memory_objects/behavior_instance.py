@@ -1,6 +1,6 @@
 from typing import Optional
 
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 from .behavior_template import DynamicBehaviorTemplate
 
 
@@ -44,11 +44,3 @@ class BehaviorInstance(PropertyClass):
             return None
 
         return DynamicBehaviorTemplate(self.hook_handler, addr)
-
-
-class DynamicBehaviorInstance(DynamicMemoryObject, BehaviorInstance):
-    """
-    Dynamic behavior instance that can be given an address
-    """
-
-    pass

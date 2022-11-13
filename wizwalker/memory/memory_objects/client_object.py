@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from wizwalker import XYZ
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memory_objects import DynamicActorBody
 from .game_stats import DynamicGameStats
 from .game_object_template import DynamicWizGameObjectTemplate
@@ -342,11 +342,3 @@ class CurrentClientObject(ClientObject):
 
     async def read_base_address(self) -> int:
         return await self.hook_handler.read_current_client_base()
-
-
-class DynamicClientObject(DynamicMemoryObject, ClientObject):
-    """
-    Dynamic client object that can take an address
-    """
-
-    pass

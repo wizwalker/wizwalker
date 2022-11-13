@@ -1,6 +1,6 @@
 from typing import List
 
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 
 
 class CharacterRegistry(PropertyClass):
@@ -29,7 +29,3 @@ class CharacterRegistry(PropertyClass):
 
     async def write_active_goal_id(self, active_goal_id: int):
         await self.write_value_to_offset(336, active_goal_id, "unsigned int")
-
-
-class DynamicCharacterRegistry(DynamicMemoryObject, CharacterRegistry):
-    pass

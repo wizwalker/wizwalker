@@ -3,7 +3,7 @@ from typing import List, Optional
 from wizwalker.errors import MemoryReadError
 from wizwalker.utils import XYZ
 from wizwalker.memory import HookHandler
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 from .combat_participant import DynamicCombatParticipant
 from .enums import DuelExecutionOrder, DuelPhase, SigilInitiativeSwitchMode
 from .combat_resolver import DynamicCombatResolver
@@ -340,10 +340,6 @@ class Duel(PropertyClass):
 
     async def write_hide_noncombatant_distance(self, hide_noncombatant_distance: float):
         await self.write_value_to_offset(536, hide_noncombatant_distance, "float")
-
-
-class DynamicDuel(DynamicMemoryObject, Duel):
-    pass
 
 
 class CurrentDuel(Duel):

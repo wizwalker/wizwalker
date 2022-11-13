@@ -1,6 +1,6 @@
 from typing import List
 
-from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
+from wizwalker.memory.memory_object import PropertyClass
 from .enums import DelayOrder, SpellSourceType
 from .spell_effect import DynamicSpellEffect
 
@@ -297,7 +297,3 @@ class SpellTemplate(PropertyClass):
 
     async def write_backrow_friendly(self, backrow_friendly: bool):
         await self.write_value_to_offset(745, backrow_friendly, "bool")
-
-
-class DynamicSpellTemplate(DynamicMemoryObject, SpellTemplate):
-    pass

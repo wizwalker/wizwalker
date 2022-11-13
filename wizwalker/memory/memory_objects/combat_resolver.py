@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 from .spell_effect import DynamicSpellEffect
 
 
@@ -28,7 +28,3 @@ class CombatResolver(PropertyClass):
             effects.append(DynamicSpellEffect(self.hook_handler, addr))
 
         return effects
-
-
-class DynamicCombatResolver(DynamicMemoryObject, CombatResolver):
-    pass

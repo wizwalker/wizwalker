@@ -1,6 +1,6 @@
 from typing import List
 
-from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
+from wizwalker.memory.memory_object import PropertyClass
 from .enums import SpellEffects, EffectTarget, HangingDisposition
 
 
@@ -149,7 +149,3 @@ class SpellEffect(PropertyClass):
             effects.append(DynamicSpellEffect(self.hook_handler, addr))
 
         return effects
-
-
-class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
-    pass

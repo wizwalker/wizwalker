@@ -1,4 +1,4 @@
-from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
+from wizwalker.memory.memory_object import MemoryObject
 
 
 class CamView(MemoryObject):
@@ -83,7 +83,3 @@ class CamView(MemoryObject):
     
     async def write_screenport_bottom(self, value: float):
         await self.write_value_to_offset(336, value, "float")
-
-
-class DynamicCamView(DynamicMemoryObject, CamView):
-    pass

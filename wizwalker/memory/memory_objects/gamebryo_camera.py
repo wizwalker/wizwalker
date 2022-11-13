@@ -1,6 +1,6 @@
 from typing import Optional
 
-from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
+from wizwalker.memory.memory_object import MemoryObject
 from wizwalker.memory.memory_objects.cam_view import DynamicCamView
 
 
@@ -21,7 +21,3 @@ class GamebryoCamera(MemoryObject):
             return None
 
         return DynamicCamView(self.hook_handler, addr)
-
-
-class DynamicGamebryoCamera(DynamicMemoryObject, GamebryoCamera):
-    pass

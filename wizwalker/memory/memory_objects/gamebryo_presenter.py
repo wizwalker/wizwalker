@@ -1,4 +1,4 @@
-from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
+from wizwalker.memory.memory_object import MemoryObject
 from wizwalker.memory.memory_objects.scene_manager import DynamicSceneManager
 
 
@@ -55,7 +55,3 @@ class GamebryoPresenter(MemoryObject):
 
     async def write_nametag_flags(self, flags: int):
         await self.write_value_to_offset(0x190, flags, "int")
-
-
-class DynamicGamebryoPresenter(DynamicMemoryObject, GamebryoPresenter):
-    pass

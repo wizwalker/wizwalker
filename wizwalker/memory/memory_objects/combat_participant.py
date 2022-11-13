@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
+from wizwalker.memory.memory_object import PropertyClass
 from .enums import PipAquiredByEnum
 from .game_stats import DynamicGameStats
 from .spell import DynamicHand
@@ -643,7 +643,3 @@ class CombatParticipant(PropertyClass):
 
     async def write_player_time_eliminated(self, player_time_eliminated: bool):
         await self.write_value_to_offset(833, player_time_eliminated, "bool")
-
-
-class DynamicCombatParticipant(DynamicMemoryObject, CombatParticipant):
-    pass

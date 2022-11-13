@@ -1,6 +1,6 @@
 from typing import Dict
 
-from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
+from wizwalker.memory.memory_object import MemoryObject
 
 
 class QuestClientManager(MemoryObject):

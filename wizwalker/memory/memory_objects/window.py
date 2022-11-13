@@ -4,11 +4,11 @@ from contextlib import suppress
 
 from loguru import logger
 
-from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
+from wizwalker.memory.memory_object import PropertyClass, MemoryObject
 from .enums import WindowFlags, WindowStyle
 from .spell import DynamicGraphicalSpell
 from .combat_participant import DynamicCombatParticipant
-from wizwalker import AddressOutOfRange, MemoryReadError, Rectangle, utils, type_format_dict
+from wizwalker import AddressOutOfRange, MemoryReadError, Rectangle, utils
 
 
 # TODO: Window.click
@@ -291,7 +291,7 @@ class Window(PropertyClass):
         await self.write_vector(176, parent_offset, 4, "int")
 
 
-class DeckListControlSpellEntry(DynamicMemoryObject):
+class DeckListControlSpellEntry(MemoryObject):
     async def graphical_spell(self) -> Optional[DynamicGraphicalSpell]:
         addr = await self.read_value_from_offset(0, "unsigned long long")
 
@@ -301,7 +301,7 @@ class DeckListControlSpellEntry(DynamicMemoryObject):
         return DynamicGraphicalSpell(self.hook_handler, addr)
 
 
-class SpellListControlSpellEntry(DynamicMemoryObject):
+class SpellListControlSpellEntry(MemoryObject):
     async def graphical_spell(self) -> Optional[DynamicGraphicalSpell]:
         addr = await self.read_value_from_offset(0, "unsigned long long")
 
@@ -315,16 +315,6 @@ class SpellListControlSpellEntry(DynamicMemoryObject):
 
     async def current_copies(self) -> int:
         return await self.read_value_from_offset(0x14, "unsigned int")
-
-    async def _read_vector(self, address: int, size: int = 3, data_type: str = "float"):
-        type_str = type_format_dict[data_type].replace("<", "")
-        size_per_type = struct.calcsize(type_str)
-
-        vector_bytes = await self.read_bytes(
-            address, size_per_type * size
-        )
-
-        return struct.unpack("<" + type_str * size, vector_bytes)
 
     async def window_rectangle(self) -> Rectangle:
         rect_addr = await self.read_value_from_offset(0x18, "unsigned long long")
@@ -365,18 +355,6 @@ class SpellListControl(Window):
 
     async def card_size_vertical(self) -> int:
         return await self.read_value_from_offset(0x2C8, "unsigned int")
-
-
-class DynamicWindow(DynamicMemoryObject, Window):
-    pass
-
-
-class DynamicDeckListControl(DynamicWindow, DeckListControl):
-    pass
-
-
-class DynamicSpellListControl(DynamicWindow, SpellListControl):
-    pass
 
 
 class CurrentRootWindow(Window):

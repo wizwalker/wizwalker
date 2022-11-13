@@ -1,6 +1,6 @@
 from typing import List
 
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 from .enums import ObjectType
 from .behavior_template import DynamicBehaviorTemplate
 
@@ -120,7 +120,3 @@ class WizGameObjectTemplate(PropertyClass):
 
     # async def leash_offset_override(self) -> class SharedPointer<class LeashOffsetOverride>:
     #     return await self.read_value_from_offset(528, "class SharedPointer<class LeashOffsetOverride>")
-
-
-class DynamicWizGameObjectTemplate(DynamicMemoryObject, WizGameObjectTemplate):
-    pass

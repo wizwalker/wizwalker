@@ -1,6 +1,6 @@
 from typing import Optional
 
-from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
+from wizwalker.memory.memory_object import MemoryObject
 from .spell import DynamicSpell
 
 
@@ -181,7 +181,3 @@ class CombatAction(MemoryObject):
 
     # async def crit_hit_list(self) -> class TargetCritHit:
     #     return await self.read_value_from_offset(352, "class TargetCritHit")
-
-
-class DynamicCombatAction(DynamicMemoryObject, CombatAction):
-    pass

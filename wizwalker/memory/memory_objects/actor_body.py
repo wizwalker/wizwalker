@@ -1,7 +1,7 @@
 from typing import Optional
 
 from wizwalker.utils import XYZ, Orient
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory import memory_objects
 
 
@@ -163,11 +163,3 @@ class CurrentActorBody(ActorBody):
 
     async def read_base_address(self) -> int:
         return await self.hook_handler.read_current_player_base()
-
-
-class DynamicActorBody(DynamicMemoryObject, ActorBody):
-    """
-    Dynamic actor body that can take an address
-    """
-
-    pass

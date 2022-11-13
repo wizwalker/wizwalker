@@ -15,6 +15,8 @@ from . import (
 )
 from .constants import WIZARD_SPEED
 from .memory import (
+    memanagers,
+    memutils,
     CurrentActorBody,
     CurrentClientObject,
     CurrentDuel,
@@ -53,11 +55,15 @@ class Client:
 
         self._pymem = pymem.Pymem()
         self._pymem.open_process_from_id(self.process_id)
-        self.hook_handler = HookHandler(self._pymem, self)
+        self.hook_handler = HookHandler(
+            memanagers.ProcessAllocator(self._pymem.process_handle),
+            self
+        )
 
         self.cache_handler = CacheHandler()
         self.mouse_handler = MouseHandler(self)
 
+        self._allocator = memanagers.ProcessAllocator(self._pymem.process_base)
         self.stats = CurrentGameStats(self.hook_handler)
         self.body = CurrentActorBody(self.hook_handler)
         self.duel = CurrentDuel(self.hook_handler)
@@ -571,7 +577,8 @@ class Client:
         if self._je_instruction_forward_backwards is not None:
             return self._je_instruction_forward_backwards
 
-        movement_state_instruction_addr = await self.hook_handler.pattern_scan(
+        movement_state_instruction_addr = await memutils.pattern_scan(
+            self._pymem.process_handle,
             rb"\x8B\x5F\x70\xF3",
             module="WizardGraphicalClient.exe"
         )

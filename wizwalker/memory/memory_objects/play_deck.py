@@ -1,6 +1,6 @@
 from typing import List
 
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 
 
 class PlayDeck(PropertyClass):
@@ -22,10 +22,6 @@ class PlayDeck(PropertyClass):
         return spell_data
 
 
-class DynamicPlayDeck(DynamicMemoryObject, PlayDeck):
-    pass
-
-
 class PlaySpellData(PropertyClass):
     async def read_base_address(self) -> int:
         raise NotImplementedError()
@@ -35,7 +31,3 @@ class PlaySpellData(PropertyClass):
 
     async def enchantment(self) -> int:
         return await self.read_value_from_offset(76, "unsigned int")
-
-
-class DynamicPlaySpellData(DynamicMemoryObject, PlaySpellData):
-    pass

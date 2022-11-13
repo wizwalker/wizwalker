@@ -2,7 +2,7 @@ from typing import Optional, Union
 
 from wizwalker import utils
 from wizwalker import XYZ, Orient
-from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
+from wizwalker.memory.memory_object import MemoryObject
 from wizwalker.memory.memory_objects.gamebryo_camera import DynamicGamebryoCamera
 
 from .client_object import DynamicClientObject, ClientObject
@@ -125,15 +125,3 @@ class ElasticCameraController(CameraController):
 
     async def write_min_distance(self, min_distance: float):
         await self.write_value_to_offset(332, min_distance, "float")
-
-
-class DynamicCameraController(DynamicMemoryObject, CameraController):
-    pass
-
-
-class DynamicFreeCameraController(DynamicMemoryObject, FreeCameraController):
-    pass
-
-
-class DynamicElasticCameraController(DynamicMemoryObject, ElasticCameraController):
-    pass

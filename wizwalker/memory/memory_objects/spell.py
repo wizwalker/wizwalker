@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
-from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
+from wizwalker.memory.memory_object import PropertyClass
 from .enums import DelayOrder
 from .spell_template import DynamicSpellTemplate
 from .spell_effect import DynamicSpellEffect
@@ -183,14 +183,6 @@ class GraphicalSpell(Spell):
         raise NotImplementedError()
 
 
-class DynamicSpell(DynamicMemoryObject, Spell):
-    pass
-
-
-class DynamicGraphicalSpell(DynamicMemoryObject, GraphicalSpell):
-    pass
-
-
 class Hand(PropertyClass):
     async def read_base_address(self) -> int:
         raise NotImplementedError()
@@ -201,7 +193,3 @@ class Hand(PropertyClass):
             spells.append(DynamicSpell(self.hook_handler, addr))
 
         return spells
-
-
-class DynamicHand(DynamicMemoryObject, Hand):
-    pass
