@@ -13,6 +13,8 @@ from .enums import AccountPermissions
 from .gamebryo_presenter import DynamicGamebryoPresenter
 
 
+# TODO: Remake
+
 # note: not defined
 class GameClient(MemoryObject):
     async def read_base_address(self) -> int:

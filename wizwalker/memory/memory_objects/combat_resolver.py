@@ -1,30 +1,29 @@
 from typing import List, Optional
 
 from wizwalker.memory.memory_object import PropertyClass
-from .spell_effect import DynamicSpellEffect
+from wizwalker.memory.memtypes import *
+from .spell_effect import SpellEffect
 
 
 class CombatResolver(PropertyClass):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
+    @staticmethod
+    def obj_size() -> int:
+        return 144
 
-    async def bool_global_effect(self) -> bool:
-        return await self.read_value_from_offset(112, "bool")
+    bool_global_effect = MemBool(112)
 
-    async def write_bool_global_effect(self, bool_global_effect: bool):
-        await self.write_value_to_offset(112, bool_global_effect, "bool")
+    # TODO: Make work
+    # async def global_effect(self) -> Optional[DynamicSpellEffect]:
+    #     addr = await self.read_value_from_offset(120, "long long")
 
-    async def global_effect(self) -> Optional[DynamicSpellEffect]:
-        addr = await self.read_value_from_offset(120, "long long")
+    #     if addr == 0:
+    #         return None
 
-        if addr == 0:
-            return None
+    #     return DynamicSpellEffect(self.hook_handler, addr)
 
-        return DynamicSpellEffect(self.hook_handler, addr)
+    # async def battlefield_effects(self) -> List[DynamicSpellEffect]:
+    #     effects = []
+    #     for addr in await self.read_shared_vector(136):
+    #         effects.append(DynamicSpellEffect(self.hook_handler, addr))
 
-    async def battlefield_effects(self) -> List[DynamicSpellEffect]:
-        effects = []
-        for addr in await self.read_shared_vector(136):
-            effects.append(DynamicSpellEffect(self.hook_handler, addr))
-
-        return effects
+    #     return effects

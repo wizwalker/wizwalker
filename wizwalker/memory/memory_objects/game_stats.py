@@ -2,201 +2,45 @@ from typing import List
 
 from wizwalker.memory import memanagers
 from wizwalker.memory.memory_object import PropertyClass
+from wizwalker.memory.memtypes import *
 
 
 class GameStats(PropertyClass):
     async def read_base_address(self) -> int:
         raise NotImplementedError()
 
-    async def max_hitpoints(self) -> int:
-        """
-        Client's max hitpoints; base + bonus
-        """
-        base = await self.base_hitpoints()
-        bonus = await self.bonus_hitpoints()
-        return base + bonus
+    base_hitpoints = MemInt32(80)
+    base_mana = MemInt32(84)
+    base_gold_pouch = MemInt32(88)
+    base_event_currency1_pouch = MemInt32(92)
+    base_event_currency2_pouch = MemInt32(96)
+    base_pvp_currency_pouch = MemInt32(100)
+    energy_max = MemInt32(104)
+    current_hitpoints = MemInt32(108)
+    current_gold = MemInt32(112)
+    current_event_currency1 = MemInt32(116)
+    current_event_currency2 = MemInt32(120)
+    current_pvp_currency = MemInt32(124)
+    current_mana = MemInt32(128)
+    current_arena_points = MemInt32(132)
 
-    async def max_mana(self) -> int:
-        """
-        Clients's max mana; base + bonus
-        """
-        base = await self.base_mana()
-        bonus = await self.bonus_mana()
-        return base + bonus
+    potion_max = MemFloat32(160)
+    potion_charge = MemFloat32(164)
 
-    async def base_hitpoints(self) -> int:
-        return await self.read_value_from_offset(80, "int")
+    bonus_hitpoints = MemInt32(216)
+    bonus_mana = MemInt32(220)
 
-    async def write_base_hitpoints(self, base_hitpoints: int):
-        await self.write_value_to_offset(80, base_hitpoints, "int")
+    bonus_energy = MemInt32(236)
+    critical_hit_percent_all = MemFloat32(240)
+    block_percent_all = MemFloat32(244)
+    critical_hit_rating_all = MemFloat32(248)
+    block_rating_all = MemFloat32(252)
 
-    async def base_mana(self) -> int:
-        return await self.read_value_from_offset(84, "int")
+    reference_level = MemInt32(316)
+    highest_character_level_on_account = MemInt32(320)
+    pet_act_chance = MemInt32(324)
 
-    async def write_base_mana(self, base_mana: int):
-        await self.write_value_to_offset(84, base_mana, "int")
 
-    async def base_gold_pouch(self) -> int:
-        return await self.read_value_from_offset(88, "int")
-
-    async def write_base_gold_pouch(self, base_gold_pouch: int):
-        await self.write_value_to_offset(88, base_gold_pouch, "int")
-
-    async def base_event_currency1_pouch(self) -> int:
-        return await self.read_value_from_offset(92, "int")
-
-    async def write_base_event_currency1_pouch(self, base_event_currency1_pouch: int):
-        await self.write_value_to_offset(92, base_event_currency1_pouch, "int")
-
-    async def base_event_currency2_pouch(self) -> int:
-        return await self.read_value_from_offset(96, "int")
-
-    async def write_base_event_currency2_pouch(self, base_event_currency2_pouch: int):
-        await self.write_value_to_offset(96, base_event_currency2_pouch, "int")
-
-    async def base_pvp_currency_pouch(self) -> int:
-        return await self.read_value_from_offset(100, "int")
-
-    async def write_base_pvp_currency_pouch(self, base_pvp_currency_pouch: int):
-        await self.write_value_to_offset(100, base_pvp_currency_pouch, "int")
-
-    async def energy_max(self) -> int:
-        return await self.read_value_from_offset(104, "int")
-
-    async def write_energy_max(self, energy_max: int):
-        await self.write_value_to_offset(104, energy_max, "int")
-
-    async def current_hitpoints(self) -> int:
-        return await self.read_value_from_offset(108, "int")
-
-    async def write_current_hitpoints(self, current_hitpoints: int):
-        await self.write_value_to_offset(108, current_hitpoints, "int")
-
-    async def current_gold(self) -> int:
-        return await self.read_value_from_offset(112, "int")
-
-    async def write_current_gold(self, current_gold: int):
-        await self.write_value_to_offset(112, current_gold, "int")
-
-    async def current_event_currency1(self) -> int:
-        return await self.read_value_from_offset(116, "int")
-
-    async def write_current_event_currency1(self, current_event_currency1: int):
-        await self.write_value_to_offset(116, current_event_currency1, "int")
-
-    async def current_event_currency2(self) -> int:
-        return await self.read_value_from_offset(120, "int")
-
-    async def write_current_event_currency2(self, current_event_currency2: int):
-        await self.write_value_to_offset(120, current_event_currency2, "int")
-
-    async def current_pvp_currency(self) -> int:
-        return await self.read_value_from_offset(124, "int")
-
-    async def write_current_pvp_currency(self, current_pvp_currency: int):
-        await self.write_value_to_offset(124, current_pvp_currency, "int")
-
-    async def current_mana(self) -> int:
-        return await self.read_value_from_offset(128, "int")
-
-    async def write_current_mana(self, current_mana: int):
-        await self.write_value_to_offset(128, current_mana, "int")
-
-    async def current_arena_points(self) -> int:
-        return await self.read_value_from_offset(132, "int")
-
-    async def write_current_arena_points(self, current_arena_points: int):
-        await self.write_value_to_offset(132, current_arena_points, "int")
-
-    async def spell_charge_base(self) -> List[int]:
-        return await self.read_dynamic_vector(136, "int")
-
-    # TODO: add write_dynamic_vector
-    # async def write_spell_charge_base(self, spell_charge_base: int):
-    #     await self.write_value_to_offset(128, spell_charge_base, "int")
-
-    async def potion_max(self) -> float:
-        return await self.read_value_from_offset(160, "float")
-
-    async def write_potion_max(self, potion_max: float):
-        await self.write_value_to_offset(160, potion_max, "float")
-
-    async def potion_charge(self) -> float:
-        return await self.read_value_from_offset(164, "float")
-
-    async def write_potion_charge(self, potion_charge: float):
-        await self.write_value_to_offset(164, potion_charge, "float")
-
-    # async def arena_ladder(self) -> class SharedPointer<class Ladder>:
-    #     return await self.read_value_from_offset(160, "class SharedPointer<class Ladder>")
-
-    # async def derby_ladder(self) -> class SharedPointer<class Ladder>:
-    #     return await self.read_value_from_offset(176, "class SharedPointer<class Ladder>")
-
-    # async def bracket_lader(self) -> class SharedPointer<class Ladder>:
-    #     return await self.read_value_from_offset(192, "class SharedPointer<class Ladder>")
-
-    async def bonus_hitpoints(self) -> int:
-        return await self.read_value_from_offset(216, "int")
-
-    async def write_bonus_hitpoints(self, bonus_hitpoints: int):
-        await self.write_value_to_offset(216, bonus_hitpoints, "int")
-
-    async def bonus_mana(self) -> int:
-        return await self.read_value_from_offset(220, "int")
-
-    async def write_bonus_mana(self, bonus_mana: int):
-        await self.write_value_to_offset(220, bonus_mana, "int")
-
-    async def bonus_energy(self) -> int:
-        return await self.read_value_from_offset(236, "int")
-
-    async def write_bonus_energy(self, bonus_energy: int):
-        await self.write_value_to_offset(236, bonus_energy, "int")
-
-    async def critical_hit_percent_all(self) -> float:
-        return await self.read_value_from_offset(240, "float")
-
-    async def write_critical_hit_percent_all(self, critical_hit_percent_all: float):
-        await self.write_value_to_offset(240, critical_hit_percent_all, "float")
-
-    async def block_percent_all(self) -> float:
-        return await self.read_value_from_offset(244, "float")
-
-    async def write_block_percent_all(self, block_percent_all: float):
-        await self.write_value_to_offset(244, block_percent_all, "float")
-
-    async def critical_hit_rating_all(self) -> float:
-        return await self.read_value_from_offset(248, "float")
-
-    async def write_critical_hit_rating_all(self, critical_hit_rating_all: float):
-        await self.write_value_to_offset(248, critical_hit_rating_all, "float")
-
-    async def block_rating_all(self) -> float:
-        return await self.read_value_from_offset(252, "float")
-
-    async def write_block_rating_all(self, block_rating_all: float):
-        await self.write_value_to_offset(252, block_rating_all, "float")
-
-    async def reference_level(self) -> int:
-        return await self.read_value_from_offset(316, "int")
-
-    async def write_reference_level(self, reference_level: int):
-        await self.write_value_to_offset(316, reference_level, "int")
-
-    async def highest_character_level_on_account(self) -> int:
-        return await self.read_value_from_offset(320, "int")
-
-    async def write_highest_character_level_on_account(
-        self, highest_character_level_on_account: int
-    ):
-        await self.write_value_to_offset(320, highest_character_level_on_account, "int")
-
-    async def pet_act_chance(self) -> int:
-        return await self.read_value_from_offset(324, "int")
-
-    async def write_pet_act_chance(self, pet_act_chance: int):
-        await self.write_value_to_offset(324, pet_act_chance, "int")
 
     async def dmg_bonus_percent(self) -> List[float]:
         return await self.read_dynamic_vector(328, "float")
@@ -769,6 +613,25 @@ class GameStats(PropertyClass):
 
     async def write_cantrip_xp(self, cantrip_xp: int):
         await self.write_value_to_offset(1012, cantrip_xp, "int")
+
+    async def max_hitpoints(self) -> int:
+        """
+        Client's max hitpoints; base + bonus
+        """
+        base = await self.base_hitpoints()
+        bonus = await self.bonus_hitpoints()
+        return base + bonus
+
+    async def max_mana(self) -> int:
+        """
+        Clients's max mana; base + bonus
+        """
+        base = await self.base_mana()
+        bonus = await self.bonus_mana()
+        return base + bonus
+
+    async def spell_charge_base(self) -> List[int]:
+        return await self.read_dynamic_vector(136, "int")
 
 
 class CurrentGameStats(GameStats):

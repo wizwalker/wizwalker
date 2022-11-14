@@ -1,7 +1,10 @@
-from typing import TypeVar
+from typing import TypeVar, Type
+from enum import Enum
 
 from addon_primitives import XYZ, Orient, Rectangle
 from memanagers import MemPrimitive, MemType
+
+from wizwalker import ReadingEnumFailed
 
 
 class MemInt8(MemPrimitive[int]):
@@ -56,6 +59,24 @@ class MemOrient(MemPrimitive[Orient]):
 class MemRect(MemPrimitive[Rectangle]):
     typename = "rect"
 
+
+
+TET = TypeVar("TET", bound=Enum)
+class MemEnum(MemType[TET]):
+    def __init__(self, enum_type: Type[TET], offset) -> None:
+        super().__init__(offset)
+        self.enum_type = enum_type
+
+    def read(self) -> TET:
+        value = self.view.read_primitive("int32", self.offset)
+        try:
+            res = self.enum_type(value)
+            return res
+        except ValueError:
+            raise ReadingEnumFailed(self.enum_type, value)
+
+    def write(self, value: TET):
+        self.view.write_primitive("int32", self.offset)
 
 
 T = TypeVar("T", int, float, str, bool, XYZ, Orient, Rectangle)
