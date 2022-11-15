@@ -5,6 +5,7 @@ from .duel import DynamicDuel
 class ClientDuelManager(PropertyClass):
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 24
 
     # TODO: Make work

@@ -5,6 +5,7 @@ from wizwalker.memory.memtypes import *
 class CharacterRegistry(PropertyClass):
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 340
     
     # async def displayed_tips(self) -> List[int]:

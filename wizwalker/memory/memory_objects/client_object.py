@@ -13,6 +13,7 @@ class ClientObject(PropertyClass):
 
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 552
 
     global_id_full = MemUInt64(72)

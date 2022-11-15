@@ -9,7 +9,10 @@ from .behavior_template import BehaviorTemplate
 class WizGameObjectTemplate(PropertyClass):
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 520
+
+    behaviors = MemCppPtrVector(BehaviorTemplate, 72)
 
     object_name = MemCppString(96)
     template_id = MemUInt32(128)
@@ -29,14 +32,3 @@ class WizGameObjectTemplate(PropertyClass):
     primary_school_name = MemCppString(456)
     location_preference = MemCppString(488)
 
-
-    # TODO: Make work
-    # # TODO: add all behavior template types
-    # async def behaviors(self) -> List[DynamicBehaviorTemplate]:
-    #     behaviors = []
-    #     for addr in await self.read_dynamic_vector(72):
-    #         # they sometimes set these to 0
-    #         if addr != 0:
-    #             behaviors.append(DynamicBehaviorTemplate(self.hook_handler, addr))
-
-    #     return behaviors

@@ -16,6 +16,7 @@ class CombatParticipant(PropertyClass):
 
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 842
 
     owner_id_full = MemUInt64(112)

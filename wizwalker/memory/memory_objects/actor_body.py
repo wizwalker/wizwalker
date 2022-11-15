@@ -11,6 +11,7 @@ class ActorBody(PropertyClass):
 
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 140
 
     # note: internal

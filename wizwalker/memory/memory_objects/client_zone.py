@@ -8,6 +8,7 @@ class ClientZone(PropertyClass):
     """
     @staticmethod
     def obj_size() -> int:
+        # unverified
         108
 
     zone_id = MemInt64(72)

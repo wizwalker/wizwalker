@@ -1,5 +1,6 @@
 import os
 import struct
+import inspect
 from typing import Any, Generic, Type, TypeVar
 
 from addon_primitives import *
@@ -70,9 +71,6 @@ type_dict = {
 
     # special
     "pointer": struct.Struct("<Q"),
-    "xyz": struct.Struct("<fff"),
-    "orient": struct.Struct("<fff"),
-    "rect": struct.Struct("<iiii")
 }
 
 
@@ -83,7 +81,13 @@ class ViewBackend:
     def address(self) -> int:
         raise NotImplementedError()
 
+    def set_address(self, address: int) -> None:
+        raise NotImplementedError()
+
     def size(self) -> int:
+        raise NotImplementedError()
+    
+    def set_size(self, size: int) -> None:
         raise NotImplementedError()
 
     def end_address(self) -> int:
@@ -98,35 +102,12 @@ class ViewBackend:
     def read_primitive(self, typename: str, offset=0) -> int | float | bool | str:
         t = type_dict[typename]
         assert offset + t.size <= self.size()
-        vals = t.unpack(self.read_bytes(t.size, offset=offset))
-        if len(vals) == 1:
-            return vals[0]
-        else:
-            return vals
+        return t.unpack(self.read_bytes(t.size, offset=offset))[0]
 
-    def write_primitive(self, typename: str, value, offset: int) -> None:
+    def write_primitive(self, typename: str, value: int | float | bool | str, offset: int) -> None:
         t = type_dict[typename]
         assert offset + t.size <= self.size()
-        if not hasattr(value, "__iter__"):
-            self.write_bytes(t.pack(value), offset=offset)
-        else:
-            self.write_bytes(t.pack(*value), offset=offset)
-
-    def read_primitive_array(self, typename: str, count: int, offset: int) -> list[int | float | bool | str]:
-        t = type_dict[typename]
-        assert offset + t.size * count <= self.size()
-
-        arr_bytes = self.read_bytes(t.size * count, offset)
-        structstr = "<" + t.format.replace("<", "") * count
-        return struct.unpack(structstr, arr_bytes)
-
-    def write_primitive_array(self, typename: str, values, offset: int):
-        t = type_dict[typename]
-        assert offset + t.size * len(values) <= self.size()
-
-        structstr = "<" + t.format.replace("<", "") * len(values)
-        arr_bytes = struct.pack(structstr, values)
-        self.write_bytes(arr_bytes, offset)
+        self.write_bytes(t.pack(value), offset=offset)
 
 class ExternalPointerBackend(ViewBackend):
     def __init__(self, handle: int, address: int, size: int, allocator) -> None:
@@ -135,11 +116,25 @@ class ExternalPointerBackend(ViewBackend):
         self._size = size
         self._allocator = allocator
 
+    def backend_to_propagate(self):
+        return ExternalUnownedPointerBackend(
+            self._process_handle,
+            self.address(),
+            self.size(),
+            self._allocator
+        )
+
     def address(self) -> int:
         return self._address
 
+    def set_address(self, address: int) -> None:
+        self._address = address
+
     def size(self) -> int:
         return self._size
+
+    def set_size(self, size: int) -> None:
+        self._size = size
 
     def read_bytes(self, count: int, offset: int) -> bytes:
         assert offset + count <= self.size()
@@ -153,79 +148,200 @@ class ExternalPointerBackend(ViewBackend):
 
 
 class ExternalOwnedPointerBackend(ExternalPointerBackend):
-    def backend_to_propagate(self):
-        return ExternalUnownedPointerBackend
+    def set_size(self, size: int) -> None:
+        raise ValueError()
+
+    def set_address(self, address: int) -> None:
+        raise ValueError()
 
 class ExternalUnownedPointerBackend(ExternalPointerBackend):
-    def backend_to_propagate(self):
-        return ExternalUnownedPointerBackend
+    pass
 
-MTT = TypeVar("MTT")
-class MemType(Generic[MTT]):
-    view: "MemoryView" = None
-    offset: int = 0
 
+
+
+def get_repr_code(basename, params: list[str]):
+    txt = f"def __repr_{basename}__(self) -> str:\n\treturn f'{basename}("
+    paramstrs = []
+    for name in params:
+        paramstrs.append("{repr(self." + name + ")}")
+    txt += f"{', '.join(paramstrs)})'\n"
+    return txt
+
+def get_init_code(basename, params: list[str], defaults: dict[int, object]) -> str:
+    paramstrs = []
+    for i in range(len(params)):
+        if i in defaults:
+            paramstrs.append(f" {params[i]}={repr(defaults[i])}")
+        else:
+            paramstrs.append(f" {params[i]}=None")
+
+    txt = f"def __init_{basename}__(self,{','.join(paramstrs)}):\n"
+    for name in params:
+        txt += f"\tself.{name}={name}\n"
+    return txt
+
+def memclass(cls):
+    defaults = {}
+    known_params = set([])
+    params = []
+    for x in cls.__mro__[-2::-1]: # last is 'object'
+        if not hasattr(x, "__memdeletedattrs"):
+            x.__memdeletedattrs = {}
+        cls_annotations = x.__dict__.get('__annotations__', {})
+        for n in cls_annotations.keys():
+            if n not in known_params:
+                known_params.add(n)
+                curval = None
+                try:
+                    curval = getattr(cls, n)
+                    defaults[len(params)] = curval
+                except AttributeError:
+                    try:
+                        curval = x.__memdeletedattrs[n]
+                        defaults[len(params)] = curval
+                    except KeyError:
+                        pass
+                params.append(n)
+                try:
+                    delattr(x, n)
+                    if curval != None:
+                        x.__memdeletedattrs[n] = curval
+                except AttributeError:
+                    pass
+
+    # TODO: Repurpose this for untyped params
+    # for i in range(len(params)):
+    #     for x in cls.__mro__[0:-1]:
+    #         for name, member in inspect.getmembers(x):
+    #             print(name, repr(member))
+
+    txt = get_repr_code(cls.__name__, params)
+    txt += f"setattr(cls, '__repr__', __repr_{cls.__name__}__)"
+    exec(txt, None, {'cls': cls})
+
+    # TODO: Make this work with intellisense
+    # TODO: Support __post_init__ 
+    txt = get_init_code(cls.__name__, params, defaults)
+    txt += f"setattr(cls, '__init__', __init_{cls.__name__}__)"
+    print(txt)
+    exec(txt, None, {'cls': cls})
+    
+    return cls
+
+
+
+MTV = TypeVar("MTV")
+MTT = TypeVar("MTT", bound="MemType")
+
+@memclass
+class MemType(Generic[MTV]):
+    _offset: int = 0
+
+    def __post_init__(self) -> None:
+        self._view: MemoryView = None
+
+    def propagate_view(self) -> None:
+        # could probably do this lazily
+        for name, field in vars(type(self)).items():
+            if issubclass(type(field), MemType):
+                attr: MemType = self.__getattribute__(name)
+                attr._view = self._view
+                attr.load_view(self._view, self._offset + attr._offset)
+
+    def load_view(self: MTT, view: "MemoryView", offset=0) -> MTT:
+        self._view = view
+        self._offset = offset
+        self.propagate_view()
+        return self
+
+    # TODO: Bounds are not checked
     @classmethod
-    def from_view(cls: Type[MTT], view: MemoryView, offset=0) -> MTT:
-        result = cls(offset)
-        result.view = view
+    def from_view(cls: Type[MTT], view: "MemoryView") -> MTT:
+        result = cls(0)
+        result.load_view(view, 0)
         return result
-
-    def __init__(self, offset) -> None:
-        self.offset = offset
+    
+    def get_dummy_inst(self: Type[MTT]) -> MTT:
+        return type(self)(0)
 
     def fieldsize(self) -> int:
         raise NotImplementedError()
 
     def fieldview(self) -> "MemoryView":
-        return self.view.read_memview(self.fieldsize(), self.offset)
+        return self._view.subview(self.fieldsize(), self._offset)
 
-    def read(self) -> MTT:
+    def read(self) -> MTV:
         raise NotImplementedError()
 
-    def write(self, value: MTT):
+    def write(self, value: MTV):
         raise NotImplementedError
 
-MPT = TypeVar("MPT", int, float, str, bool, XYZ, Orient, Rectangle)
-class MemPrimitive(MemType, Generic[MPT]):
-    typename: str = ""
 
-    def __init__(self, offset) -> None:
-        self.offset = offset
+MPT = TypeVar("MPT", bound=MemType)
+
+@memclass
+class MemPointer(MemType[MPT]):
+    _dummy: MPT
+
+    def propagate_view(self) -> None:
+        for name, field in vars(type(self)).items():
+            if issubclass(type(field), MemType):
+                attr: MemType = self.__getattribute__(name)
+                # Propagating into the dummy would be a waste of time
+                if id(attr) == self._dummy:
+                    continue
+                attr._view = self._view
+                attr.load_view(self._view, attr._offset)
+
+    def fieldsize(self) -> int:
+        return type_dict["pointer"].size
+
+    def read(self) -> MPT:
+        view = self.fieldview()
+        result: MemType = self._dummy.get_dummy_inst()
+        result.load_view(view.ptr_view(result.fieldsize()))
+        return result
+
+    def write(self, value: int):
+        view = self.fieldview()
+        view.write_primitive("pointer", value)
+
+    def alloc_dummy(self, dummy: MPT = None):
+        ## Replaces the stored dummy, allocates it and writes the new address
+        if dummy is not None:
+            self._dummy = dummy
+        allocated: MemoryView = self._view.backend._allocator.alloc(self._dummy.fieldsize())
+        self.write(allocated.backend.address())
+        self.read().propagate_view()
+
+MPT = TypeVar("MPT", int, float, str, bool, XYZ, Orient, Rectangle)
+@memclass
+class MemPrimitive(MemType, Generic[MPT]):
+    # defined by stuff that inherits from it
+    typename: str
 
     def fieldsize(self) -> int:
         return type_dict[self.typename].size
 
     def read(self) -> MPT:
-        return self.view.read_primitive(self.typename, self.offset)
+        t = type_dict[self.typename]
+        view = self.fieldview()
+        vals = t.unpack(view.read_bytes(t.size))
+        if len(vals) == 1:
+            return vals[0]
+        else:
+            return vals
 
     def write(self, value: MPT):
-        self.view.write_primitive(self.typename, value, self.offset)
+        t = type_dict[self.typename]
+        view = self.fieldview()
+        view.write_bytes(t.pack(value))
 
 
-T = TypeVar("T", "MemoryView")
-MTT = TypeVar("MTT", MemType)
 class MemoryView:
-    ## Forwarded functions for convenience so objects that inherit from it can use them directly
-
     def __init__(self, backend: ViewBackend) -> None:
         self.backend = backend
-
-        for name, field in vars(type(self)).items():
-            if issubclass(type(field), MemType):
-                self.__getattribute__(name).view = self
-
-    @staticmethod
-    def obj_size() -> int:
-        raise NotImplementedError()
-
-    def from_address(self, cls: Type[T], address: int, size: int) -> T:
-        assert self.backend.backend_to_propagate()
-        return cls(self.backend.backend_to_propagate()(
-            self.backend._process_handle,
-            address,
-            size
-        ))
 
     def read_bytes(self, count: int, offset=0) -> bytes:
         return self.backend.read_bytes(count, offset)
@@ -236,81 +352,39 @@ class MemoryView:
     def read_primitive(self, typename: str, offset=0) -> int | float | bool | str:
         return self.backend.read_primitive(typename, offset)
 
-    def write_primitive(self, typename: str, value, offset=0) -> None:
+    def write_primitive(self, typename: str, value: int | float | bool | str, offset=0) -> None:
         self.backend.write_primitive(typename, value, offset)
 
-    def read_xyz(self, offset=0) -> XYZ:
-        return XYZ(*self.read_primitive("xyz", offset))
+    def read_typestring(self, typestring: str, offset=0) -> Any:
+        s = struct.Struct(typestring)
+        return s.unpack(self.backend.read_bytes(s.size, offset))
 
-    def write_xyz(self, value: XYZ, offset=0) -> None:
-        self.write_primitive("xyz", value, offset)
+    def write_typestring(self, typestring: str, values: tuple, offset=0):
+        s = struct.Struct(typestring)
+        self.backend.write_bytes(s.pack(*values), offset)
 
-    def read_orient(self, offset=0) -> Orient:
-        return Orient(*self.read_primitive("orient", offset))
+    def subview(self, size: int, offset=0) -> "MemoryView":
+        back = self.backend.backend_to_propagate()
+        assert back
+        assert offset + size <= self.backend.size()
+        result = MemoryView(back)
+        result.backend.set_address(self.backend.address() + offset)
+        result.backend.set_size(size)
+        return result
 
-    def write_orient(self, value: Orient, offset=0) -> None:
-        self.write_primitive("orient", value, offset)
-
-    def read_rect(self, offset=0) -> Rectangle:
-        return Rectangle(*self.read_primitive("rect", offset))
-
-    def write_rect(self, value: Rectangle, offset=0) -> None:
-        self.write_primitive("rect", value, offset)
-
-    def read_primitive_array(self, typename: str, count=1, offset=0) -> list[int | float | bool | str]:
-        return self.backend.read_primitive_array(typename, count, offset)
-
-    def write_primitive_array(self, typename: str, values, offset=0):
-        self.backend.write_primitive_array(typename, values, offset)
-
-    def read_memview(self, size: int, offset=0) -> "MemoryView":
-        assert self.backend.backend_to_propagate()
-        return MemoryView(self.backend.backend_to_propagate()(
-            self.backend._process_handle,
-            self.backend.address() + offset,
-            size,
-            self.backend._allocator
-        ))
-
-    def read_memview_ptr(self, size: int, offset=0) -> "MemoryView":
-        assert self.backend.backend_to_propagate()
-        addr = self.read_primitive("pointer", offset)
-        return MemoryView(self.backend.backend_to_propagate()(
-            self.backend._process_handle,
-            addr,
-            size,
-            self.backend._allocator
-        ))
-
-    def write_addr(self, x: "MemoryView", offset=0):
-        self.write_primitive("pointer", x.backend.address(), offset)
-
-    def get_memprimitive(self, cls: Type[T], offset=0) -> T:
-        return cls(self, offset)
-
-    def read_typeview(self, cls: Type[T], offset=0) -> T:
-        assert self.backend.backend_to_propagate()
-        return cls(self.backend.backend_to_propagate()(
-            self.backend._process_handle,
-            self.backend.address() + offset,
-            cls.obj_size(),
-            self.backend._allocator
-        ))
-
-    def read_typeview_ptr(self, cls: Type[T], offset=0) -> T:
-        assert self.backend.backend_to_propagate()
-        addr = self.read_primitive("pointer", offset)
-        return cls(self.backend.backend_to_propagate()(
-            self.backend._process_handle,
-            addr,
-            cls.obj_size(),
-            self.backend._allocator
-        ))
+    def ptr_view(self, size: int, offset=0) -> "MemoryView":
+        back = self.backend.backend_to_propagate()
+        assert back
+        result = MemoryView(back)
+        result.backend.set_address(self.read_primitive("pointer", offset))
+        result.backend.set_size(size)
+        return result
 
 
 class AllocatorError(RuntimeError):
     pass
 
+T = TypeVar("T", bound=MemoryView)
 class BaseAllocator:
     def __init__(self) -> None:
         ## Not thread safe!
@@ -351,11 +425,13 @@ class BaseAllocator:
                 self._owned_pointers.pop(i)
                 break
 
-    def alloc(self, size: int, cls=MemoryView) -> MemoryView:
+    def alloc(self, size: int) -> MemoryView:
         raise NotImplementedError()
 
-    def alloc(self, cls: Type[T]) -> T:
-        return self.alloc(cls.obj_size(), cls)
+    def alloc0(self, size: int) -> MemoryView:
+        result = self.alloc(size)
+        result.write_bytes("\x00" * size)
+        return result
 
     def free(self, ptr: MemoryView) -> None:
         # can't provide default because order of dealloc and _removeptr might matter
@@ -367,7 +443,7 @@ class ProcessAllocator(BaseAllocator):
         # Could optimize to use pages correctly
         self.process_handle = process_handle
 
-    def alloc(self, size: int, cls=MemoryView) -> MemoryView:
+    def alloc(self, size: int) -> MemoryView:
         # could use large pages for big allocs
         if lpvoid := _VirtualAllocEx(
             self.process_handle,
@@ -376,7 +452,7 @@ class ProcessAllocator(BaseAllocator):
             0x1000 | 0x2000, # MEM_COMMIT and MEM_RESERVE
             0x40, # PAGE_EXECUTE_READWRITE
             ):
-            ptr = cls(ExternalOwnedPointerBackend(
+            ptr = MemoryView(ExternalOwnedPointerBackend(
                 self.process_handle,
                 int(lpvoid),
                 size,
@@ -473,16 +549,14 @@ class CaveAllocator(ProcessAllocator):
 if __name__ == "__main__":
     from memtypes import *
     def _main():
-        class TestType(MemoryView):
-            def __init__(self, backend: ViewBackend) -> None:
-                super().__init__(backend)
-            
-            @staticmethod
-            def obj_size() -> int:
-                return 32
+        @memclass
+        class TestType(MemType):
+            def fieldsize(self) -> int:
+                return 32 + 12 + 8
 
-            name = MemCppString(0)
-
+            name: ... = MemCppString(0)
+            position: ... = MemXYZ(32)
+            ptr: ... = MemPointer(44, MemXYZ(0))
 
         pid = os.getpid()
         # PROCESS_ALL_ACCESS
@@ -491,15 +565,38 @@ if __name__ == "__main__":
         allocator = ProcessAllocator(handle)
 
         x = ctypes.c_uint64(0xBE1211)
-        x_view = MemoryView(ExternalUnownedPointerBackend(
+        xt = MemInt64.from_view(MemoryView(ExternalUnownedPointerBackend(
             handle, type_dict["pointer"].unpack(ctypes.pointer(x))[0], 8, allocator
-        ))
-        print(hex(x_view.read_primitive("int64")))
+        )))
+        print(xt.typename)
+        print(hex(xt.read()))
 
-        testview = allocator.alloc(16)
-        testtypeview = testview.read_typeview(TestType)
-        testtypeview.name.write("test123456789test")
+
+        testview = allocator.alloc0(32+12+8)
+        testtypeview = TestType.from_view(testview)
+
+        #testtypeview.name.write("test123456789test")
         print(testtypeview.name.read())
+        testtypeview.name.write("test")
+        print(testtypeview.name.read())
+
+        print(testtypeview.name.fieldview().backend.address())
+        print(testtypeview.position.fieldview().backend.address())
+        print(testtypeview.position.x.fieldview().backend.address())
+
+        testtypeview.position.x.write(1.0)
+        print(testtypeview.position.x.read())
+        print(testtypeview.position.read())
+
+        testtypeview.ptr.alloc_dummy()
+
+        testtypeview.ptr.read().write(XYZ(1.0, 2.0, 3.0))
+
+        print("END")
+        print(TestType.position.x)
+        print(testtypeview.ptr.read().x._offset)
+        testtypeview.ptr.read().x.write(2.0)
+        print(testtypeview.ptr.read().read())
 
         ctypes.windll.kernel32.CloseHandle(handle)
 

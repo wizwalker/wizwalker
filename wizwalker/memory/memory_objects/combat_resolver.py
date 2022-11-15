@@ -8,6 +8,7 @@ from .spell_effect import SpellEffect
 class CombatResolver(PropertyClass):
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 144
 
     bool_global_effect = MemBool(112)

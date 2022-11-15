@@ -205,32 +205,6 @@ class MemoryObject:
 
         return pointers
 
-    async def read_dynamic_vector(
-        self, offset: int, data_type: str = "long long"
-    ) -> List[int]:
-        """
-        Read a vector that changes in size
-        """
-        start_address = await self.read_value_from_offset(offset, "long long")
-        end_address = await self.read_value_from_offset(offset + 8, "long long")
-
-        type_str = type_format_dict[data_type].replace("<", "")
-        size_per_type = struct.calcsize(type_str)
-
-        size = (end_address - start_address) // size_per_type
-
-        if size == 0:
-            return []
-
-        current_address = start_address
-        pointers = []
-        for _ in range(size):
-            pointers.append(await self.read_typed(current_address, data_type))
-
-            current_address += size_per_type
-
-        return pointers
-
     async def read_inlined_vector(
             self,
             offset: int,

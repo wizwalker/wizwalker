@@ -9,6 +9,7 @@ from .spell import Spell
 class CombatAction(MemoryView):
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 348
 
     spell_caster = MemInt32(72)

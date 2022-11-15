@@ -14,6 +14,7 @@ class CameraController(MemoryView):
 
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 144
 
     position = MemXYZ(108)

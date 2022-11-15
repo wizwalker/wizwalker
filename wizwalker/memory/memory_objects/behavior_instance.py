@@ -12,6 +12,7 @@ class BehaviorInstance(memanagers.MemoryView):
     """
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 108
 
     behavior_template_name_id = MemUInt32(104)

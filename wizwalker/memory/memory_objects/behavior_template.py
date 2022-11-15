@@ -9,6 +9,7 @@ class BehaviorTemplate(PropertyClass):
 
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 90
 
     behavior_name = MemCppString(72)

@@ -7,6 +7,7 @@ class CamView(MemoryView):
 
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 340
 
     view_matrix = MemArray("float32", 9, 80)

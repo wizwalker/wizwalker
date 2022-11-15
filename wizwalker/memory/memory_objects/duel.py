@@ -14,6 +14,7 @@ from .combat_resolver import CombatResolver
 class Duel(PropertyClass):
     @staticmethod
     def obj_size() -> int:
+        # unverified
         return 672
 
     duel_id_full = MemUInt64(72)
