@@ -2,58 +2,58 @@ from typing import TypeVar, Type, Any
 from enum import Enum
 
 from addon_primitives import XYZ, Orient, Rectangle
-from memanagers_new import MemPrimitive, MemType, MemPointer, type_dict, memclass
+from memanagers import MemPrimitive, MemType, MemPointer, type_dict, memclass, ParamType
 
 from wizwalker import ReadingEnumFailed
 
 @memclass
 class MemInt8(MemPrimitive[int]):
-    typename: ... = "int8"
+    typename = "int8"
 
 @memclass
 class MemUInt8(MemPrimitive[int]):
-    typename: ... = "uint8"
+    typename = "uint8"
 
 @memclass
 class MemInt16(MemPrimitive[int]):
-    typename: ... = "int16"
+    typename = "int16"
 
 @memclass
 class MemUInt16(MemPrimitive[int]):
-    typename: ... = "uint16"
+    typename = "uint16"
 
 @memclass
 class MemInt32(MemPrimitive[int]):
-    typename: ... = "int32"
+    typename = "int32"
 
 @memclass
 class MemUInt32(MemPrimitive[int]):
-    typename: ... = "uint32"
+    typename = "uint32"
 
 @memclass
 class MemInt64(MemPrimitive[int]):
-    typename: ... = "int64"
+    typename = "int64"
 
 @memclass
 class MemUInt64(MemPrimitive[int]):
-    typename: ... = "uint64"
+    typename = "uint64"
 
 @memclass
 class MemFloat32(MemPrimitive[float]):
-    typename: ... = "float32"
+    typename = "float32"
 
 @memclass
 class MemFloat64(MemPrimitive[float]):
-    typename: ... = "float64"
+    typename = "float64"
 
 
 @memclass
 class MemBool(MemPrimitive[bool]):
-    typename: ... = "bool"
+    typename = "bool"
 
 @memclass
 class MemChar(MemPrimitive[str]):
-    typename: ... = "char"
+    typename = "char"
 
 
 @memclass
@@ -70,9 +70,9 @@ class MemXYZ(MemType[XYZ]):
         view.write_typestring("<fff", value)
 
     # In case you just want one of them
-    x: ... = MemFloat32(0)
-    y: ... = MemFloat32(4)
-    z: ... = MemFloat32(8)
+    x = MemFloat32(0)
+    y = MemFloat32(4)
+    z = MemFloat32(8)
 
 # class MemOrient(MemPrimitive[Orient]):
 #     typename = "orient"
@@ -83,7 +83,7 @@ class MemXYZ(MemType[XYZ]):
 
 @memclass
 class MemBytes(MemType[bytes]):
-    size: int
+    size: ParamType | int
 
     def get_dummy_inst(self) -> "MemBytes":
         return type(self)(0, self.size)
@@ -101,7 +101,7 @@ class MemBytes(MemType[bytes]):
 TET = TypeVar("TET", bound=Enum)
 @memclass
 class MemEnum(MemType[TET]):
-    enum_type: Type[TET]
+    enum_type: ParamType | Type[TET]
 
     def get_dummy_inst(self) -> "MemEnum":
         return type(self)(0, self.enum_type)
@@ -126,8 +126,8 @@ class MemEnum(MemType[TET]):
 T = TypeVar("T", bound=MemType)
 @memclass
 class MemArray(MemType[list[T]]):
-    mtype: Type[T]
-    count: int
+    mtype: ParamType | Type[T]
+    count: ParamType | int
 
     def get_dummy_inst(self):
         return type(self)(0, self.mtype, self.count)
@@ -239,9 +239,9 @@ class MemCppString(MemType[str]):
     def fieldsize(self) -> int:
         return 32
 
-    data_ptr: ... = MemPointer(0, MemBytes(0, -1))
-    data_sso: ... = MemBytes(0, 16)
-    length: ... = MemInt32(16)
+    data_ptr = MemPointer(0, MemBytes(0, -1))
+    data_sso = MemBytes(0, 16)
+    length = MemInt32(16)
 
     def read(self) -> str:
         str_len = len(self)
