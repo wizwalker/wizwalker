@@ -161,7 +161,6 @@ class ExternalUnownedPointerBackend(ExternalPointerBackend):
 
 MTV = TypeVar("MTV")
 MTT = TypeVar("MTT", bound="MemType")
-
 @memclass
 class MemType(Generic[MTV]):
     _offset: ParamType | int = 0
@@ -241,11 +240,14 @@ class MemPointer(MemType[MPT]):
         self.write(allocated.backend.address())
         self.read().propagate_view()
 
-MPT = TypeVar("MPT", int, float, str, bool, XYZ, Orient, Rectangle)
+MPT = TypeVar("MPT", int, float, str, bool)
 @memclass
 class MemPrimitive(MemType, Generic[MPT]):
     # defined by stuff that inherits from it
     typename: ParamType | str = ""
+
+    def get_dummy_inst(self):
+        return type(self)(0, self.typename)
 
     def fieldsize(self) -> int:
         return type_dict[self.typename].size

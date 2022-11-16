@@ -1,4 +1,4 @@
-from typing import TypeVar, Type, Any
+from typing import TypeVar, Type
 from enum import Enum
 
 from addon_primitives import XYZ, Orient, Rectangle
@@ -75,11 +75,14 @@ class MemXYZ(MemType[XYZ]):
         view.write_typestring("<fff", value)
 
 
-class MemOrient(MemPrimitive[Orient]):
+@memclass
+class MemOrient(MemType[Orient]):
     def fieldsize(self) -> int:
         return 12
 
-    
+    pitch = MemFloat32(0)
+    roll = MemFloat32(4)
+    yaw = MemFloat32(8)
 
     def read(self) -> Orient:
         view = self.fieldview()
@@ -90,8 +93,23 @@ class MemOrient(MemPrimitive[Orient]):
         view.write_typestring("<fff", value)
 
 
-# class MemRect(MemPrimitive[Rectangle]):
-#     typename = "rect"
+@memclass
+class MemRect(MemType[Rectangle]):
+    def fieldsize(self) -> int:
+        return 16
+
+    x1 = MemInt32(0)
+    y1 = MemInt32(4)
+    x2 = MemInt32(8)
+    y2 = MemInt32(12)
+
+    def read(self) -> Orient:
+        view = self.fieldview()
+        return Orient(*view.read_typestring("<iiii"))
+
+    def write(self, value: Orient):
+        view = self.fieldview()
+        view.write_typestring("<iiii", value)
 
 
 
@@ -138,124 +156,70 @@ class MemEnum(MemType[TET]):
 
 
 T = TypeVar("T", bound=MemType)
+# Arrays are just spicy pointers
 @memclass
-class MemArray(MemType[list[T]]):
-    mtype: ParamType | Type[T]
+class MemArray(MemPointer[list[T]]):
     count: ParamType | int
 
     def get_dummy_inst(self):
-        return type(self)(0, self.mtype, self.count)
+        return type(self)(0, self._dummy, self.count)
 
     def __len__(self) -> int:
         return self.count
 
     def fieldsize(self) -> int:
-        return type_dict["pointer"].size
+        # might be kinda heavy
+        return self._dummy.get_dummy_inst().fieldsize() * self.count
+
+    # Am not yet 100% convinced I want this
+    def __getitem__(self, i: int) -> T:
+        view = self.fieldview()
+        inst: MemType = self._dummy.get_dummy_inst()
+        dummysize = inst.fieldsize()
+        inst.load_view(view.subview(dummysize, i * dummysize))
+        return inst
+
+    # Even less convinced on this
+    def __setitem__(self, i: int, val: MemType):
+        view = self.fieldview()
+        inst: MemType = self._dummy.get_dummy_inst()
+        if dummysize == None:
+            dummysize = inst.fieldsize()
+        inst.load_view(view.subview(dummysize, i * dummysize))
+        if isinstance(T, MemPointer):
+            inst.write(val._view.backend.address())
+        else:
+            inst.write(val.read())
 
     def read(self) -> list[T]:
-        raise NotImplementedError()
-        view = self.fieldview()
-        arr_view = view.read_memview_ptr(len(self) * self.fieldsize())
-        arr_view.read_primitive_array(self.typename, self.count)
         result = []
-        for off in range(0, len(self) * self.fieldsize(), self.fieldsize()):
-            result.append(self.mtype())
+
+        for i in range(self.count):
+            result.append(self[i])
+
         return result
     
     def write(self, value: list[T]):
-        raise NotImplementedError()
-        view = self.fieldview()
-        arr_view = view.read_memview_ptr(len(self) * self.fieldsize())
-        arr_view.write_primitive_array(self.typename, value)
+        for i in range(self.count):
+            self[i] = value[i]
 
 
-# TODO: Implement on MemType only
-# PVT = TypeVar("PVT", int, MemoryView)
-# class MemCppPtrVector(MemType[list[PVT]]):
-#     def __init__(self, oftype: Type[PVT], offset: int) -> None:
-#         super().__init__(offset)
-#         self.oftype = oftype
+# TODO: Implement
+#class MemCppVector(MemType[list[T]]):
+#    _dummy: ParamType | Type[T]
 
-#     def _memsize(self) -> int:
-#         view_start = self.view.read_primitive("pointer", self.offset)
-#         view_end = self.view.read_primitive("pointer", self.offset + 8)
-#         return view_end - view_start
-
-#     def __len__(self) -> int:
-#         type_size = type_dict["pointer"].size
-#         return self._memsize() // type_size
-
-#     def fieldsize(self) -> int:
-#         return type_dict["pointer"].size * 2
-
-#     def read(self) -> list[PVT]:
-#         view_size = self._memsize()
-#         if view_size == 0:
-#             return []
-#         view_start = self.view.read_primitive("pointer", self.offset)
-#         vec_view = self.view.read_memview(view_size, view_start)
-
-#         type_size = type_dict["pointer"].size
-#         result = []
-#         for off in range(0, view_size, type_size):
-#             if isinstance(Type(self.oftype), MemoryView):
-#                 result.append(vec_view.read_typeview_ptr(Type(self.oftype), off))
-#             else:
-#                 result.append(vec_view.read_primitive("pointer", off))
-#         return result
-
-#     def write(self, value: list[PVT]) -> None:
-#         raise NotImplementedError()
-
-# VVT = TypeVar("VVT", MemType)
-# class MemCppValVector(MemType[T]):
-#     def __init__(self, oftype: T, offset: int) -> None:
-#         super().__init__(offset)
-#         self.oftype = oftype
-
-#     def _memsize(self) -> int:
-#         view = self.fieldview()
-#         view_start = view.read_primitive("pointer")
-#         view_end = view.read_primitive("pointer", 8)
-#         return view_end - view_start
-
-#     def __len__(self) -> int:
-#         type_size = type_dict["pointer"].size
-#         return self._memsize() // type_size
-
-#     def fieldsize(self) -> int:
-#         return type_dict["pointer"] * 2
-
-#     def read(self) -> list[PVT]:
-#         view_size = self._memsize()
-#         if view_size == 0:
-#             return []
-#         view = self.fieldview()
-#         vec_view = view.read_memview_ptr(view_size)
-
-#         type_size = type_dict["pointer"].size
-#         result = []
-#         for off in range(0, view_size, type_size):
-#             if isinstance(Type(self.oftype), MemoryView):
-#                 result.append(vec_view.read_typeview_ptr(Type(self.oftype), off))
-#             else:
-#                 result.append(vec_view.read_primitive("pointer", off))
-#         return result
-
-#     def write(self, value: list[PVT]) -> None:
-#         raise NotImplementedError()
 
 @memclass
 class MemCppString(MemType[str]):
-    def __len__(self) -> int:
-        return self.length.read()
-
     def fieldsize(self) -> int:
         return 32
 
     data_ptr = MemPointer(0, MemBytes(0, -1))
     data_sso = MemBytes(0, 16)
     length = MemInt32(16)
+
+    def __len__(self) -> int:
+        return self.length.read()
 
     def read(self) -> str:
         str_len = len(self)
