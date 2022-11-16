@@ -16,7 +16,7 @@ def get_repr_code(basename, params: list[str]):
     txt += f"{', '.join(paramstrs)})'\n"
     return txt
 
-def get_init_code(params: list[str], initfields: list[str], defaults: dict[str, str]) -> str:
+def get_init_code(params: list[str], initfields: list[str], defaults: dict[str, str], call_postinit) -> str:
     paramstrs = []
     for name in params:
         if name in defaults:
@@ -35,8 +35,9 @@ def get_init_code(params: list[str], initfields: list[str], defaults: dict[str, 
         if name in defaults:
             txt += f"\tself.{name}={defaults[name]}\n"
         else:
-            txt += f"\tself.{name}=None\n"    
-    txt += "\tself.__post_init__()"
+            txt += f"\tself.{name}=None\n" 
+    if call_postinit:
+        txt += "\tself.__post_init__()"
     # TODO: Maybe generate super().__init__() call
     return txt
 
@@ -50,6 +51,8 @@ def lift_fields(tree) -> ClsFieldTuple:
 
     # (TODO: Handle stuff like a = b (inject self.))
     for b in tree.body:
+        if isinstance(b, ast.Expr):
+            continue
         for bod in b.body:
             match type(bod):
                 case ast.Assign:
@@ -71,84 +74,97 @@ def lift_fields(tree) -> ClsFieldTuple:
                     pass
     return ClsFieldTuple(seen_vars, defaults, params, initfields)
 
-def memclass(cls):
-    globals = sys.modules[cls.__module__].__dict__
+def memclass(arg):
+    call_postinit = arg if type(arg) == bool else True
+    def wrap(cls):
+        globals = sys.modules[cls.__module__].__dict__
 
-    class_source = inspect.getsource(cls)
-    class_source = class_source.replace("@memclass", "").strip()
-    class_ast = ast.parse(class_source)
+        class_source = inspect.getsource(cls)
+        decostart = class_source.find("@memclass(")
+        if decostart > 0:
+            decoend = class_source.find("e)", decostart)
+            class_source = class_source[:decostart] + class_source[decoend+2:]
+        class_source = class_source.replace("@memclass", "").strip()
+        class_ast = ast.parse(class_source)
 
-    # grab all the fields
-    fielddata = lift_fields(class_ast)
-    
-    # handle inheritance, inject params from parents into constructor
-    parent_params = []
-    parent_param_defaults = {}
-    parent_initfields = []
-    for x in cls.__mro__[-2:0:-1]:
-        if not hasattr(x, "__memdeletedattrs__") or id(x) not in x.__memdeletedattrs__:
-            # the type was not processed by memclass, so nothing to extract
-            continue
-        for p in x.__memdeletedattrs__[id(x)]["params"]:
-            if p not in fielddata.seen_vars:
-                parent_params.append(p)
-                if p in x.__memdeletedattrs__[id(x)]["defaults"]:
-                    parent_param_defaults[p] = x.__memdeletedattrs__[id(x)]["defaults"][p]
-        for p in x.__memdeletedattrs__[id(x)]["initfields"]:
-            if p not in fielddata.seen_vars:
-                parent_initfields.append(p)
-                if p in x.__memdeletedattrs__[id(x)]["defaults"]:
+        # grab all the fields
+        fielddata = lift_fields(class_ast)
+        
+        # handle inheritance, inject params from parents into constructor
+        parent_params = []
+        parent_param_defaults = {}
+        parent_initfields = []
+        for x in cls.__mro__[-2:0:-1]:
+            if not hasattr(x, "__memdeletedattrs__") or id(x) not in x.__memdeletedattrs__:
+                # the type was not processed by memclass, so nothing to extract
+                continue
+            for p in x.__memdeletedattrs__[id(x)]["params"]:
+                if p not in fielddata.seen_vars:
+                    parent_params.append(p)
+                    if p in x.__memdeletedattrs__[id(x)]["defaults"]:
                         parent_param_defaults[p] = x.__memdeletedattrs__[id(x)]["defaults"][p]
+            for p in x.__memdeletedattrs__[id(x)]["initfields"]:
+                if p not in fielddata.seen_vars:
+                    parent_initfields.append(p)
+                    if p in x.__memdeletedattrs__[id(x)]["defaults"]:
+                            parent_param_defaults[p] = x.__memdeletedattrs__[id(x)]["defaults"][p]
 
-    full_params = parent_params + fielddata.params
-    full_defaults = parent_param_defaults | fielddata.defaults # order is important, right side replaces left in case of conflict
-    full_initfields = parent_initfields + fielddata.initfields
-    
-    initcode = get_init_code(
-        full_params,
-        full_initfields,
-        full_defaults
-    )
-    #print(cls.__name__)
-    #print(initcode)
-    ls = {}
-    exec(
-        initcode,
-        globals,
-        ls
-    )
-    cls.__init__ = ls["__init__"]
-    
-    # {"defaults": {}, "params": [], "initfields": []}
-    # allows filling in all the defaults
-    if not hasattr(cls, "__memdeletedattrs__"):
-        cls.__memdeletedattrs__ = { }
-    if id(cls) not in cls.__memdeletedattrs__:
-        cls.__memdeletedattrs__[id(cls)] = {}
+        full_params = parent_params + fielddata.params
+        full_defaults = parent_param_defaults | fielddata.defaults # order is important, right side replaces left in case of conflict
+        full_initfields = parent_initfields + fielddata.initfields
+        
+        initcode = get_init_code(
+            full_params,
+            full_initfields,
+            full_defaults,
+            call_postinit
+        )
+        #print(cls.__name__)
+        #print(initcode)
+        ls = {}
+        exec(
+            initcode,
+            globals,
+            ls
+        )
+        cls.__init__ = ls["__init__"]
+        
+        # {"defaults": {}, "params": [], "initfields": []}
+        # allows filling in all the defaults
+        if not hasattr(cls, "__memdeletedattrs__"):
+            cls.__memdeletedattrs__ = { }
+        if id(cls) not in cls.__memdeletedattrs__:
+            cls.__memdeletedattrs__[id(cls)] = {}
 
-    for p in fielddata.params + fielddata.initfields:
-        try:
-            delattr(cls, p)
-        except AttributeError:
-            pass
+        for p in fielddata.params + fielddata.initfields:
+            try:
+                delattr(cls, p)
+            except AttributeError:
+                pass
 
-    # use deletedattrs to pass along to derived classes
-    cls.__memdeletedattrs__[id(cls)]["defaults"] = fielddata.defaults
-    cls.__memdeletedattrs__[id(cls)]["params"] = fielddata.params
-    cls.__memdeletedattrs__[id(cls)]["initfields"] = fielddata.initfields
-    
-    return cls
+        # use deletedattrs to pass along to derived classes
+        cls.__memdeletedattrs__[id(cls)]["defaults"] = fielddata.defaults
+        cls.__memdeletedattrs__[id(cls)]["params"] = fielddata.params
+        cls.__memdeletedattrs__[id(cls)]["initfields"] = fielddata.initfields
+        
+        return cls
+
+    if type(arg) == bool:
+        return wrap
+    return wrap(arg)
 
 
 
 if __name__ == "__main__":
-    @memclass
     class Base:
         a: ParamType | int = 99
         b = None
         c: int = "test"
         d: ParamType = 1.0
         e = 99.00
+
+        def __post_init__(self):
+            pass
 
     @memclass
     class Child(Base):
@@ -168,6 +184,9 @@ if __name__ == "__main__":
             if self.a is None:
                 print(self.a.x) # cause issue intentionally
             print("gaming")
+
+        def __post_init__(self):
+            pass
 
     x = OtherObj()
     print(x.a)

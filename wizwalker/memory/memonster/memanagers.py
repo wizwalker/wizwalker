@@ -1,7 +1,7 @@
 import inspect
 import os
 import struct
-from typing import Any, Generic, Type, TypeVar
+from typing import Any, Generic, Type, TypeVar, Callable
 
 from .addon_primitives import *
 from .memast import memclass, ParamType
@@ -161,6 +161,21 @@ class ExternalUnownedPointerBackend(ExternalPointerBackend):
 
 MTV = TypeVar("MTV")
 MTT = TypeVar("MTT", bound="MemType")
+
+
+class LazyDummy(Generic[MTT]):
+    def __init__(self, dummy_type: MTT, dummy_args: tuple):
+        self._dummy_type = dummy_type
+        self._dummy_args = dummy_args
+
+    def new_args(self, dummy_args: tuple):
+        self._dummy_args = dummy_args
+
+    def instantiate(self):
+        inst = self._dummy_type(*self._dummy_args)
+        return inst
+
+
 @memclass
 class MemType(Generic[MTV]):
     _offset: ParamType | int = 0
@@ -189,9 +204,12 @@ class MemType(Generic[MTV]):
         result = cls(0)
         result.load_view(view, 0)
         return result
-    
-    def get_dummy_inst(self: Type[MTT]) -> MTT:
-        return type(self)(0)
+
+    def get_lazy_dummy_args(self) -> tuple:
+        return (0,)
+
+    def get_lazy_dummy(self) -> LazyDummy[MTT]:
+        return LazyDummy[MTT](type(self), self.get_lazy_dummy_args())
 
     def fieldsize(self) -> int:
         raise NotImplementedError()
@@ -209,28 +227,25 @@ class MemType(Generic[MTV]):
         return self.fieldview().backend.address() == 0
 
 
-MPT = TypeVar("MPT", bound=MemType)
-
 @memclass
-class MemPointer(MemType[MPT]):
-    _dummy: ParamType | Type[MPT]
+class MemPointer(MemType[MTT]):
+    _lazy_dummy: ParamType | LazyDummy[MTT]
 
-    def propagate_view(self) -> None:
-        for name, field in vars(type(self)).items():
-            if issubclass(type(field), MemType):
-                attr: MemType = self.__getattribute__(name)
-                # Propagating into the dummy would be a waste of time
-                if id(attr) == self._dummy:
-                    continue
-                attr._view = self._view
-                attr.load_view(self._view, attr._offset)
+    def __post_init__(self):
+        super().__post_init__()
+        if self._lazy_dummy is not None and isinstance(self._lazy_dummy, MemType):
+            if isinstance(self._lazy_dummy, MemType):
+                self._lazy_dummy = self._lazy_dummy.get_lazy_dummy()
+            if type(self._lazy_dummy) == Type:
+                # assume we don't want any special args
+                self._lazy_dummy = self._lazy_dummy().get_lazy_dummy()
 
     def fieldsize(self) -> int:
         return type_dict["pointer"].size
 
-    def read(self) -> MPT:
+    def read(self) -> MTT:
         view = self.fieldview()
-        result: MemType = self._dummy.get_dummy_inst()
+        result: MemType = self._lazy_dummy.instantiate()
         result.load_view(view.ptr_view(result.fieldsize()))
         return result
 
@@ -238,11 +253,24 @@ class MemPointer(MemType[MPT]):
         view = self.fieldview()
         view.write_primitive("pointer", value)
 
-    def alloc_dummy(self, dummy: MPT = None):
+    def get_lazy_dummy_args(self) -> tuple:
+        return (0, self._lazy_dummy)
+
+    def load_lazy_dummy(self, lazy_dummy: LazyDummy[MTT]):
+        self._lazy_dummy = lazy_dummy
+
+    def alloc_dummy(self, dummy: MTT = None):
         ## Replaces the stored dummy, allocates it and writes the new address
         if dummy is not None:
-            self._dummy = dummy
-        allocated: MemoryView = self._view.backend._allocator.alloc(self._dummy.fieldsize())
+            if isinstance(dummy, LazyDummy):
+                self.load_lazy_dummy(dummy)
+            else:
+                self.load_lazy_dummy(dummy.get_lazy_dummy())
+        if self._lazy_dummy is None:
+            raise ValueError()
+
+        dum: MemType = self._lazy_dummy.instantiate()
+        allocated: MemoryView = self._view.backend._allocator.alloc(dum.fieldsize())
         self.write(allocated.backend.address())
         self.read().propagate_view()
 
@@ -252,8 +280,8 @@ class MemPrimitive(MemType, Generic[MPT]):
     # defined by stuff that inherits from it
     typename: ParamType | str = ""
 
-    def get_dummy_inst(self):
-        return type(self)(0, self.typename)
+    def get_lazy_dummy_args(self) -> tuple:
+        return (0, self.typename)
 
     def fieldsize(self) -> int:
         return type_dict[self.typename].size

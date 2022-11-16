@@ -140,7 +140,7 @@ class GameStats(PropertyClass):
     cantrip_xp = MemInt32(1012)
 
 
-    spell_charge_base = MemCppValVector()
+    #spell_charge_base = MemCppValVector()
 
     async def spell_charge_base(self) -> List[int]:
         return await self.read_dynamic_vector(136, "int")

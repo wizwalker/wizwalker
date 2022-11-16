@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memonster.memtypes import *
+from wizwalker.memory.memonster import memclass
 from .enums import PipAquiredByEnum
 from .game_stats import GameStats
 from .spell import Hand
@@ -9,13 +10,13 @@ from .play_deck import PlayDeck
 from .spell_effect import SpellEffect
 
 
+@memclass
 class CombatParticipant(PropertyClass):
     """
     Base class for CombatParticipants
     """
 
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
         # unverified
         return 842
 
@@ -62,7 +63,15 @@ class CombatParticipant(PropertyClass):
 
     max_hand_size = MemInt32(248)
 
+    hand = MemPointer[Hand](256, Hand)
+    saved_hand = MemPointer[Hand](264, Hand)
+    play_deck = MemPointer[PlayDeck](272, PlayDeck)
+    saved_play_deck = MemPointer[PlayDeck](280, PlayDeck)
+    saved_game_stats = MemPointer[GameStats](288, GameStats)
+
     saved_primary_magic_school_id = MemInt32(304)
+
+    game_stats = MemPointer[GameStats](312, GameStats)
 
     rotation = MemFloat32(332)
     radius = MemFloat32(336)
@@ -98,9 +107,13 @@ class CombatParticipant(PropertyClass):
 
     shadow_creature_level_count = MemInt32(712)
 
+    intercept_effect = MemPointer[SpellEffect](736, SpellEffect)
+
     rounds_since_shadow_pip = MemInt32(768)
 
     planning_phase_pip_aquired_type = MemEnum(784, PipAquiredByEnum)
+    
+    polymorph_effect = MemPointer[SpellEffect](792, SpellEffect)
 
     shadow_pip_rate_threshold = MemFloat32(808)
     base_spell_damage = MemInt32(812)
@@ -113,54 +126,6 @@ class CombatParticipant(PropertyClass):
 
 
     # TODO: Make work
-    # async def hand(self) -> Optional[DynamicHand]:
-    #     addr = await self.read_value_from_offset(256, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicHand(self.hook_handler, addr)
-
-    # async def saved_hand(self) -> Optional[DynamicHand]:
-    #     addr = await self.read_value_from_offset(264, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicHand(self.hook_handler, addr)
-
-    # async def play_deck(self) -> Optional[DynamicPlayDeck]:
-    #     addr = await self.read_value_from_offset(272, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicPlayDeck(self.hook_handler, addr)
-
-    # async def saved_play_deck(self) -> Optional[DynamicPlayDeck]:
-    #     addr = await self.read_value_from_offset(280, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicPlayDeck(self.hook_handler, addr)
-
-    # async def saved_game_stats(self) -> Optional[DynamicGameStats]:
-    #     addr = await self.read_value_from_offset(288, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicGameStats(self.hook_handler, addr)
-
-    # async def game_stats(self) -> Optional[DynamicGameStats]:
-    #     addr = await self.read_value_from_offset(312, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicGameStats(self.hook_handler, addr)
-
     # # TODO: figure out what color is
     # # async def color(self) -> class Color:
     # #     return await self.read_value_from_offset(328, "class Color")
@@ -214,19 +179,3 @@ class CombatParticipant(PropertyClass):
     #         delay_cast_effects.append(DynamicSpellEffect(self.hook_handler, addr))
 
     #     return delay_cast_effects
-
-    # async def intercept_effect(self) -> Optional[DynamicSpellEffect]:
-    #     addr = await self.read_value_from_offset(736, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicSpellEffect(self.hook_handler, addr)
-
-    # async def polymorph_effect(self) -> Optional[DynamicSpellEffect]:
-    #     addr = await self.read_value_from_offset(792, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicSpellEffect(self.hook_handler, addr)

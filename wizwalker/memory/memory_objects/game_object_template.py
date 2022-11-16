@@ -12,7 +12,7 @@ class WizGameObjectTemplate(PropertyClass):
         # unverified
         return 520
 
-    behaviors = MemCppVector(72, MemPointer(0, BehaviorTemplate()))
+    behaviors = MemCppVector(72, MemPointer[BehaviorTemplate](0, BehaviorTemplate))
 
     object_name = MemCppString(96)
     template_id = MemUInt32(128)

@@ -24,4 +24,4 @@ class BehaviorInstance(PropertyClass):
             return None
         return template.behavior_name.read()
 
-    behavior_template = MemPointer[BehaviorTemplate](0x58, BehaviorTemplate())
+    behavior_template = MemPointer[BehaviorTemplate](0x58, BehaviorTemplate)

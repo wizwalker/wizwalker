@@ -9,11 +9,9 @@ from .behavior_instance import BehaviorInstance
 from .client_zone import ClientZone
 
 
-@memclass
+@memclass(False)
 class _ClientObjectClientObjectPtr(MemPointer["ClientObject"]):
-    def __post_init__(self):
-        super().__post_init__()
-        self._dummy = ClientObject()
+    pass # workaround. __post_init__ is below ClientObject and puts the lazy dummy instance
 
 @memclass
 class ClientObject(PropertyClass):
@@ -28,7 +26,7 @@ class ClientObject(PropertyClass):
     perm_id = MemUInt64(80)
     
     # note: not defined
-    object_template = MemPointer[WizGameObjectTemplate](88, WizGameObjectTemplate())
+    object_template = MemPointer[WizGameObjectTemplate](88, WizGameObjectTemplate)
 
     template_id_full = MemUInt64(96)
 
@@ -48,13 +46,13 @@ class ClientObject(PropertyClass):
     parent = _ClientObjectClientObjectPtr(208)
 
     # note: not defined
-    client_zone = MemPointer[ClientZone](304, ClientZone())
+    client_zone = MemPointer[ClientZone](304, ClientZone)
     zone_tag_id = MemUInt32(334)
 
     character_id = MemUInt64(440)
 
     # Note: not defined
-    game_stats = MemPointer[GameStats](544, GameStats())
+    game_stats = MemPointer[GameStats](544, GameStats)
 
 
     # helper method
@@ -127,6 +125,13 @@ class ClientObject(PropertyClass):
     #         children.append(DynamicClientObject(self.hook_handler, addr))
 
     #     return children
+
+
+# Workaround to make definition order legal. Puts the dummy
+def ___ClientObjectClientObjectPtrpost_init__(self):
+    self.lazy_dummy = ClientObject().get_lazy_dummy()
+    super(_ClientObjectClientObjectPtr, self).__post_init__()
+_ClientObjectClientObjectPtr.__post_init__ = ___ClientObjectClientObjectPtrpost_init__
 
 
 # TODO: Update

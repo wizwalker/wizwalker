@@ -8,12 +8,13 @@ from .combat_participant import CombatParticipant
 from .enums import DuelExecutionOrder, DuelPhase, SigilInitiativeSwitchMode
 from .combat_resolver import CombatResolver
 from wizwalker.memory.memonster.addon_primitives import XYZ
+from wizwalker.memory.memonster import memclass
 
 
 # TODO: add m_gameEffectInfo and friends, and fix offsets
+@memclass
 class Duel(PropertyClass):
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
         # unverified
         return 672
 

@@ -7,6 +7,7 @@ from .spell import Spell
 @memclass
 class CombatAction(MemType):
     def fieldsize(self) -> int:
+        # unverified
         return 348
 
     spell_caster = MemInt32(72)
@@ -23,7 +24,7 @@ class CombatAction(MemType):
     stun_resist_roll = MemUInt8(117)
 
     pip_conversion_roll = MemInt32(120)
-    handled_random_spell_per_target = MemBool()
+    handled_random_spell_per_target = MemBool(124)
 
     random_spell_effect_per_target_rolls = MemInt32(128)
 

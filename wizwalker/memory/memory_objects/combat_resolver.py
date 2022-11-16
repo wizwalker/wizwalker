@@ -2,29 +2,18 @@ from typing import List, Optional
 
 from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memonster.memtypes import *
+from wizwalker.memory.memonster import memclass
 from .spell_effect import SpellEffect
 
 
+@memclass
 class CombatResolver(PropertyClass):
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
         # unverified
         return 144
 
     bool_global_effect = MemBool(112)
 
-    # TODO: Make work
-    # async def global_effect(self) -> Optional[DynamicSpellEffect]:
-    #     addr = await self.read_value_from_offset(120, "long long")
+    global_effect = MemPointer[SpellEffect](120, SpellEffect)
 
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicSpellEffect(self.hook_handler, addr)
-
-    # async def battlefield_effects(self) -> List[DynamicSpellEffect]:
-    #     effects = []
-    #     for addr in await self.read_shared_vector(136):
-    #         effects.append(DynamicSpellEffect(self.hook_handler, addr))
-
-    #     return effects
+    battlefield_effects = MemPointer[SpellEffect](136, SpellEffect)

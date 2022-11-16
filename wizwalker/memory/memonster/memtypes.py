@@ -2,7 +2,7 @@ from typing import TypeVar, Type
 from enum import Enum
 
 from .addon_primitives import XYZ, Orient, Rectangle
-from .memanagers import MemPrimitive, MemType, MemPointer, memclass, ParamType
+from .memanagers import MemPrimitive, MemType, MemPointer, memclass, ParamType, LazyDummy
 
 from wizwalker import ReadingEnumFailed
 
@@ -117,8 +117,8 @@ class MemRect(MemType[Rectangle]):
 class MemBytes(MemType[bytes]):
     size: ParamType | int
 
-    def get_dummy_inst(self) -> "MemBytes":
-        return type(self)(0, self.size)
+    def get_lazy_dummy_args(self) -> tuple:
+        return (0, self.size)
 
     def fieldsize(self) -> int:
         return self.size
@@ -135,8 +135,8 @@ TET = TypeVar("TET", bound=Enum)
 class MemEnum(MemType[TET]):
     enum_type: ParamType | Type[TET]
 
-    def get_dummy_inst(self) -> "MemEnum":
-        return type(self)(0, self.enum_type)
+    def get_lazy_dummy_args(self) -> tuple:
+        return (0, self.enum_type)
 
     def fieldsize(self) -> int:
         return 4
@@ -158,23 +158,24 @@ class MemEnum(MemType[TET]):
 T = TypeVar("T", bound=MemType)
 # Arrays are just spicy pointers
 @memclass
-class MemArray(MemPointer[list[T]]):
+class MemArray(MemPointer[T]):
     count: ParamType | int
 
-    def get_dummy_inst(self):
-        return type(self)(0, self._dummy, self.count)
+    def get_lazy_dummy_args(self) -> tuple:
+        return (0, self._lazy_dummy, self.count)
 
     def __len__(self) -> int:
         return self.count
 
     def fieldsize(self) -> int:
         # might be kinda heavy
-        return self._dummy.get_dummy_inst().fieldsize() * self.count
+        inst: MemType = self._lazy_dummy.instantiate()
+        return inst.fieldsize() * self.count
 
     # Am not yet 100% convinced I want this
     def __getitem__(self, i: int) -> T:
         view = self.fieldview()
-        inst: MemType = self._dummy.get_dummy_inst()
+        inst: MemType = self._lazy_dummy.instantiate()
         dummysize = inst.fieldsize()
         inst.load_view(view.subview(dummysize, i * dummysize))
         return inst
@@ -182,7 +183,7 @@ class MemArray(MemPointer[list[T]]):
     # Even less convinced on this
     def __setitem__(self, i: int, val: MemType):
         view = self.fieldview()
-        inst: MemType = self._dummy.get_dummy_inst()
+        inst: MemType = self._lazy_dummy.instantiate()
         if dummysize == None:
             dummysize = inst.fieldsize()
         inst.load_view(view.subview(dummysize, i * dummysize))
@@ -214,7 +215,7 @@ class MemCppString(MemType[str]):
     def fieldsize(self) -> int:
         return 32
 
-    data_ptr = MemPointer(0, MemBytes(0, -1))
+    data_ptr = MemPointer(0, MemBytes)
     data_sso = MemBytes(0, 16)
     length = MemInt32(16)
 
@@ -227,7 +228,6 @@ class MemCppString(MemType[str]):
             return ""
         
         if str_len >= 16:
-            self.data_ptr._dummy.size = str_len
             str_ptr = self.data_sso.fieldview().ptr_view(str_len)
         else:
             str_ptr = self.fieldview().subview(str_len)
@@ -244,8 +244,8 @@ class MemCppString(MemType[str]):
 
         # needs alloc
         if new_str_len >= 15 > cur_str_len:
-            # +1 for 
-            self.data_ptr.alloc_dummy(MemBytes(self.data_ptr._offset, new_str_len + 1))
+            # Use LazyDummy directly so we don't have to make the instance an extra time for no reason
+            self.data_ptr.alloc_dummy(LazyDummy(MemBytes, (self.data_ptr._offset, new_str_len + 1)))
             self.data_ptr.read().write(encoded + b"\x00")
         elif new_str_len >= 15 and cur_str_len >= 15:
             # TODO: This is definitely not right. But implementing from original for now

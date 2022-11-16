@@ -51,7 +51,7 @@ class ElasticCameraController(CameraController):
         # unverified
         return 612
 
-    attached_client_object = MemPointer(264, ClientObject())
+    attached_client_object = MemPointer[ClientObject](264, ClientObject)
 
     distance = MemFloat32(300)
     distance_target = MemFloat32(304)
