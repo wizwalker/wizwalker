@@ -12,14 +12,14 @@ class WizGameObjectTemplate(PropertyClass):
         # unverified
         return 520
 
-    behaviors = MemCppPtrVector(BehaviorTemplate, 72)
+    behaviors = MemCppVector(72, MemPointer(0, BehaviorTemplate()))
 
     object_name = MemCppString(96)
     template_id = MemUInt32(128)
     visual_id = MemUInt32(132)
     description = MemCppString(136)
     display_name = MemCppString(168)
-    object_type = MemEnum(ObjectType, 200)
+    object_type = MemEnum(200, ObjectType)
     icon = MemCppString(208)
     exempt_from_aoi = MemBool(240)
     adjective_list = MemCppString(248)

@@ -1,13 +1,15 @@
 from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memonster.memtypes import *
+from wizwalker.memory.memonster import memclass
 
 
+@memclass
 class CharacterRegistry(PropertyClass):
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
         # unverified
         return 340
     
+    # TODO: Make work
     # async def displayed_tips(self) -> List[int]:
     #     sub_object_addrs = await self.read_linked_list(112)
     #

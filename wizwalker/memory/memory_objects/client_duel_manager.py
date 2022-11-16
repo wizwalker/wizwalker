@@ -1,10 +1,11 @@
 from wizwalker.memory.memory_object import PropertyClass
-from .duel import DynamicDuel
+from wizwalker.memory.memonster import memclass
+from .duel import Duel
 
 
+@memclass
 class ClientDuelManager(PropertyClass):
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
         # unverified
         return 24
 

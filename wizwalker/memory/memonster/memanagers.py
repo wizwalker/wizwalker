@@ -3,8 +3,8 @@ import os
 import struct
 from typing import Any, Generic, Type, TypeVar
 
-from addon_primitives import *
-from memast import memclass, ParamType
+from .addon_primitives import *
+from .memast import memclass, ParamType
 
 import ctypes
 from ctypes import wintypes
@@ -166,6 +166,9 @@ class MemType(Generic[MTV]):
     _offset: ParamType | int = 0
     _view: "MemoryView" = None
     
+    def __post_init__(self):
+        pass
+
     def propagate_view(self) -> None:
         # could probably do this lazily
         for name, field in inspect.getmembers(self):
@@ -201,6 +204,9 @@ class MemType(Generic[MTV]):
 
     def write(self, value: MTV):
         raise NotImplementedError
+
+    def isnull(self) -> bool:
+        return self.fieldview().backend.address() == 0
 
 
 MPT = TypeVar("MPT", bound=MemType)

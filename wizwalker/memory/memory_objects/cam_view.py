@@ -1,16 +1,17 @@
-from wizwalker.memory.memonster.memanagers import MemoryView
+from wizwalker.memory.memonster.memanagers import MemType
 from wizwalker.memory.memonster.memtypes import *
+from wizwalker.memory.memonster import memclass
 
 
-class CamView(MemoryView):
+@memclass
+class CamView(MemType):
     # TODO: Find real name (or more fitting)
 
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
         # unverified
         return 340
 
-    view_matrix = MemArray("float32", 9, 80)
+    view_matrix = MemArray(80, MemFloat32, 9)
 
     viewport_left = MemFloat32(288)
     viewport_right = MemFloat32(292)

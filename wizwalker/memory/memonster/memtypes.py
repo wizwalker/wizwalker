@@ -1,8 +1,8 @@
 from typing import TypeVar, Type
 from enum import Enum
 
-from addon_primitives import XYZ, Orient, Rectangle
-from memanagers import MemPrimitive, MemType, MemPointer, type_dict, memclass, ParamType
+from .addon_primitives import XYZ, Orient, Rectangle
+from .memanagers import MemPrimitive, MemType, MemPointer, memclass, ParamType
 
 from wizwalker import ReadingEnumFailed
 
@@ -205,8 +205,8 @@ class MemArray(MemPointer[list[T]]):
 
 
 # TODO: Implement
-#class MemCppVector(MemType[list[T]]):
-#    _dummy: ParamType | Type[T]
+class MemCppVector(MemPointer[list[T]]):
+    _dummy: ParamType | Type[T]
 
 
 @memclass

@@ -1,13 +1,13 @@
 from typing import List, Optional
 
 from wizwalker.errors import MemoryReadError
-from wizwalker.utils import XYZ
 from wizwalker.memory import HookHandler
 from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memonster.memtypes import *
 from .combat_participant import CombatParticipant
 from .enums import DuelExecutionOrder, DuelPhase, SigilInitiativeSwitchMode
 from .combat_resolver import CombatResolver
+from wizwalker.memory.memonster.addon_primitives import XYZ
 
 
 # TODO: add m_gameEffectInfo and friends, and fix offsets
@@ -44,13 +44,13 @@ class Duel(PropertyClass):
 
     duel_phase = MemEnum(DuelPhase, 196)
 
-    initiative_switch_mode = MemEnum(SigilInitiativeSwitchMode, 384)
+    initiative_switch_mode = MemEnum(384, SigilInitiativeSwitchMode)
     initiative_switch_rounds = MemInt32(388)
 
     alt_turn_counter = MemInt32(456)
 
 
-    execution_order = MemEnum(DuelExecutionOrder, 528)
+    execution_order = MemEnum(528, DuelExecutionOrder)
 
     no_henchmen = MemBool(532)
 

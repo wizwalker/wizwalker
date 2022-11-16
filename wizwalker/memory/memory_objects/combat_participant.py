@@ -100,7 +100,7 @@ class CombatParticipant(PropertyClass):
 
     rounds_since_shadow_pip = MemInt32(768)
 
-    planning_phase_pip_aquired_type = MemEnum(PipAquiredByEnum, 784)
+    planning_phase_pip_aquired_type = MemEnum(784, PipAquiredByEnum)
 
     shadow_pip_rate_threshold = MemFloat32(808)
     base_spell_damage = MemInt32(812)

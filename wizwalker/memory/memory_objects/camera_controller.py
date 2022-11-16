@@ -1,20 +1,18 @@
 from typing import Optional, Union
 
-from wizwalker import utils
-from wizwalker.memory.memory_object import MemoryObject
-from wizwalker.memory.memonster.memanagers import MemoryView
+from wizwalker.memory.memonster.memanagers import MemType
 from wizwalker.memory.memonster.memtypes import *
+from wizwalker.memory.memonster import memclass
 from wizwalker.memory.memory_objects.gamebryo_camera import GamebryoCamera
 
 from .client_object import ClientObject
 
 
-class CameraController(MemoryView):
+@memclass
+class CameraController(MemType):
     # TODO: camera 0x88 offset
 
-    @staticmethod
-    def obj_size() -> int:
-        # unverified
+    def fieldsize(self) -> int:
         return 144
 
     position = MemXYZ(108)
@@ -24,21 +22,15 @@ class CameraController(MemoryView):
     roll = MemFloat32(124)
     yaw = MemFloat32(128)
 
+    gamebryo_camera = MemPointer[GamebryoCamera](136, GamebryoCamera())
+
     # TODO: Make work
-    # async def gamebryo_camera(self) -> Optional[DynamicGamebryoCamera]:
-    #     addr = await self.read_value_from_offset(136, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicGamebryoCamera(self.hook_handler, addr)
-
-    # async def update_orientation(self, orientation: Orient = None):
+    # def update_orientation(self, orientation: Orient = None):
     #     """
     #     Utility function that sets the camera's matrix using pitch, yaw and roll
     #     """
-    #     gcam = await self.gamebryo_camera()
-    #     view = await gcam.cam_view()
+    #     gcam = self.gamebryo_camera.read()
+    #     view = gcam.cam_view.read()
     #     mat = await gcam.base_matrix()
     #     if orientation is None:
     #         orientation = await self.orientation()
@@ -48,29 +40,18 @@ class CameraController(MemoryView):
     #     await view.write_view_matrix(mat)
 
 
+@memclass
 class FreeCameraController(CameraController):
     pass
 
 
+@memclass
 class ElasticCameraController(CameraController):
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
+        # unverified
         return 612
 
-    # TODO: Make work
-    # async def attached_client_object(self) -> Optional[DynamicClientObject]:
-    #     addr = await self.read_value_from_offset(264, "unsigned long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicClientObject(self.hook_handler, addr)
-
-    # async def write_attached_client_object(self, attached_client_object: Union[ClientObject, int]):
-    #     if isinstance(attached_client_object, ClientObject):
-    #         attached_client_object = await attached_client_object.read_base_address()
-
-    #     await self.write_value_to_offset(264, attached_client_object, "unsigned long long")
+    attached_client_object = MemPointer(264, ClientObject())
 
     distance = MemFloat32(300)
     distance_target = MemFloat32(304)

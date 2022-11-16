@@ -2,29 +2,22 @@ from typing import Optional
 
 from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memonster.memtypes import *
+from wizwalker.memory.memonster import memclass
+from wizwalker.memory.memory_objects.client_object import _ClientObjectClientObjectPtr
 
 
+@memclass
 class ActorBody(PropertyClass):
     """
     Base class for ActorBody
     """
 
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
         # unverified
         return 140
 
     # note: internal
-    # TODO: Make work
-    """
-    async def parent_client_object(self) -> Optional["memory_objects.DynamicClientObject"]:
-        addr = await self.read_value_from_offset(72, "unsigned long long")
-
-        if addr == 0:
-            return None
-
-        return memory_objects.DynamicClientObject(self.hook_handler, addr)
-    """
+    parent_client_object = _ClientObjectClientObjectPtr(72)
 
     position = MemXYZ(88)
 

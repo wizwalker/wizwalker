@@ -5,7 +5,8 @@ import warnings
 
 from loguru import logger
 
-from . import memanagers, memutils
+from . import memutils
+from .memonster import memanagers
 from wizwalker import HookAlreadyActivated, HookNotActive, HookNotReady
 from .hooks import (
     ClientHook,

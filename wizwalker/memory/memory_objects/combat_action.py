@@ -1,20 +1,19 @@
-from typing import Optional
-
-from wizwalker.memory.memonster.memanagers import MemoryView
+from wizwalker.memory.memonster import memclass
 from wizwalker.memory.memonster.memtypes import *
 from .spell import Spell
 
 
 # TODO: document
-class CombatAction(MemoryView):
-    @staticmethod
-    def obj_size() -> int:
-        # unverified
+@memclass
+class CombatAction(MemType):
+    def fieldsize(self) -> int:
         return 348
 
     spell_caster = MemInt32(72)
 
     target_subcircle_list = MemInt32(80)
+    
+    spell = MemPointer[Spell](96, Spell)
 
     spell_hits = MemChar(112) # might be an int8, but leaving for now
     interrupt = MemBool(113)
@@ -50,15 +49,3 @@ class CombatAction(MemoryView):
     pet_casted = MemBool(340)
     pet_cast_target = MemInt32(344)
 
-
-    # async def crit_hit_list(self) -> class TargetCritHit:
-    #     return await self.read_value_from_offset(352, "class TargetCritHit")
-
-    # TODO: Make work
-    # async def spell(self) -> Optional[DynamicSpell]:
-    #     addr = await self.read_value_from_offset(96, "long long")
-
-    #     if addr == 0:
-    #         return None
-
-    #     return DynamicSpell(self.hook_handler, addr)

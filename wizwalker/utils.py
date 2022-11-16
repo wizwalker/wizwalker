@@ -17,6 +17,7 @@ import appdirs
 
 from wizwalker import ExceptionalTimeout
 from wizwalker.constants import Keycode, kernel32, user32, gdi32
+from wizwalker.memory.memonster.addon_primitives import *
 
 
 DEFAULT_INSTALL = "C:/ProgramData/KingsIsle Entertainment/Wizard101"

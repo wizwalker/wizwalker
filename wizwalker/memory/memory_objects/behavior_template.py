@@ -1,14 +1,15 @@
 from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memonster.memtypes import *
+from wizwalker.memory.memonster import memclass
 
 
+@memclass
 class BehaviorTemplate(PropertyClass):
     """
     Base class for behavior templates
     """
 
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
         # unverified
         return 90
 

@@ -9,7 +9,7 @@ from wizwalker.errors import (
     PatternFailed,
     PatternMultipleResults
 )
-from wizwalker.utils import XYZ, Orient
+from .memonster.addon_primitives import XYZ, Orient
 from . import memanagers, memutils
 from .handler import HookHandler
 
@@ -291,7 +291,7 @@ class MemoryObject:
         return mapped_return
 
 
-class PropertyClass(memanagers.MemoryView):
+class PropertyClass(memanagers.MemType):
     async def maybe_read_type_name(self) -> str:
         try:
             return await self.read_type_name()

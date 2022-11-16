@@ -36,7 +36,8 @@ def get_init_code(params: list[str], initfields: list[str], defaults: dict[str, 
             txt += f"\tself.{name}={defaults[name]}\n"
         else:
             txt += f"\tself.{name}=None\n"    
-    # TODO: Maybe generate super().__init__() call    
+    txt += "\tself.__post_init__()"
+    # TODO: Maybe generate super().__init__() call
     return txt
 
 
