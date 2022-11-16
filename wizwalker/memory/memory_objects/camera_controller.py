@@ -2,8 +2,8 @@ from typing import Optional, Union
 
 from wizwalker import utils
 from wizwalker.memory.memory_object import MemoryObject
-from wizwalker.memory.memanagers import MemoryView
-from wizwalker.memory.memtypes import *
+from wizwalker.memory.memonster.memanagers import MemoryView
+from wizwalker.memory.memonster.memtypes import *
 from wizwalker.memory.memory_objects.gamebryo_camera import GamebryoCamera
 
 from .client_object import ClientObject

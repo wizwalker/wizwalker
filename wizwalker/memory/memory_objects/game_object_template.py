@@ -1,7 +1,7 @@
 from typing import List
 
 from wizwalker.memory.memory_object import PropertyClass
-from wizwalker.memory.memtypes import *
+from wizwalker.memory.memonster.memtypes import *
 from .enums import ObjectType
 from .behavior_template import BehaviorTemplate
 

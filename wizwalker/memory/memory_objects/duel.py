@@ -4,7 +4,7 @@ from wizwalker.errors import MemoryReadError
 from wizwalker.utils import XYZ
 from wizwalker.memory import HookHandler
 from wizwalker.memory.memory_object import PropertyClass
-from wizwalker.memory.memtypes import *
+from wizwalker.memory.memonster.memtypes import *
 from .combat_participant import CombatParticipant
 from .enums import DuelExecutionOrder, DuelPhase, SigilInitiativeSwitchMode
 from .combat_resolver import CombatResolver

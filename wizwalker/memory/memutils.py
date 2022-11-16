@@ -7,7 +7,7 @@ import pymem.process
 
 from ctypes import wintypes
 
-from . import memanagers
+from .memonster import memanagers
 from wizwalker import (
     PatternFailed,
     PatternMultipleResults,

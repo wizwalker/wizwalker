@@ -1,5 +1,5 @@
 from wizwalker.memory.memory_object import PropertyClass
-from wizwalker.memory.memtypes import *
+from wizwalker.memory.memonster.memtypes import *
 
 
 class ClientZone(PropertyClass):

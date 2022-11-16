@@ -1,7 +1,7 @@
 from typing import Optional
 
 from wizwalker.memory import memanagers
-from wizwalker.memory.memtypes import *
+from wizwalker.memory.memonster.memtypes import *
 from wizwalker.memory.memory_object import PropertyClass
 from .behavior_template import BehaviorTemplate
 

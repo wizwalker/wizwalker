@@ -2,7 +2,7 @@ from typing import List
 
 from wizwalker.memory import memanagers
 from wizwalker.memory.memory_object import PropertyClass
-from wizwalker.memory.memtypes import *
+from wizwalker.memory.memonster.memtypes import *
 
 
 class GameStats(PropertyClass):

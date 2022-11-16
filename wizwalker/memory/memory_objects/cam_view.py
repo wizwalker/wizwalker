@@ -1,5 +1,5 @@
-from wizwalker.memory.memanagers import MemoryView
-from wizwalker.memory.memtypes import *
+from wizwalker.memory.memonster.memanagers import MemoryView
+from wizwalker.memory.memonster.memtypes import *
 
 
 class CamView(MemoryView):
