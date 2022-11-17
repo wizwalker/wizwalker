@@ -259,13 +259,16 @@ class MemPointer(MemType[MTT]):
     def load_lazy_dummy(self, lazy_dummy: LazyDummy[MTT]):
         self._lazy_dummy = lazy_dummy
 
-    def alloc_dummy(self, dummy: MTT = None):
-        ## Replaces the stored dummy, allocates it and writes the new address
+    def load_dummy(self, dummy):
         if dummy is not None:
             if isinstance(dummy, LazyDummy):
                 self.load_lazy_dummy(dummy)
             else:
                 self.load_lazy_dummy(dummy.get_lazy_dummy())
+
+    def alloc_dummy(self, dummy: MTT = None):
+        ## Replaces the stored dummy, allocates it and writes the new address
+        self.load_dummy(dummy)
         if self._lazy_dummy is None:
             raise ValueError()
 

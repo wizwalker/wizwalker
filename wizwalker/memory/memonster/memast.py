@@ -42,8 +42,19 @@ def get_init_code(params: list[str], initfields: list[str], defaults: dict[str, 
     return txt
 
 
+class StubReplacer(ast.NodeTransformer):
+    def __init__(self, typemap) -> None:
+        super().__init__()
+        self.typemap = typemap
+
+    def visit_Name(self, node: ast.Name):
+        if node.id in self.typemap:
+            node.id = self.typemap[node.id]
+        return node
+
+
 ClsFieldTuple = namedtuple("ClsFieldTuple", "seen_vars, defaults, params, initfields")
-def lift_fields(tree) -> ClsFieldTuple:
+def lift_fields(tree, typemap) -> ClsFieldTuple:
     seen_vars = set([])
     defaults = {}
     params = []
@@ -56,6 +67,7 @@ def lift_fields(tree) -> ClsFieldTuple:
         for bod in b.body:
             match type(bod):
                 case ast.Assign:
+                    StubReplacer(typemap).visit(bod)
                     seen_vars.add(bod.targets[0].id)
                     if hasattr(bod, "value") and bod.value is not None:
                         defaults[bod.targets[0].id] = ast.unparse(bod.value)
@@ -74,21 +86,22 @@ def lift_fields(tree) -> ClsFieldTuple:
                     pass
     return ClsFieldTuple(seen_vars, defaults, params, initfields)
 
-def memclass(arg):
-    call_postinit = arg if type(arg) == bool else True
+def memclass(_call_postinit=True, typemap={}):
+    call_postinit = _call_postinit if type(_call_postinit) == bool else True
     def wrap(cls):
         globals = sys.modules[cls.__module__].__dict__
 
         class_source = inspect.getsource(cls)
-        decostart = class_source.find("@memclass(")
-        if decostart > 0:
-            decoend = class_source.find("e)", decostart)
-            class_source = class_source[:decostart] + class_source[decoend+2:]
+        decostart = class_source.find("@memclass")
+        if decostart >= 0:
+            # TODO: Replace with something safer like walking the ast
+            decoend = class_source.find("class ", decostart)
+            class_source = class_source[decoend:]
         class_source = class_source.replace("@memclass", "").strip()
         class_ast = ast.parse(class_source)
 
         # grab all the fields
-        fielddata = lift_fields(class_ast)
+        fielddata = lift_fields(class_ast, typemap)
         
         # handle inheritance, inject params from parents into constructor
         parent_params = []
@@ -117,7 +130,7 @@ def memclass(arg):
             full_params,
             full_initfields,
             full_defaults,
-            call_postinit
+            call_postinit,
         )
         #print(cls.__name__)
         #print(initcode)
@@ -149,10 +162,19 @@ def memclass(arg):
         
         return cls
 
-    if type(arg) == bool:
+    if type(_call_postinit) == bool:
         return wrap
-    return wrap(arg)
+    return wrap(_call_postinit)
 
+
+# TODO: Generator for semi-common pattern
+# (maybe multiple inheritance would work as well)
+"""
+    class _HashNodePtr(MemPointer["HashNode"]):
+        def __post_init__(self):
+            self._lazy_dummy = LazyDummy(HashNode, (0,))
+            return super().__post_init__()
+"""
 
 
 if __name__ == "__main__":

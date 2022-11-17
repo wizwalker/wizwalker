@@ -1,14 +1,15 @@
 from typing import List
 
 from wizwalker.memory.memory_object import PropertyClass
+from wizwalker.memory.memonster import memclass
 from wizwalker.memory.memonster.memtypes import *
 from .enums import ObjectType
 from .behavior_template import BehaviorTemplate
 
 
+@memclass
 class WizGameObjectTemplate(PropertyClass):
-    @staticmethod
-    def obj_size() -> int:
+    def fieldsize(self) -> int:
         # unverified
         return 520
 

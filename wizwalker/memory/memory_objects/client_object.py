@@ -7,11 +7,17 @@ from .game_stats import GameStats
 from .game_object_template import WizGameObjectTemplate
 from .behavior_instance import BehaviorInstance
 from .client_zone import ClientZone
+from .actor_body import ActorBody
 
 
 @memclass(False)
 class _ClientObjectClientObjectPtr(MemPointer["ClientObject"]):
-    pass # workaround. __post_init__ is below ClientObject and puts the lazy dummy instance
+    def __post_init__(self):
+        self._lazy_dummy = LazyDummy(ClientObject, (0,))
+        return super().__post_init__()
+
+class _ClientObject(MemType):
+    pass
 
 @memclass
 class ClientObject(PropertyClass):
@@ -43,20 +49,26 @@ class ClientObject(PropertyClass):
     scale = MemFloat32(196)
     
     # note: not defined
-    parent = _ClientObjectClientObjectPtr(208)
+    parent = MemPointer(208, _ClientObject)
+
+    # TODO: test if this is actually active behaviors
+    inactive_behaviors = MemCppVector(224, MemCppSharedPointer(0, BehaviorInstance))
 
     # note: not defined
     client_zone = MemPointer[ClientZone](304, ClientZone)
+
     zone_tag_id = MemUInt32(334)
+
+    # note: not defined
+    children = MemCppVector(384, MemCppSharedPointer(0, _ClientObject))
 
     character_id = MemUInt64(440)
 
     # Note: not defined
     game_stats = MemPointer[GameStats](544, GameStats)
 
-
     # helper method
-    async def object_name(self) -> Optional[str]:
+    def object_name(self) -> Optional[str]:
         """
         This client object's object name if it has one
         """
@@ -67,36 +79,18 @@ class ClientObject(PropertyClass):
         # explict None
         return None
 
+    # helper method
+    def actor_body(self) -> Optional[ActorBody]:
+        for behavior in self.inactive_behaviors.read():
+            behavior: BehaviorInstance
+            if behavior.behavior_name() == "AnimationBehavior":
+                view = behavior._view.ptr_view(ActorBody().fieldsize(), 0x70)
+                if view.backend.address() == 0:
+                    return None
+                return ActorBody.from_view(view)
 
 
     # TODO: Make work
-
-    # # TODO: test if this is actually active behaviors
-    # async def inactive_behaviors(self) -> List[BehaviorInstance]:
-    #     """
-    #     This client object's inactive behaviors
-
-    #     Returns:
-    #         List of DynamicBehaviorInstace
-    #     """
-    #     behaviors = []
-    #     for addr in await self.read_shared_vector(224):
-    #         if addr != 0:
-    #             behaviors.append(BehaviorInstance(self.hook_handler, addr))
-
-    #     return behaviors
-
-    # # helper method
-    # async def actor_body(self) -> Optional[ActorBody]:
-    #     for behavior in await self.inactive_behaviors():
-    #         if await behavior.behavior_name() == "AnimationBehavior":
-    #             addr = await behavior.read_value_from_offset(0x70, "unsigned long long")
-
-    #             if addr == 0:
-    #                 return None
-
-    #             return DynamicActorBody(self.hook_handler, addr)
-
     # # helper method
     # async def display_name(self) -> Optional[str]:
     #     """
@@ -112,26 +106,6 @@ class ClientObject(PropertyClass):
     #     # explict None
     #     return None
 
-    # # note: not defined
-    # async def children(self) -> List["DynamicClientObject"]:
-    #     """
-    #     This client object's child client objects
-
-    #     Returns:
-    #         List of DynamicClientObject
-    #     """
-    #     children = []
-    #     for addr in await self.read_shared_vector(384):
-    #         children.append(DynamicClientObject(self.hook_handler, addr))
-
-    #     return children
-
-
-# Workaround to make definition order legal. Puts the dummy
-def ___ClientObjectClientObjectPtrpost_init__(self):
-    self.lazy_dummy = ClientObject().get_lazy_dummy()
-    super(_ClientObjectClientObjectPtr, self).__post_init__()
-_ClientObjectClientObjectPtr.__post_init__ = ___ClientObjectClientObjectPtrpost_init__
 
 
 # TODO: Update

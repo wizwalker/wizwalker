@@ -3,7 +3,7 @@ from typing import Optional
 from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memonster.memtypes import *
 from wizwalker.memory.memonster import memclass
-from wizwalker.memory.memory_objects.client_object import _ClientObjectClientObjectPtr
+from wizwalker.memory.memory_objects.client_object import ClientObject
 
 
 @memclass
@@ -17,7 +17,7 @@ class ActorBody(PropertyClass):
         return 140
 
     # note: internal
-    parent_client_object = _ClientObjectClientObjectPtr(72)
+    parent_client_object = MemPointer(72, ClientObject)
 
     position = MemXYZ(88)
 

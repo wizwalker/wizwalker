@@ -1,13 +1,18 @@
 from typing import List
 
 from wizwalker.memory import memanagers
+from wizwalker.memory.memonster import memclass
 from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memonster.memtypes import *
 
 
+@memclass
 class GameStats(PropertyClass):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
+    #
+    # TODO: PUT SOMETHING!!!!!!
+    #
+    def fieldsize(self) -> int:
+        return super().fieldsize()
 
     def max_hitpoints(self) -> int:
         """

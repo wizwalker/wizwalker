@@ -1,5 +1,6 @@
 from wizwalker.memory.memory_object import PropertyClass
 from wizwalker.memory.memonster import memclass
+from wizwalker.memory.memonster.memtypes import *
 from .duel import Duel
 
 
@@ -9,6 +10,4 @@ class ClientDuelManager(PropertyClass):
         # unverified
         return 24
 
-    # TODO: Make work
-    # async def duelmap(self) -> dict[int, DynamicDuel]:
-    #     return await self.read_std_map(8, DynamicDuel)
+    duelmap = MemCppTree(8, Duel)
