@@ -369,16 +369,14 @@ class CurrentDuel(Duel):
             self._duel_manager_addr = mov_instruction_addr + 7 + rip_offset
         # avoid circular import
         from .client_duel_manager import DynamicClientDuelManager
-        while True:
-            try:
-                duel_manager = DynamicClientDuelManager(self.hook_handler, await self.read_typed(self._duel_manager_addr, "long long"))
-                for duel in (await duel_manager.duelmap()).values():
-                    for part in await duel.participant_list():
-                        if await part.owner_id_full() == await self.hook_handler.client.client_object.global_id_full():
-                            return await duel.read_base_address()
-                break
-            except:
-                pass
+        try:
+            duel_manager = DynamicClientDuelManager(self.hook_handler, await self.read_typed(self._duel_manager_addr, "long long"))
+            for duel in (await duel_manager.duelmap()).values():
+                for part in await duel.participant_list():
+                    if await part.owner_id_full() == await self.hook_handler.client.client_object.global_id_full():
+                        return await duel.read_base_address()
+        except:
+            pass
         return 0
 
     async def duel_phase(self) -> DuelPhase:
