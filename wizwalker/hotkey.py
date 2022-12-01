@@ -90,7 +90,7 @@ class KeyListener:
             self.modifiers = []
             self.key_pressed = []
             self.last_key_pressed = None
-            self.mod_keycodes = [Keycode.Left_CONTROL, Keycode.Right_CONTROL, Keycode.Left_SHIFT, Keycode.Right_SHIFT, Keycode.Alt]
+            self.mod_keycodes = [Keycode.Left_CONTROL, Keycode.Right_CONTROL, Keycode.Left_SHIFT, Keycode.Right_SHIFT, Keycode.ALT]
             self.hook = None
 
         def LowLevelKeyboardProc(self, nCode, wParam, lParam):
