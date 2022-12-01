@@ -105,22 +105,21 @@ class KeyListener:
             """
 
             self.hotkey_match()
-            
 
             if wParam == win32con.WM_SYSKEYDOWN:
-                vkCode = lParam[0]
+                vkCode = lParam[0] >> 32
                 self.handle_keydown(vkCode)
         
             if wParam == win32con.WM_SYSKEYUP:
-                vkCode = lParam[0]
+                vkCode = lParam[0] >> 32
                 self.handle_keyup(vkCode)
 
             if nCode == HC_ACTION and wParam == win32con.WM_KEYUP:
-                vkCode = lParam[0]
+                vkCode = lParam[0] >> 32
                 self.handle_keyup(vkCode)
                 
             if nCode == HC_ACTION and wParam == WM_KEYDOWN:
-                vkCode = lParam[0]
+                vkCode = lParam[0] >> 32
                 self.handle_keydown(vkCode)
                 
             return self.user32.CallNextHookEx(Hook().is_hooked , nCode, wParam, lParam)
