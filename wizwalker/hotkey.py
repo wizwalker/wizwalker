@@ -1,124 +1,67 @@
 import asyncio
+import win32con
+from ctypes import windll,byref,c_int, POINTER, CFUNCTYPE
 import ctypes
-import ctypes.wintypes
-from contextlib import suppress
+from ctypes.wintypes import WPARAM, LPARAM, MSG
+from enum import Enum
 from enum import IntFlag
 from typing import Callable, Union
+from icecream import ic
 
-import janus
+from wizwalker.constants import Keycode, ModifierKeys, user32
 
-from wizwalker import HotkeyAlreadyRegistered
-from wizwalker.constants import Keycode, user32
+WH_KEYBOARD_LL = 13
+WM_KEYDOWN = 0x0100
+WM_KEYUP = 257
+HC_ACTION = 0
+
+LLKP_decl = CFUNCTYPE(c_int, c_int, WPARAM, POINTER(LPARAM))
 
 
-MAX_HOTKEY_ID = 0xBFFF
-
-
-class _GlobalHotkeyIdentifierManager:
+class Hook:
+    
     def __init__(self):
-        self.hotkey_id_list = []
-        self.hotkey_lock = asyncio.Lock()
+        """
+        Constructor for the hook class.
 
-    async def get_id(self) -> int:
-        # so an id isn't given out twice
-        async with self.hotkey_lock:
-            if (id_list_len := len(self.hotkey_id_list)) == MAX_HOTKEY_ID:
-                raise RuntimeError(f"Max hotkey id of {MAX_HOTKEY_ID} reached")
+        Responsible for allowing methods to call functions from
+        user32.dll 
+        """
+        self.user32 = user32
+        self.is_hooked = None
+        
 
-            # all True
-            if sum(self.hotkey_id_list) == id_list_len:
-                self.hotkey_id_list.append(True)
-                return id_list_len + 1
+    def install_hook(self, ptr) -> bool:
+        """
+        Method for installing hook.
 
-            # at least one False
-            else:
-                index = self.hotkey_id_list.index(False)
-                self.hotkey_id_list[index] = True
-                return index + 1
+        Arguments
+            ptr: pointer to the callback function
+        """
 
-    async def free_id(self, hotkey_id: int):
-        async with self.hotkey_lock:
-            self.hotkey_id_list[hotkey_id - 1] = False
+        self.is_hooked = self.user32.SetWindowsHookExA(
+            WH_KEYBOARD_LL,
+            ptr,
+            0,
+            0
+        )
 
-            # all False
-            if sum(self.hotkey_id_list) == 0:
-                self.hotkey_id_list = []
+        if not self.is_hooked:
+            return False
 
+        return True
 
-_hotkey_id_manager = _GlobalHotkeyIdentifierManager()
+    def uninstall_hook(self):
+        """
+        Method for uninstalling the hook.
+        """
 
+        if self.is_hooked is None:
+            return
+        
+        self.user32.UnhookWindowsHookEx(self.is_hooked)
+        self.is_hooked = None
 
-class _GlobalHotkeyMessageLoop:
-    def __init__(self):
-        self.messages = []
-        self.message_loop_task = None
-        self.connected_instances = 0
-        self._message_loop_delay = 0.1
-
-    async def check_for_message(self, keycode: int, modifiers: int) -> bool:
-        if (keycode, modifiers) in self.messages:
-            self.messages.remove((keycode, modifiers))
-            return True
-
-        return False
-
-    async def message_loop(self):
-        while True:
-            # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-peekmessagew
-            message = ctypes.wintypes.MSG()
-            is_message = user32.PeekMessageW(
-                ctypes.byref(message),
-                None,
-                0x311,
-                0x314,
-                1,
-            )
-
-            if is_message:
-                # get lower 16 bits
-                modifiers = message.lParam & 0b1111111111111111
-                # get higher 16 bits
-                keycode = message.lParam >> 16
-
-                self.messages.append((keycode, modifiers))
-
-                user32.DispatchMessageW(ctypes.byref(message))
-
-            await asyncio.sleep(self._message_loop_delay)
-
-    def connect(self):
-        if not self.message_loop_task:
-            self.message_loop_task = asyncio.create_task(self.message_loop())
-
-        self.connected_instances += 1
-
-    def disconnect(self):
-        self.connected_instances -= 1
-
-        if self.connected_instances == 0:
-            if self.message_loop_task:
-                with suppress(asyncio.CancelledError):
-                    self.message_loop_task.cancel()
-
-    def set_message_loop_delay(self, new_delay: float):
-        self._message_loop_delay = new_delay
-
-
-_hotkey_message_loop = _GlobalHotkeyMessageLoop()
-
-
-class ModifierKeys(IntFlag):
-    """
-    Key modifiers
-    """
-
-    ALT = 0x1
-    CTRL = 0x2
-    NOREPEAT = 0x4000
-    SHIFT = 0x4
-
-
-# TODO: remove in 2.0
 class Hotkey:
     """
     A hotkey to be listened to
@@ -126,333 +69,242 @@ class Hotkey:
     Args:
         keycode: Keycode to listen for
         callback: Coroutine to run when the key is pressed
-        modifiers: Key modifiers to apply
+        modifiers: List of Key modifiers to apply
     """
 
     def __init__(
         self,
         keycode: Keycode,
         callback: Callable,
-        *,
-        modifiers: Union[ModifierKeys, int] = 0,
+        *args: Union[ModifierKeys, int],
     ):
         self.keycode = keycode
-        self.modifiers = modifiers
+        self.modifiers = args
         self.callback = callback
 
 
-# TODO: remove in 2.0, make sure to also remove janus requirement
-class Listener:
-    """
-    Hotkey listener
+class KeyListener:
+        def __init__(self, hotkey: list[Hotkey]):
+            self.hotkeys = hotkey[0]
+            self.user32 = user32
+            self.modifiers = []
+            self.key_pressed = []
+            self.last_key_pressed = None
+            self.mod_keycodes = [Keycode.Left_CONTROL, Keycode.Right_CONTROL, Keycode.Left_SHIFT, Keycode.Right_SHIFT, Keycode.Alt]
+            self.hook = None
 
-    Args:
-        hotkeys: list of Hotkeys to be listened for
-        loop: The event loop to use; defaults to current
+        def LowLevelKeyboardProc(self, nCode, wParam, lParam):
+            """
+            Hook procedure to monitor and log keyboard events.
 
-    Examples:
-        .. code-block:: py
+            Arguments:
+                nCode       = HC_ACTION code
+                wParam      = Keyboard event message code
+                lParam      = Address of keyboard input event
 
-                import asyncio
+            """
 
-                from wizwalker import Hotkey, Keycode, Listener
+            self.hotkey_match()
+            
+
+            if wParam == win32con.WM_SYSKEYDOWN:
+                vkCode = lParam[0]
+                self.handle_keydown(vkCode)
+        
+            if wParam == win32con.WM_SYSKEYUP:
+                vkCode = lParam[0]
+                self.handle_keyup(vkCode)
+
+            if nCode == HC_ACTION and wParam == win32con.WM_KEYUP:
+                vkCode = lParam[0]
+                self.handle_keyup(vkCode)
+                
+            if nCode == HC_ACTION and wParam == WM_KEYDOWN:
+                vkCode = lParam[0]
+                self.handle_keydown(vkCode)
+                
+            return self.user32.CallNextHookEx(Hook().is_hooked , nCode, wParam, lParam)
+
+        def handle_keyup(self, vkCode: int):
+            self.nonrepeat_logic()
+            keycode = self.key_type(Keycode(vkCode))
+            if type(keycode) == Keycode:  # if keycode is a type Keycode
+                if keycode in self.key_pressed:
+                    self.key_pressed.remove(keycode) # remove the type Keycodejn to the list of keys_pressed
+            else:
+                if keycode in self.modifiers:
+                    self.modifiers.remove(keycode) # else remove the ModifierKeys to the modifiers list
 
 
-                async def main():
-                    async def callback():
-                        print("a was pressed")
-
-                    hotkey = Hotkey(Keycode.A, callback)
-                    listener = Listener(hotkey)
-
-                    listener.listen_forever()
-
-                    # your program here
-                    while True:
-                        await asyncio.sleep(1)
+        def handle_keydown(self, vkCode: int):
+            keycode = self.key_type(Keycode(vkCode))
+            if type(keycode) == Keycode:  # if keycode is a type Keycode
+                self.key_pressed.append(keycode) # add the type Keycode to the list of keys_pressed
+            else:
+                if keycode not in self.modifiers: # makes sure there isn't duplicates when holding down key
+                    self.modifiers.append(keycode) # else add the ModifierKeys to the modifiers list
+            self.last_key_pressed = keycode 
 
 
+        def key_type(self, keycode: Keycode):
 
-                if __name__ == "__main__":
-                    asyncio.run(main())
-    """
+            """
+            Finds if Keycode is a modifier key
+            """
 
-    def __init__(self, *hotkeys: Hotkey):
-        self.ready = False
+            if keycode in self.mod_keycodes:
+                if keycode == Keycode.Left_CONTROL:
+                    return ModifierKeys.CTRL
+                elif keycode == Keycode.Right_CONTROL:
+                    return ModifierKeys.CTRL
+                elif keycode == Keycode.Left_SHIFT:
+                    return ModifierKeys.SHIFT
+                elif keycode == Keycode.Right_SHIFT:
+                    return ModifierKeys.SHIFT
+                elif keycode == Keycode.Alt:
+                    return ModifierKeys.ALT             
+            
+            return keycode
 
-        self._loop = asyncio.get_event_loop()
-        self._hotkeys = hotkeys
-        self._callbacks = {}
-        self._queue = None
-        self._message_task = None
-        self._id_counter = 1
-        self._closed = False
 
-    def listen_forever(self) -> asyncio.Task:
-        """
-        return a task listening to events
-        """
-        return asyncio.create_task(self._listen_forever_loop())
+        def run_callback(self, c: Callable):
+            return c()
 
-    async def _listen_forever_loop(self):
-        while True:
-            await self.listen()
 
-    async def listen(self):
-        """
-        Listen for one event
-        """
-        self._queue = janus.Queue()
-        if self._message_task is None:
-            self._message_task = self._loop.run_in_executor(None, self._add_and_listen)
+        def hotkey_match(self) -> None:
+            """ 
+            Finds if Listener has matched hotkey
+            """
+            #ic(self.key_pressed)
+            #ic(self.last_key_pressed)
+            #ic(self.modifiers)
 
-        message = await self._queue.async_q.get()
-        keycode, modifiers = message.split("|")
-        keycode = int(keycode)
-        modifiers = int(modifiers)
+            if self.key_pressed:
+                hotkeys = [hotkey for hotkey in self.hotkeys if not ModifierKeys.NOREPEAT in hotkey.modifiers]
+                for hotkey in hotkeys:
+                    if hotkey.keycode == self.key_pressed[0] and list(hotkey.modifiers) == self.modifiers:
+                        self.run_callback(hotkey.callback) 
+                        self.last_key_pressed = None
+                        self.key_pressed = []
+                        return
 
-        # TODO: add to self._tasks and cancel in self.close
-        self._loop.create_task(self._callbacks[(keycode, modifiers)]())
 
-    # async for future proofing
-    async def close(self):
-        self._closed = True
+        def nonrepeat_logic(self) -> None:
+            if self.key_pressed:
+                if len(set(self.key_pressed)) > 1: # makes it check if multiple key codes in key_pressed which is unwanted
+                        self.key_pressed = [self.last_key_pressed]
 
-    def _add_and_listen(self):
-        if not self.ready:
-            self._add_hotkeys()
-        self.ready = True
+                nonrepeat_hotkeys = [hotkey for hotkey in self.hotkeys if ModifierKeys.NOREPEAT in hotkey.modifiers]
+                for hotkey in nonrepeat_hotkeys:
+                    if ModifierKeys.NOREPEAT in hotkey.modifiers:
+                        hotkey_modifiers = list(hotkey.modifiers)
+                        hotkey_modifiers.remove(ModifierKeys.NOREPEAT)
+                        if hotkey_modifiers == False:
+                            #print("hi")
+                            hotkey_modifiers = []
+                        #print(hotkey_modifiers)
+                        #print(self.modifiers)
+                        if list(set(self.key_pressed))[0] == hotkey.keycode and hotkey_modifiers == self.modifiers:
+                            if len(self.key_pressed) > 1 and self.key_pressed[0] == self.last_key_pressed:
+                                ic("held down")
+                                self.run_callback(hotkey.callback) 
+                                self.key_pressed = []
+                                return
+                            self.run_callback(hotkey.callback)
 
-        while True:
+
+        def install_keyhook(self):
+            """
+            Install hook
+            """
+            self.hook = Hook()
+            callback = LLKP_decl((self.LowLevelKeyboardProc))
+            self.hook.install_hook(callback)
+            self.message()
+
+
+        def uninstall_hook(self):
+            """
+            uninstall hook
+            """
+            self.hook.uninstall_hook()
+
+
+        def message(self):
             # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-peekmessagew
-            message = ctypes.wintypes.MSG()
-            is_message = user32.PeekMessageW(
-                ctypes.byref(message),
-                None,
-                0x311,
-                0x314,
-                1,
-            )
-
-            if is_message:
-                modifiers = message.lParam & 0b1111111111111111
-                keycode = message.lParam >> 16
-
-                self._queue.sync_q.put(f"{keycode}|{modifiers}")
-
-                user32.DispatchMessageW(ctypes.byref(message))
-
-            else:
-                if self._closed:
-                    break
-
-    def _add_hotkeys(self):
-        for hotkey in self._hotkeys:
-            if self._register_hotkey(hotkey.keycode.value, int(hotkey.modifiers)):
-                # No repeat is not included in the return message
-                no_norepeat = hotkey.modifiers & ~ModifierKeys.NOREPEAT
-                self._callbacks[(hotkey.keycode.value, no_norepeat)] = hotkey.callback
-
-            else:
-                raise HotkeyAlreadyRegistered(
-                    f"{hotkey.keycode} with modifers {hotkey.modifiers}"
+            message = MSG()
+            while True:
+                is_message = self.user32.PeekMessageW(
+                    ctypes.byref(message),
+                    None,
+                    0x311,
+                    0x314,
+                    1,
                 )
 
-    def _register_hotkey(self, keycode: int, modifiers: int = 0) -> bool:
-        res = user32.RegisterHotKey(None, self._id_counter, modifiers, keycode)
-        self._id_counter += 1
-
-        return res != 0
 
 
-class HotkeyListener:
-    """
-    Examples:
-        .. code-block:: py
+class Listener():
 
-                import asyncio
-
-                from wizwalker import Keycode, HotkeyListener, ModifierKeys
-
-
-                async def main():
-                    listener = HotkeyListener()
-
-                    async def callback():
-                        print("a was pressed; removing it")
-                        await listener.remove_hotkey(Keycode.A, modifiers=ModifierKeys.NOREPEAT)
-
-                    await listener.add_hotkey(Keycode.A, callback, modifiers=ModifierKeys.NOREPEAT)
-
-                    listener.start()
-
-                    try:
-                        # your program here
-                        while True:
-                            await asyncio.sleep(1)
-
-                    finally:
-                        await listener.stop()
+    def __init__(self, *hotkey: Hotkey):
+        self._loop = None
+        self.hotkeys = list(hotkey)
+        self.hook = None
+        self.key_listener = None
+        self.message_loop_task = None
 
 
-                if __name__ == "__main__":
-                    asyncio.run(main())
-    """
+    def message_loop(self):
+        while True:
+            self.key_listener.message()
 
-    def __init__(self, *, sleep_time: float = 0.1):
-        self.sleep_time = sleep_time
 
-        self._hotkeys = {}
-        self._callbacks = {}
-        self._callback_tasks = []
-
-        self._message_loop_task = None
-
-    @property
-    def is_running(self) -> bool:
-        """
-        If this hotkey listener is running
-        """
-        return self._message_loop_task is not None
-
-    # TODO: 2.0: make async
     def start(self):
         """
         Start the listener
         """
-        if self._message_loop_task:
+
+        if self.message_loop_task:
             raise ValueError("This listener has already been started")
+        
+        self.key_listener = KeyListener(self.hotkeys)
+        self.key_listener.install_keyhook()
+        #self.message_loop()
 
-        _hotkey_message_loop.connect()
 
-        self._message_loop_task = asyncio.create_task(self._message_loop())
-
-        # this is because making this method async would be breaking
-        loop = asyncio.get_event_loop()
-
-        for keycode, modifiers in self._hotkeys:
-            loop.create_task(self._register_hotkey(keycode, modifiers))
-
-    async def stop(self):
+    def stop(self):
         """
         Stop the listener
         """
-        _hotkey_message_loop.disconnect()
+        #TODO make it work
+        if not self.message_loop_task:
+            raise ValueError("This listener has already been stopped")
 
-        for hotkey_id in self._hotkeys.values():
-            res = user32.UnregisterHotKey(None, hotkey_id)
+        self.key_listener.uninstall_hook()
+        #self.key_listener = None
 
-            if res != 0:
-                await _hotkey_id_manager.free_id(hotkey_id)
+        #self.message_loop_task.cancel()
+        #self.message_loop_task = None
+        
 
-        with suppress(asyncio.CancelledError):
-            if self._message_loop_task:
-                self._message_loop_task.cancel()
-                self._message_loop_task = None
+def main():
+    def callback2():
+        print("notfaj was pressed")
+    
+    def callback1():
+        print("a was pressed")
+    
+    def callback0():
+        print("s was pressed")
 
-            for task in self._callback_tasks:
-                task.cancel()
+    hotkey = [
+            Hotkey(Keycode.A, callback1),
+            Hotkey(Keycode.S, callback0, ModifierKeys.CTRL, ModifierKeys.NOREPEAT),
+            Hotkey(Keycode.D, callback2, ModifierKeys.ALT, ModifierKeys.SHIFT )
+            ]
 
-    async def add_hotkey(
-        self, key: Keycode, callback: Callable, *, modifiers: ModifierKeys = 0
-    ):
-        """
-        Add a hotkey to listen for
+    hotkey_L = Listener(hotkey)
+    hotkey_L.start()
 
-        Args:
-            key: The keycode to use
-            callback: The hotkey callback
-            modifiers: The hotkey modifer keys
-        """
-        if await self._register_hotkey(key.value, int(modifiers)):
-            # No repeat is not included in the return message
-            no_norepeat = modifiers & ~ModifierKeys.NOREPEAT
-            self._callbacks[(key.value, no_norepeat)] = callback
-
-        else:
-            raise ValueError(f"{key} with modifers {modifiers} already registered")
-
-    async def remove_hotkey(self, key: Keycode, *, modifiers: ModifierKeys = 0):
-        """
-        Remove a hotkey from this listener
-
-        Args:
-            key: The keycode of the hotkey to stop listening to
-            modifiers: Modifers of the hotkey to stop listening to
-        """
-        if self._hotkeys.get((key.value, modifiers)) is None:
-            raise ValueError(
-                f"No hotkey registered for key {key} with modifiers {modifiers}"
-            )
-
-        if not await self._unregister_hotkey(key.value, int(modifiers)):
-            raise ValueError(
-                f"Unregistering hotkey failure for key {key} with modifiers {modifiers}"
-            )
-
-        del self._hotkeys[(key.value, modifiers)]
-
-    @staticmethod
-    async def set_global_message_loop_delay(delay: float):
-        """
-        Set the global message loop delay
-
-        Args:
-            delay: The message loop delay
-        """
-        _hotkey_message_loop.set_message_loop_delay(delay)
-
-    # async so it isn't a breaking change later
-    async def clear(self):
-        """
-        Remove all hotkeys from this listener
-        """
-        for hotkey_id in self._hotkeys.values():
-            res = user32.UnregisterHotKey(None, hotkey_id)
-
-            if res != 0:
-                await _hotkey_id_manager.free_id(hotkey_id)
-
-        self._callbacks = {}
-        self._hotkeys = {}
-
-    async def _message_loop(self):
-        while True:
-            for keycode, modifiers in self._callbacks.keys():
-                if await _hotkey_message_loop.check_for_message(keycode, modifiers):
-                    await self._handle_hotkey(keycode, modifiers)
-
-            await asyncio.sleep(self.sleep_time)
-
-    async def _handle_hotkey(self, keycode: int, modifiers: int):
-        self._callback_tasks.append(
-            asyncio.create_task(self._callbacks[(keycode, modifiers)]())
-        )
-
-    async def _register_hotkey(self, keycode: int, modifiers: int = 0) -> bool:
-        hotkey_id = await _hotkey_id_manager.get_id()
-        # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey
-        res = user32.RegisterHotKey(None, hotkey_id, modifiers, keycode)
-
-        success = res != 0
-
-        if success:
-            self._hotkeys[(keycode, modifiers)] = hotkey_id
-
-        else:
-            await _hotkey_id_manager.free_id(hotkey_id)
-
-        return success
-
-    async def _unregister_hotkey(self, keycode: int, modifiers: int = 0):
-        hotkey_id = self._hotkeys[(keycode, modifiers)]
-
-        # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-unregisterhotkey
-        res = user32.UnregisterHotKey(None, hotkey_id)
-
-        success = res != 0
-
-        if success:
-            await _hotkey_id_manager.free_id(hotkey_id)
-
-        return success
+    
+main()
