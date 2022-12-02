@@ -785,7 +785,7 @@ class GameStats(PropertyClass):
         return await self.read_value_from_offset(324, "int")
 
     async def write_highest_character_world_on_account(self, highest_character_world_on_account: int):
-        return await self.write_value_to_offset(1028, highest_character_world_on_account, "int")
+        return await self.write_value_to_offset(324, highest_character_world_on_account, "int")
 
 
 
