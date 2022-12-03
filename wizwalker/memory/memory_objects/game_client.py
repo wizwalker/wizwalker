@@ -38,7 +38,7 @@ class GameClient(MemoryObject):
     async def free_camera_controller(self) -> Optional[DynamicFreeCameraController]:
         offset = await self.pattern_scan_offset_cached(
             rb"\x48\x8B\x93....\x48\x8B\x03\x4C\x8B\x88...."
-            rb"\x41\xB8\x01\x00\x00\x00\x48\x8B\xCB\x48\x3B\xFA\x75"
+            rb"\x41\xB8\x01\x00\x00\x00\x48\x8B\xCB\x48\x3B\xFA\x75",
             3,
             "free_camera_controller",
             0x21fe8
