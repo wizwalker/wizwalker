@@ -124,6 +124,57 @@ class CombatParticipant(PropertyClass):
 
         return DynamicPipCount(self.hook_handler, addr)
 
+    async def num_pips(self) -> int:
+        """
+        The number of pips this combat participant has
+        """
+        pipcount = await self.pip_count()
+        return await pipcount.generic_pips()
+
+    async def write_num_pips(self, num_pips: int):
+        """
+        Write this participant's pip number
+
+        Args:
+            num_pips: The pip number to write
+        """
+        pipcount = await self.pip_count()
+        return await pipcount.write_generic_pips(num_pips)
+
+    async def num_power_pips(self) -> int:
+        """
+        The number of power pips this combat participant has
+        """
+        pipcount = await self.pip_count()
+        return await pipcount.power_pips()
+
+    async def write_num_power_pips(self, num_power_pips: int):
+        """
+        Write the number of power pips this combat participant has
+
+        Args:
+            num_power_pips: The power pip number to write
+        """
+        pipcount = await self.pip_count()
+        return await pipcount.write_power_pips(num_power_pips)
+
+    async def num_shadow_pips(self) -> int:
+        """
+        The number of shadow pips this combat participant has
+        """
+        pipcount = await self.pip_count()
+        return await pipcount.shadow_pips()
+
+    async def write_num_shadow_pips(self, num_shadow_pips: int):
+        """
+        Write the number of shadow pips this combat participant has
+
+        Args:
+            num_shadow_pips: The power pip number to write
+        """
+        pipcount = await self.pip_count()
+        return await pipcount.write_shadow_pips(num_shadow_pips)
+
     async def pips_suspended(self) -> bool:
         """
         If this participant's pips are suspended
