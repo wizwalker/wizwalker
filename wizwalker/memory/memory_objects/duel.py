@@ -370,6 +370,7 @@ class CurrentDuel(Duel):
         # avoid circular import
         from .client_duel_manager import DynamicClientDuelManager
         while True: # sometimes this can go wrong thanks to bad timing
+            duel_manager = DynamicClientDuelManager(self.hook_handler, await self.read_typed(self._duel_manager_addr, "long long"))
             try:
                 for duel in (await duel_manager.duelmap()).values():
                     for part in await duel.participant_list():
