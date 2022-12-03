@@ -180,8 +180,10 @@ class CombatAction(MemoryObject):
         await self.write_value_to_offset(344, pet_cast_target, "int")
 
     # async def crit_hit_list(self) -> class TargetCritHit:
-    #     return await self.read_value_from_offset(352, "class TargetCritHit")
+    #     return await self.read_value_from_offset(368, "class TargetCritHit")
 
+    # async def x_pip_cost(self) -> class TargetCritHit:
+    #     return await self.read_value_from_offset(348, "unsigned char")
 
 class DynamicCombatAction(DynamicMemoryObject, CombatAction):
     pass
