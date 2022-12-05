@@ -1,22 +1,36 @@
-import asyncio
-import win32con
-from ctypes import windll,byref,c_int, POINTER, CFUNCTYPE
-import ctypes
-from ctypes.wintypes import WPARAM, LPARAM, MSG
-from enum import Enum
 from enum import IntFlag
+import win32con, win32gui
+from ctypes import byref, c_int, CFUNCTYPE, Structure
+
+from ctypes.wintypes import WPARAM, MSG, DWORD
 from typing import Callable, Union
 from icecream import ic
 
-from wizwalker.constants import Keycode, ModifierKeys, user32
+from wizwalker.constants import Keycode, user32#, ModifierKeys
 
 WH_KEYBOARD_LL = 13
 WM_KEYDOWN = 0x0100
 WM_KEYUP = 257
 HC_ACTION = 0
 
-LLKP_decl = CFUNCTYPE(c_int, c_int, WPARAM, POINTER(LPARAM))
+class KBDLLHOOKSTRUCT(Structure):_fields_=[
+    ('vkCode', DWORD),
+    ('scanCode', DWORD),
+    ('flags', DWORD),
+    ('dwExtraInfo', DWORD)
+]
 
+LLKP_decl = CFUNCTYPE(c_int, c_int, WPARAM, KBDLLHOOKSTRUCT)
+
+class ModifierKeys(IntFlag):
+    """
+    Key modifiers
+    """
+
+    ALT = 0x12
+    CTRL = 0x11
+    SHIFT = 0x10
+    NOREPEAT = 0x4000
 
 class Hook:
     
@@ -90,7 +104,7 @@ class KeyListener:
             self.modifiers = []
             self.key_pressed = []
             self.last_key_pressed = None
-            self.mod_keycodes = [Keycode.Left_CONTROL, Keycode.Right_CONTROL, Keycode.Left_SHIFT, Keycode.Right_SHIFT, Keycode.ALT]
+            self.mod_keycodes = [Keycode.Left_CONTROL, Keycode.Right_CONTROL, Keycode.Left_SHIFT, Keycode.Right_SHIFT, Keycode.Left_MENU, Keycode.Right_MENU]
             self.hook = None
 
         def LowLevelKeyboardProc(self, nCode, wParam, lParam):
@@ -107,19 +121,27 @@ class KeyListener:
             self.hotkey_match()
 
             if wParam == win32con.WM_SYSKEYDOWN:
-                vkCode = lParam[0] >> 32
+                kb = KBDLLHOOKSTRUCT.from_param(lParam)
+                vkCode = kb.vkCode
+                #ic(Keycode(vkCode))
                 self.handle_keydown(vkCode)
         
             if wParam == win32con.WM_SYSKEYUP:
-                vkCode = lParam[0] >> 32
+                kb = KBDLLHOOKSTRUCT.from_param(lParam)
+                vkCode = kb.vkCode
+                #ic(Keycode(vkCode))
                 self.handle_keyup(vkCode)
 
             if nCode == HC_ACTION and wParam == win32con.WM_KEYUP:
-                vkCode = lParam[0] >> 32
+                kb = KBDLLHOOKSTRUCT.from_param(lParam)
+                vkCode = kb.vkCode
+                #ic(Keycode(vkCode))
                 self.handle_keyup(vkCode)
                 
             if nCode == HC_ACTION and wParam == WM_KEYDOWN:
-                vkCode = lParam[0] >> 32
+                kb = KBDLLHOOKSTRUCT.from_param(lParam)
+                vkCode = kb.vkCode
+                #ic(Keycode(vkCode))
                 self.handle_keydown(vkCode)
                 
             return self.user32.CallNextHookEx(Hook().is_hooked , nCode, wParam, lParam)
@@ -160,8 +182,10 @@ class KeyListener:
                     return ModifierKeys.SHIFT
                 elif keycode == Keycode.Right_SHIFT:
                     return ModifierKeys.SHIFT
-                elif keycode == Keycode.Alt:
-                    return ModifierKeys.ALT             
+                elif keycode == Keycode.Left_MENU:
+                    return ModifierKeys.ALT         
+                elif keycode == Keycode.Right_MENU:
+                    return ModifierKeys.ALT
             
             return keycode
 
@@ -174,9 +198,6 @@ class KeyListener:
             """ 
             Finds if Listener has matched hotkey
             """
-            #ic(self.key_pressed)
-            #ic(self.last_key_pressed)
-            #ic(self.modifiers)
 
             if self.key_pressed:
                 hotkeys = [hotkey for hotkey in self.hotkeys if not ModifierKeys.NOREPEAT in hotkey.modifiers]
@@ -199,10 +220,7 @@ class KeyListener:
                         hotkey_modifiers = list(hotkey.modifiers)
                         hotkey_modifiers.remove(ModifierKeys.NOREPEAT)
                         if hotkey_modifiers == False:
-                            #print("hi")
                             hotkey_modifiers = []
-                        #print(hotkey_modifiers)
-                        #print(self.modifiers)
                         if list(set(self.key_pressed))[0] == hotkey.keycode and hotkey_modifiers == self.modifiers:
                             if len(self.key_pressed) > 1 and self.key_pressed[0] == self.last_key_pressed:
                                 ic("held down")
@@ -230,16 +248,15 @@ class KeyListener:
 
 
         def message(self):
-            # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-peekmessagew
             message = MSG()
             while True:
-                is_message = self.user32.PeekMessageW(
-                    ctypes.byref(message),
-                    None,
-                    0x311,
-                    0x314,
-                    1,
+                msg = win32gui.GetMessage(
+                None
+                ,0
+                ,0
                 )
+                win32gui.TranslateMessage(byref(msg))
+                win32gui.DispatchMessage(byref(msg))
 
 
 
@@ -299,7 +316,7 @@ def main():
     hotkey = [
             Hotkey(Keycode.A, callback1),
             Hotkey(Keycode.S, callback0, ModifierKeys.CTRL, ModifierKeys.NOREPEAT),
-            Hotkey(Keycode.D, callback2, ModifierKeys.ALT, ModifierKeys.SHIFT )
+            Hotkey(Keycode.D, callback2, ModifierKeys.ALT, ModifierKeys.SHIFT)
             ]
 
     hotkey_L = Listener(hotkey)
