@@ -280,19 +280,21 @@ class Listener():
         loop: The event loop to use; defaults to current
     Examples:
         .. code-block:: py
-                import asyncio
-                from wizwalker import Hotkey, Keycode, Listener, ModifierKeys
-                async def main():
-                    async def callback():
-                        print("a was pressed")
-                    hotkey = Hotkey(Keycode.A, callback, ModifierKeys.CTRL)
-                    listener = Listener(hotkey)
-                    listener.listen_forever()
-                    # your program here
-                    while True:
-                        await asyncio.sleep(1)
-                if __name__ == "__main__":
-                    asyncio.run(main())
+			import asyncio
+			from wizwalker import Hotkey, Keycode, Listener, ModifierKeys
+
+			async def main():
+				async def callback():
+					print("a was pressed")
+				hotkeys = [Hotkey(Keycode.A, callback, ModifierKeys.CTRL)] 
+				listener = Listener(hotkeys)
+				listener.listen_forever()
+				# your program here
+				while True:
+					await asyncio.sleep(1)
+
+			if __name__ == "__main__":
+				asyncio.run(main())
     """
 	def __init__(self, *hotkey: Hotkey):
 		self._loop = asyncio.get_event_loop()
