@@ -88,13 +88,14 @@ class Hotkey:
 
 
 class KeyListener:
+    
 	def __init__(self, hotkey: list[Hotkey]):
 		self.hotkeys = hotkey[0]
 		self.user32 = user32
-		self.modifiers = []
-		self.key_pressed = []
-		self.last_key_pressed = None
-		self.mod_keycodes = [Keycode.Left_CONTROL, Keycode.Right_CONTROL, Keycode.Left_SHIFT, Keycode.Right_SHIFT, Keycode.Left_MENU, Keycode.Right_MENU]
+		self.modifiers = set()
+		self.current_pressed_key = None
+		self.last_pressed_key = None
+		self.mod_keycodes = (Keycode.Left_CONTROL, Keycode.Right_CONTROL, Keycode.Left_SHIFT, Keycode.Right_SHIFT, Keycode.Left_MENU, Keycode.Right_MENU)
 		self.hook = None
 		self.message_loop = None
 
@@ -109,8 +110,6 @@ class KeyListener:
 			lParam      = Address of keyboard input event
 
 		"""
-
-		self.hotkey_match()
 
 		if wParam == WM_SYSKEYDOWN:
 			kb = KBDLLHOOKSTRUCT.from_param(lParam)
@@ -136,20 +135,19 @@ class KeyListener:
 
 
 	def handle_keyup(self, vkCode: int):
-		self.nonrepeat_logic()
-
 		try:
 			keycode = self.key_type(Keycode(vkCode))
 		except:
 			keycode = None
 
-		if keycode is not None:
-			if type(keycode) == Keycode:  # if keycode is a type Keycode
-				if keycode in self.key_pressed:
-					self.key_pressed.remove(keycode) # remove the type Keycodejn to the list of keys_pressed
-			else:
+		if keycode:
+			if type(keycode) == ModifierKeys:
 				if keycode in self.modifiers:
-					self.modifiers.remove(keycode) # else remove the ModifierKeys to the modifiers list
+					self.modifiers.remove(keycode)
+
+		if self.current_pressed_key == keycode:
+			self.current_pressed_key = None
+			self.last_pressed_key = None
 
 
 	def handle_keydown(self, vkCode: int):
@@ -158,14 +156,15 @@ class KeyListener:
 		except:
 			keycode = None
 
-		if keycode is not None:
-			if type(keycode) == Keycode:  # if keycode is a type Keycode
-				self.key_pressed.append(keycode) # add the type Keycode to the list of keys_pressed
+		if keycode:
+			if type(keycode) == ModifierKeys:
+				self.modifiers.add(keycode)
 			else:
-				if keycode not in self.modifiers: # makes sure there isn't duplicates when holding down key
-					self.modifiers.append(keycode) # else add the ModifierKeys to the modifiers list
+				self.current_pressed_key = keycode
 
-		self.last_key_pressed = keycode 
+				self.hotkey_match()
+
+		self.last_pressed_key = keycode 
 
 
 	def key_type(self, keycode: Keycode):
@@ -200,34 +199,21 @@ class KeyListener:
 		Finds if Listener has matched hotkey
 		"""
 
-		if self.key_pressed:
-			hotkeys = [hotkey for hotkey in self.hotkeys if not ModifierKeys.NOREPEAT in hotkey.modifiers]
+		if self.current_pressed_key:
+			hotkeys = [hotkey for hotkey in self.hotkeys if not ModifierKeys.NOREPEAT in hotkey.modifiers and self.current_pressed_key == hotkey.keycode]
 			for hotkey in hotkeys:
-				if hotkey.keycode == self.key_pressed[0] and list(hotkey.modifiers) == self.modifiers:
-					self.run_callback(hotkey.callback) 
-					self.last_key_pressed = None
-					self.key_pressed = []
-					return
+				if set(hotkey.modifiers) == self.modifiers:
+					self.run_callback(hotkey.callback)
+					return 
 
-
-	def nonrepeat_logic(self) -> None:
-		if self.key_pressed:
-			if len(set(self.key_pressed)) > 1: # makes it check if multiple key codes in key_pressed which is unwanted
-					self.key_pressed = [self.last_key_pressed]
-
-			nonrepeat_hotkeys = [hotkey for hotkey in self.hotkeys if ModifierKeys.NOREPEAT in hotkey.modifiers]
-			for hotkey in nonrepeat_hotkeys:
-				if ModifierKeys.NOREPEAT in hotkey.modifiers:
-					hotkey_modifiers = list(hotkey.modifiers)
-					hotkey_modifiers.remove(ModifierKeys.NOREPEAT)
-					if hotkey_modifiers == False:
-						hotkey_modifiers = []
-					if list(set(self.key_pressed))[0] == hotkey.keycode and hotkey_modifiers == self.modifiers:
-						if len(self.key_pressed) > 1 and self.key_pressed[0] == self.last_key_pressed:
-							self.run_callback(hotkey.callback) 
-							self.key_pressed = []
-							return
+		if not self.current_pressed_key == self.last_pressed_key:
+			no_repeat_hotkeys = [hotkey for hotkey in self.hotkeys if ModifierKeys.NOREPEAT in hotkey.modifiers and self.current_pressed_key == hotkey.keycode]
+			for hotkey in no_repeat_hotkeys:
+				hotkey_modifiers = set(hotkey.modifiers)
+				hotkey_modifiers.remove(ModifierKeys.NOREPEAT)
+				if hotkey_modifiers == self.modifiers:
 						self.run_callback(hotkey.callback)
+						return
 
 
 	async def install_keyhook(self):
@@ -296,6 +282,7 @@ class Listener():
 			if __name__ == "__main__":
 				asyncio.run(main())
     """
+
 	def __init__(self, *hotkey: Hotkey):
 		self._loop = asyncio.get_event_loop()
 		self.hotkeys = list(hotkey)
@@ -324,5 +311,6 @@ class Listener():
 			raise ValueError("This listener has already been stopped or not started")
 
 		self.key_listener.uninstall_hook()
+		self.key_listener.message_loop.cancel()
 		self.listen_task.cancel()
 		self.listen_task = None
