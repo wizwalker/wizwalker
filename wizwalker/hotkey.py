@@ -292,14 +292,14 @@ class Listener():
 
 
 	def listen_forever(self) -> asyncio.Task:
-			"""
-			return a task listening to events
-			"""
+		"""
+		return a task listening to events
+		"""
 
-			self.key_listener = KeyListener(self.hotkeys)
-			self.listen_task = asyncio.create_task(self.key_listener.install_keyhook())
+		self.key_listener = KeyListener(self.hotkeys)
+		self.listen_task = asyncio.create_task(self.key_listener.install_keyhook())
 
-			return self.listen_task
+		return self.listen_task
 
 
 	def close(self):
