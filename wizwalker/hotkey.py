@@ -311,6 +311,5 @@ class Listener():
 			raise ValueError("This listener has already been stopped or not started")
 
 		self.key_listener.uninstall_hook()
-		self.key_listener.message_loop.cancel()
 		self.listen_task.cancel()
 		self.listen_task = None
