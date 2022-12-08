@@ -7,7 +7,6 @@ import struct
 import subprocess
 
 # noinspection PyCompatibility
-import winreg
 import zlib
 from pathlib import Path
 from typing import Any, Callable, Iterable, List, Optional
@@ -214,18 +213,6 @@ def order_clients(clients):
 _OVERRIDE_PATH = None
 
 
-def override_wiz_install_location(path: str):
-    """
-    Override the path returned by get_wiz_install
-
-    Args:
-        path: The path to override with
-    """
-    # hacking old behavior so I dont have to actually fix the issue
-    global _OVERRIDE_PATH
-    _OVERRIDE_PATH = path
-
-
 def get_wiz_install() -> Path:
     """
     Get the game install root dir
@@ -238,20 +225,14 @@ def get_wiz_install() -> Path:
     if default_install_path.exists():
         return default_install_path
 
-    try:
-        with winreg.OpenKey(
-            winreg.HKEY_CURRENT_USER,
-            r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{A9E27FF5-6294-46A8-B8FD-77B1DECA3021}",
-            0,
-            winreg.KEY_READ,
-        ) as key:
-            install_location = Path(
-                winreg.QueryValueEx(key, "InstallLocation")[0]
-            ).absolute()
-            return install_location
-    except OSError:
-        raise Exception("Wizard101 install not found.")
-
+    result = subprocess.Popen(f'wmic process where "ProcessID={get_pid_from_handle(get_all_wizard_handles()[0])}" get ExecutablePath /format:list')
+    for line in result:
+        if "ExecutablePath" in line:
+            path = Path(line.replace("\\Bin\\WizardGraphicalClient.exe\n", "").replace("ExecutablePath=", "")).absolute()
+            global _OVERRIDE_PATH
+            if not _OVERRIDE_PATH:
+                _OVERRIDE_PATH = path
+            return path
 
 def start_instance():
     """
