@@ -211,9 +211,6 @@ def order_clients(clients):
     return sorted(clients, key=sort_clients)
 
 
-_OVERRIDE_PATH = None
-
-
 def override_wiz_install_location(path: str):
     """
     Override the path returned by get_wiz_install
@@ -224,6 +221,9 @@ def override_wiz_install_location(path: str):
     # hacking old behavior so I dont have to actually fix the issue
     global _OVERRIDE_PATH
     _OVERRIDE_PATH = path
+
+
+_OVERRIDE_PATH = None
 
 
 def get_wiz_install() -> Path:
@@ -248,9 +248,39 @@ def get_wiz_install() -> Path:
             install_location = Path(
                 winreg.QueryValueEx(key, "InstallLocation")[0]
             ).absolute()
+            if install_location.exists():
+                return install_location
+            install_location = get_wiz_install_with_process()
             return install_location
     except OSError:
-        raise Exception("Wizard101 install not found.")
+        try:
+            install_location = get_wiz_install_with_process()
+            return install_location
+        except:
+            raise Exception("Wizard101 install not found.")
+
+
+def get_wiz_install_with_process() -> Path:
+    """
+    Gets the root directory of Wizard101
+    """
+    if _OVERRIDE_PATH:
+        return Path(_OVERRIDE_PATH).absolute()
+
+    default_install_path = Path(DEFAULT_INSTALL)
+
+    if default_install_path.exists():
+        return default_install_path
+    
+    handle = get_pid_from_handle(get_all_wizard_handles()[0])
+    
+    if not handle:
+        raise Exception("No open Wizard101 instances were found.")
+
+    result = subprocess.Popen(f'wmic process where "ProcessID={handle}" get ExecutablePath /format:list')
+    for line in result:
+        if "ExecutablePath" in line:
+            return Path(line.replace("\\Bin\\WizardGraphicalClient.exe\n", "").replace("ExecutablePath=", "")).absolute()
 
 
 def start_instance():

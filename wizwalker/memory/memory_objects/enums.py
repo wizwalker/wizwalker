@@ -236,6 +236,7 @@ class SpellEffects(Enum):
     remove_converted_ward = 145
     remove_converted_over_time = 146
     modify_over_time_duration = 147
+    modify_school_pips = 148
 
 
 class EffectTarget(Enum):
