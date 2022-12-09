@@ -53,17 +53,16 @@ class Spell(PropertyClass):
         await self.write_value_to_offset(176 + 73, rank.shadow_rank, "unsigned char")
 
     async def regular_adjust(self) -> int:
-        return await self.read_value_from_offset(192, "int")
+        return await self.read_value_from_offset(256, "int")
 
     async def write_regular_adjust(self, regular_adjust: int):
-        await self.write_value_to_offset(192, regular_adjust, "int")
+        await self.write_value_to_offset(256, regular_adjust, "int")
 
-    # TODO: Figure out what this offset is, as it does not exist in the type dump - slack
-    # async def shadow_adjust(self) -> int:
-    #     return await self.read_value_from_offset(260, "int")
+    async def shadow_adjust(self) -> int:
+        return await self.read_value_from_offset(260, "int")
 
-    # async def write_shadow_adjust(self, shadow_adjust: int):
-    #     await self.write_value_to_offset(260, shadow_adjust, "int")
+    async def write_shadow_adjust(self, shadow_adjust: int):
+        await self.write_value_to_offset(260, shadow_adjust, "int")
 
     async def magic_school_id(self) -> int:
         return await self.read_value_from_offset(136, "unsigned int")
@@ -85,48 +84,48 @@ class Spell(PropertyClass):
         return effects
 
     async def treasure_card(self) -> bool:
-        return await self.read_value_from_offset(197, "bool")
+        return await self.read_value_from_offset(265, "bool")
 
     async def write_treasure_card(self, treasure_card: bool):
-        await self.write_value_to_offset(197, treasure_card, "bool")
+        await self.write_value_to_offset(265, treasure_card, "bool")
 
     async def battle_card(self) -> bool:
-        return await self.read_value_from_offset(198, "bool")
+        return await self.read_value_from_offset(266, "bool")
 
     async def write_battle_card(self, battle_card: bool):
-        await self.write_value_to_offset(198, battle_card, "bool")
+        await self.write_value_to_offset(266, battle_card, "bool")
 
     async def item_card(self) -> bool:
-        return await self.read_value_from_offset(199, "bool")
+        return await self.read_value_from_offset(267, "bool")
 
     async def write_item_card(self, item_card: bool):
-        await self.write_value_to_offset(199, item_card, "bool")
+        await self.write_value_to_offset(267, item_card, "bool")
 
     async def side_board(self) -> bool:
-        return await self.read_value_from_offset(200, "bool")
+        return await self.read_value_from_offset(268, "bool")
 
     async def write_side_board(self, side_board: bool):
-        await self.write_value_to_offset(200, side_board, "bool")
+        await self.write_value_to_offset(268, side_board, "bool")
 
     async def spell_id(self) -> int:
-        return await self.read_value_from_offset(204, "unsigned int")
+        return await self.read_value_from_offset(272, "unsigned int")
 
     async def write_spell_id(self, spell_id: int):
-        await self.write_value_to_offset(204, spell_id, "unsigned int")
+        await self.write_value_to_offset(272, spell_id, "unsigned int")
 
     async def leaves_play_when_cast_override(self) -> bool:
-        return await self.read_value_from_offset(216, "bool")
+        return await self.read_value_from_offset(284, "bool")
 
     async def write_leaves_play_when_cast_override(
         self, leaves_play_when_cast_override: bool
     ):
-        await self.write_value_to_offset(216, leaves_play_when_cast_override, "bool")
+        await self.write_value_to_offset(284, leaves_play_when_cast_override, "bool")
 
     async def cloaked(self) -> bool:
-        return await self.read_value_from_offset(196, "bool")
+        return await self.read_value_from_offset(264, "bool")
 
     async def write_cloaked(self, cloaked: bool):
-        await self.write_value_to_offset(196, cloaked, "bool")
+        await self.write_value_to_offset(264, cloaked, "bool")
 
     async def enchantment_spell_is_item_card(self) -> bool:
         return await self.read_value_from_offset(76, "bool")
@@ -149,22 +148,22 @@ class Spell(PropertyClass):
         await self.write_value_to_offset(77, enchanted_this_combat, "bool")
 
     # async def param_overrides(self) -> class SharedPointer<class SpellEffectParamOverride>:
-    #     return await self.read_value_from_offset(224, "class SharedPointer<class SpellEffectParamOverride>")
+    #     return await self.read_value_from_offset(288, "class SharedPointer<class SpellEffectParamOverride>")
 
     # async def sub_effect_meta(self) -> class SharedPointer<class SpellSubEffectMetadata>:
-    #     return await self.read_value_from_offset(240, "class SharedPointer<class SpellSubEffectMetadata>")
+    #     return await self.read_value_from_offset(304, "class SharedPointer<class SpellSubEffectMetadata>")
 
     async def delay_enchantment(self) -> bool:
-        return await self.read_value_from_offset(257, "bool")
+        return await self.read_value_from_offset(321, "bool")
 
     async def write_delay_enchantment(self, delay_enchantment: bool):
-        await self.write_value_to_offset(257, delay_enchantment, "bool")
+        await self.write_value_to_offset(321, delay_enchantment, "bool")
 
     async def pve(self) -> bool:
-        return await self.read_value_from_offset(264, "bool")
+        return await self.read_value_from_offset(328, "bool")
 
     async def write_pve(self, pve: bool):
-        await self.write_value_to_offset(264, pve, "bool")
+        await self.write_value_to_offset(328, pve, "bool")
 
     async def delay_enchantment_order(self) -> DelayOrder:
         return await self.read_enum(72, DelayOrder)
@@ -173,10 +172,10 @@ class Spell(PropertyClass):
         await self.write_enum(72, delay_enchantment_order)
 
     async def round_added_tc(self) -> int:
-        return await self.read_value_from_offset(260, "int")
+        return await self.read_value_from_offset(324, "int")
 
     async def write_round_added_tc(self, round_added_t_c: int):
-        await self.write_value_to_offset(260, round_added_t_c, "int")
+        await self.write_value_to_offset(324, round_added_t_c, "int")
 
 
 class GraphicalSpell(Spell):
