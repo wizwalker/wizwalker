@@ -1,34 +1,16 @@
 from typing import List, Optional
 
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
-from .spell_effect import DynamicSpellEffect
+from wizwalker.memory.memory_object import PropertyClass
+from .spell_effect import SpellEffect
+
+from memonster import LazyType
+from memonster.memtypes import *
+from .memtypes import *
 
 
 class CombatResolver(PropertyClass):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
+    bool_global_effect = MemBool(112)
 
-    async def bool_global_effect(self) -> bool:
-        return await self.read_value_from_offset(112, "bool")
+    global_effect = MemPointer(120, SpellEffect(0))
 
-    async def write_bool_global_effect(self, bool_global_effect: bool):
-        await self.write_value_to_offset(112, bool_global_effect, "bool")
-
-    async def global_effect(self) -> Optional[DynamicSpellEffect]:
-        addr = await self.read_value_from_offset(120, "long long")
-
-        if addr == 0:
-            return None
-
-        return DynamicSpellEffect(self.hook_handler, addr)
-
-    async def battlefield_effects(self) -> List[DynamicSpellEffect]:
-        effects = []
-        for addr in await self.read_shared_vector(136):
-            effects.append(DynamicSpellEffect(self.hook_handler, addr))
-
-        return effects
-
-
-class DynamicCombatResolver(DynamicMemoryObject, CombatResolver):
-    pass
+    battlefield_effects = MemCppVector(136, MemCppSharedPointer(0, SpellEffect(0)))

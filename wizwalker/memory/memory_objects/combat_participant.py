@@ -9,7 +9,6 @@ from .play_deck import PlayDeck
 from .spell import Hand
 from .spell_effect import SpellEffect
 
-from memonster import LazyType
 from memonster.memtypes import *
 from .memtypes import *
 
