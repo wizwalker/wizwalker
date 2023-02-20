@@ -134,28 +134,6 @@ class MemoryObject(MemoryReader):
         base_address = await self.read_base_address()
         await self.write_wide_string(base_address + offset, string, encoding)
 
-    # todo: rework this into from_offset and add read_vector which takes an address
-    async def read_vector(self, offset: int, size: int = 3, data_type: str = "float"):
-        type_str = type_format_dict[data_type].replace("<", "")
-        size_per_type = struct.calcsize(type_str)
-
-        base_address = await self.read_base_address()
-        vector_bytes = await self.read_bytes(
-            base_address + offset, size_per_type * size
-        )
-
-        return struct.unpack("<" + type_str * size, vector_bytes)
-
-    async def write_vector(
-        self, offset: int, value: tuple, size: int = 3, data_type: str = "float"
-    ):
-        type_str = type_format_dict[data_type].replace("<", "")
-
-        base_address = await self.read_base_address()
-        packed_bytes = struct.pack("<" + type_str * size, *value)
-
-        await self.write_bytes(base_address + offset, packed_bytes)
-
     async def read_inlined_vector(
             self,
             offset: int,

@@ -45,7 +45,7 @@ class ClientObject(PropertyClass):
             display_name_code = object_template.display_name.read()
             # this is sometimes just a blank string
             if display_name_code:
-                # TODO: Rework to for memonster
+                # TODO: Rework for memonster
                 return self.hook_handler.client.cache_handler.get_langcode_name(display_name_code)
         except:
             return None

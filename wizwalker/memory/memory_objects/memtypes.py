@@ -5,6 +5,30 @@ from memonster.memtypes import *
 from wizwalker.utils import XYZ, Orient
 
 
+T = TypeVar("T")
+MT = TypeVar("MT", bound=MemType)
+
+# Maybe one day count can be part of generic signature
+class MemArray(MemType, Generic[MT]):
+    def __init__(self, offset: int, elements: int, dummy: MT) -> None:
+        super().__init__(offset)
+        self.elements = elements
+        self._dummy = dummy
+
+    def read(self) -> list[MT]:
+        tsize = self._dummy.size()
+        res = []
+        for i in range(self.elements):
+            res.append(self.cast_offset(i * tsize, self._dummy))
+        return res
+
+    # TODO: Make sure this works at all
+    def write(self, data: list[MT]):
+        assert len(data) == self.elements
+        tsize = self._dummy.size()
+        for i in range(self.elements):
+            self.cast_offset(i * tsize, self._dummy).write(data[i].cast(self._dummy).read())
+
 class MemXYZ(MemType):
     x = MemFloat32(0)
     y = MemFloat32(4)
@@ -44,8 +68,6 @@ class MemCppString(MemType):
             cstring = cstring.cast(MemPointer(0, MemCString(0, l+1))).read()
 
         return cstring.read_bytes(l)
-
-MT = TypeVar("MT", bound=MemType)
 
 class MemCppSharedPointer(MemPointer, Generic[MT]):
     # Only here to make python's type inference work
