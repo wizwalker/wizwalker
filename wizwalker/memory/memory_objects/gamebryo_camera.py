@@ -1,27 +1,9 @@
-from typing import Optional
+from wizwalker.memory.memory_objects.cam_view import CamView
 
-from wizwalker.memory.memory_object import MemoryObject, DynamicMemoryObject
-from wizwalker.memory.memory_objects.cam_view import DynamicCamView
-
-
-class GamebryoCamera(MemoryObject):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()    
-
-    async def base_matrix(self) -> list[float]:
-        return list(await self.read_vector(164, 9))
-
-    async def write_base_matrix(self, vals: list[float]):
-        await self.write_vector(164, vals)
-
-    async def cam_view(self) -> Optional[DynamicCamView]:
-        addr = await self.read_value_from_offset(200, "long long")
-
-        if addr == 0:
-            return None
-
-        return DynamicCamView(self.hook_handler, addr)
+from memonster.memtypes import *
+from memtypes import *
 
 
-class DynamicGamebryoCamera(DynamicMemoryObject, GamebryoCamera):
-    pass
+class GamebryoCamera(MemType):
+    base_matrix = MemArray(164, 9, MemFloat32(0))
+    cam_view = MemPointer(200, CamView(0))

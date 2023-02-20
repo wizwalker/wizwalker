@@ -1,5 +1,6 @@
 from typing import TypeVar, Generic
 
+from memonster import LazyType
 from memonster.memtypes import *
 
 from wizwalker.utils import XYZ, Orient
@@ -29,6 +30,7 @@ class MemArray(MemType, Generic[MT]):
         for i in range(self.elements):
             self.cast_offset(i * tsize, self._dummy).write(data[i].cast(self._dummy).read())
 
+# TODO: Convert to use MemArray
 class MemXYZ(MemType):
     x = MemFloat32(0)
     y = MemFloat32(4)
@@ -104,4 +106,53 @@ class MemCppVector(MemType, Generic[MT]):
         p = self.start_ptr.read()
         for i in range(c):
             res.append(p.cast_offset(self._dummy, i * s))
+        return res
+
+class MemCppHashNode(MemType, Generic[MT]):
+    def __init__(self, offset: int, _dummy: MT) -> None:
+        super().__init__(offset)
+        self._dummy = _dummy
+        
+        self.left = MemPointer(0, LazyType(MemCppHashNode)(0, self._dummy))
+        self.parent = MemPointer(8, LazyType(MemCppHashNode)(0, self._dummy))
+        self.right = MemPointer(0x10, LazyType(MemCppHashNode)(0, self._dummy))
+
+        self.data = MemPointer(0x28, self._dummy)
+
+    is_leaf = MemBool(0x19)
+    hash = MemUInt32(0x20)
+
+    def read(self) -> dict[int, MT]:
+        res = {}
+
+        if not self.is_leaf.read():
+            res[self.hash.read()] = self.data.read()
+
+            # TODO: Better error handling
+            try:
+                res = res | self.left.read().read()
+            except:
+                pass
+            try:
+                res = res | self.right.read().read()
+            except:
+                pass
+
+        return res
+
+class MemCppMap(MemType, Generic[MT]):
+    def __init__(self, offset: int, _dummy: MT) -> None:
+        super().__init__(offset)
+        self._dummy = _dummy
+        self.root = MemPointer(0, MemCppHashNode(0, self._dummy))
+
+    def read(self) -> dict[int, MT]:
+        res = {}
+
+        root = self.root.read()
+        first_node = root.parent.read()
+
+        if first_node._memview.address == root._memview.address:
+            return res
+
         return res

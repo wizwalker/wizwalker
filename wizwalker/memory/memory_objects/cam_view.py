@@ -4,7 +4,7 @@ from memonster.memtypes import *
 from memtypes import *
 
 
-class CamView(MemoryObject):
+class CamView(MemType):
     # TODO: Find real name (or more fitting)
 
     view_matrix = MemArray(80, 9, MemFloat32(0))
