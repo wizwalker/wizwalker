@@ -10,7 +10,7 @@ from .combat_resolver import CombatResolver
 
 from memonster import LazyType
 from memonster.memtypes import *
-from memtypes import *
+from .memtypes import *
 
 
 # TODO: add m_gameEffectInfo and friends, and fix offsets

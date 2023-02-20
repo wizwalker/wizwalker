@@ -154,40 +154,6 @@ class MemoryObject(MemoryReader):
 
         return res
 
-    async def read_shared_linked_list(self, offset: int):
-        list_addr = await self.read_value_from_offset(offset, "long long")
-
-        addrs = []
-        # TODO: ensure this is always the case
-        # skip first node
-        next_node_addr = await self.read_typed(list_addr, "long long")
-        list_size = await self.read_value_from_offset(offset + 8, "int")
-
-        for i in range(list_size):
-            addr = await self.read_typed(next_node_addr + 16, "long long")
-            addrs.append(addr)
-            next_node_addr = await self.read_typed(next_node_addr, "long long")
-
-        return addrs
-
-    async def read_linked_list(self, offset: int) -> List[int]:
-        list_addr = await self.read_value_from_offset(offset, "long long")
-        list_size = await self.read_value_from_offset(offset + 8, "int")
-
-        if list_size < 1:
-            return []
-
-        addrs = []
-        list_node = await self.read_typed(list_addr, "long long")
-        # object starts +16 from node
-        addrs.append(list_node + 16)
-        # -1 because we've already read one node
-        for _ in range(list_size - 1):
-            list_node = await self.read_typed(list_node, "long long")
-            addrs.append(list_node + 16)
-
-        return addrs
-        
 class DynamicMemoryObject(MemoryObject):
     def __init__(self, hook_handler: HookHandler, base_address: int):
         super().__init__(hook_handler)

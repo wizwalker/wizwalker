@@ -1,7 +1,7 @@
 from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
 
 from memonster.memtypes import *
-from memtypes import *
+from .memtypes import *
 
 
 class BehaviorTemplate(PropertyClass):

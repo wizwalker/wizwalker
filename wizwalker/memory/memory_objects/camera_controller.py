@@ -5,7 +5,7 @@ from wizwalker.memory.memory_objects.gamebryo_camera import GamebryoCamera
 from .client_object import ClientObject
 
 from memonster.memtypes import *
-from memtypes import *
+from .memtypes import *
 
 
 class CameraController(MemType):

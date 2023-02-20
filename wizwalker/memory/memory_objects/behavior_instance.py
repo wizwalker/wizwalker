@@ -4,7 +4,7 @@ from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
 from .behavior_template import BehaviorTemplate
 
 from memonster.memtypes import *
-from memtypes import *
+from .memtypes import *
 
 
 class BehaviorInstance(PropertyClass):

@@ -1,7 +1,7 @@
 from wizwalker.memory.memory_objects.cam_view import CamView
 
 from memonster.memtypes import *
-from memtypes import *
+from .memtypes import *
 
 
 class GamebryoCamera(MemType):

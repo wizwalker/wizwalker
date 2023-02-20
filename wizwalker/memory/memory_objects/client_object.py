@@ -9,7 +9,7 @@ from .client_zone import ClientZone
 
 from memonster import LazyType
 from memonster.memtypes import *
-from memtypes import *
+from .memtypes import *
 
 
 class ClientObject(PropertyClass):

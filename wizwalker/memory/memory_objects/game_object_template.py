@@ -3,7 +3,7 @@ from .enums import ObjectType
 from .behavior_template import BehaviorTemplate
 
 from memonster.memtypes import *
-from memtypes import *
+from .memtypes import *
 
 
 class WizGameObjectTemplate(PropertyClass):

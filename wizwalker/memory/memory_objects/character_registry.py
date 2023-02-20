@@ -3,7 +3,7 @@ from typing import List
 from wizwalker.memory.memory_object import PropertyClass
 
 from memonster.memtypes import *
-from memtypes import *
+from .memtypes import *
 
 
 class CharacterRegistry(PropertyClass):

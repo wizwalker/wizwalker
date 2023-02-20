@@ -105,8 +105,43 @@ class MemCppVector(MemType, Generic[MT]):
         s = self._dummy.size()
         p = self.start_ptr.read()
         for i in range(c):
-            res.append(p.cast_offset(self._dummy, i * s))
+            res.append(p.cast_offset(i * s, self._dummy))
         return res
+
+class MemCppLinkedListNode(MemType, Generic[MT]):
+    def __init__(self, offset: int, dummy: MT) -> None:
+        super().__init__(offset)
+        self._dummy = dummy
+
+        # Empty on head node
+        self.data = copy.copy(self._dummy)
+        self.data.offset = 16
+
+        self.next = MemPointer(0, LazyType(MemCppLinkedListNode)(self._dummy))
+        self.prev = MemPointer(8, LazyType(MemCppLinkedListNode)(self._dummy))
+
+    def read(self) -> MT:
+        return self.data.read()
+
+class MemCppLinkedList(MemType, Generic[MT]):
+    def __init__(self, offset: int, dummy: MT) -> None:
+        super().__init__(offset)
+        self._dummy = dummy
+        self.head = MemCppLinkedListNode(0, self._dummy)
+
+    list_size = MemInt64(8)
+
+    def read(self) -> list[MT]:
+        res = []
+        size = self.list_size.read()
+        if size < 1:
+            return res
+        node = self.head.next.read()
+        for _ in range(size):
+            res.append(node.read())
+            node = node.next.read()
+        return res
+
 
 class MemCppHashNode(MemType, Generic[MT]):
     def __init__(self, offset: int, _dummy: MT) -> None:

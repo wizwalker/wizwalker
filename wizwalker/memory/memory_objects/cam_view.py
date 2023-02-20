@@ -1,7 +1,7 @@
 from wizwalker.memory.memory_object import MemoryObject
 
 from memonster.memtypes import *
-from memtypes import *
+from .memtypes import *
 
 
 class CamView(MemType):
