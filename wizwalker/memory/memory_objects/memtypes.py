@@ -1,4 +1,6 @@
-from memonster import MemType, MemFloat32, MemInt32, MemCString, MemPointer
+from typing import TypeVar, Generic
+
+from memonster.memtypes import *
 
 from wizwalker.utils import XYZ, Orient
 
@@ -41,5 +43,43 @@ class MemCppString(MemType):
             # TODO: Is this l+1 correct
             cstring = cstring.cast(MemPointer(0, MemCString(0, l+1))).read()
 
-        # TODO: Maybe read bytes instead to deal with null inside of string
-        return cstring.read()
+        return cstring.read_bytes(l)
+
+MT = TypeVar("MT", bound=MemType)
+
+class MemCppSharedPointer(MemPointer, Generic[MT]):
+    # Only here to make python's type inference work
+    def __init__(self, offset: int, dummy: MT) -> None:
+        super().__init__(offset, dummy)
+
+    # refer to above
+    def read(self) -> MT:
+        return super().read()
+
+    def size(self) -> int:
+        return 16
+
+class MemCppVector(MemType, Generic[MT]):
+    def __init__(self, offset: int, dummy: MT) -> None:
+        super().__init__(offset)
+        self._dummy = dummy
+        self.start_ptr = MemPointer(0, dummy)
+        self.end_ptr = MemPointer(0, dummy)
+
+    def count(self) -> int:
+        # TODO: Change this once inference is added, for now only support types that add this method
+        s = self._dummy.size()
+        size = self.end_ptr.cast(MemInt64(0)).read() - self.start_ptr.cast(MemInt64(0)).read()
+        return size // s
+
+    def read(self) -> list[MT]:
+        res = []
+        c = self.count()
+        if c <= 0:
+            return []
+
+        s = self._dummy.size()
+        p = self.start_ptr.read()
+        for i in range(c):
+            res.append(p.cast_offset(self._dummy, i * s))
+        return res
