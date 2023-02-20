@@ -2,11 +2,12 @@ from typing import List
 
 from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
 
+from memonster import LazyType
+from memonster.memtypes import *
+from .memtypes import *
+
 
 class GameStats(PropertyClass):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
     async def max_hitpoints(self) -> int:
         """
         Client's max hitpoints; base + bonus
@@ -110,10 +111,6 @@ class GameStats(PropertyClass):
     async def spell_charge_base(self) -> List[int]:
         return await self.read_dynamic_vector(136, "int")
 
-    # TODO: add write_dynamic_vector
-    # async def write_spell_charge_base(self, spell_charge_base: int):
-    #     await self.write_value_to_offset(128, spell_charge_base, "int")
-
     async def potion_max(self) -> float:
         return await self.read_value_from_offset(160, "float")
 
@@ -125,15 +122,6 @@ class GameStats(PropertyClass):
 
     async def write_potion_charge(self, potion_charge: float):
         await self.write_value_to_offset(164, potion_charge, "float")
-
-    # async def arena_ladder(self) -> class SharedPointer<class Ladder>:
-    #     return await self.read_value_from_offset(168, "class SharedPointer<class Ladder>")
-
-    # async def derby_ladder(self) -> class SharedPointer<class Ladder>:
-    #     return await self.read_value_from_offset(184, "class SharedPointer<class Ladder>")
-
-    # async def bracket_lader(self) -> class SharedPointer<class Ladder>:
-    #     return await self.read_value_from_offset(200, "class SharedPointer<class Ladder>")
 
     async def bonus_hitpoints(self) -> int:
         return await self.read_value_from_offset(216, "int")
@@ -359,440 +347,98 @@ class GameStats(PropertyClass):
     ):
         await self.write_value_to_offset(648, critical_hit_rating_by_school, "float")
 
-    async def block_rating_by_school(self) -> List[float]:
-        return await self.read_dynamic_vector(672, "float")
 
-    async def write_block_rating_by_school(self, block_rating_by_school: float):
-        await self.write_value_to_offset(672, block_rating_by_school, "float")
+    pip_conversion_rating_per_school = MemFloat32(256)
 
-    async def balance_mastery(self) -> int:
-        return await self.read_value_from_offset(812, "int")
+    pip_conversion_rating_all = MemFloat32(280)
 
-    async def write_balance_mastery(self, balance_mastery: int):
-        await self.write_value_to_offset(812, balance_mastery, "int")
+    pip_conversion_percent_per_school = MemFloat32(288)
 
-    async def death_mastery(self) -> int:
-        return await self.read_value_from_offset(816, "int")
+    pip_conversion_percent_all = MemFloat32(312)
 
-    async def write_death_mastery(self, death_mastery: int):
-        await self.write_value_to_offset(816, death_mastery, "int")
+    highest_character_world_on_account = MemInt32(324)
 
-    async def fire_mastery(self) -> int:
-        return await self.read_value_from_offset(820, "int")
+    fishing_luck_bonus_percent = MemFloat32(552)
 
-    async def write_fire_mastery(self, fire_mastery: int):
-        await self.write_value_to_offset(820, fire_mastery, "int")
+    block_rating_by_school = MemCppVector(672, MemFloat32(0))
 
-    async def ice_mastery(self) -> int:
-        return await self.read_value_from_offset(824, "int")
+    fishing_luck_bonus_percent_all = MemFloat32(732)
 
-    async def write_ice_mastery(self, ice_mastery: int):
-        await self.write_value_to_offset(824, ice_mastery, "int")
+    pip_conversion_base_all_schools = MemInt32(744)
 
-    async def life_mastery(self) -> int:
-        return await self.read_value_from_offset(828, "int")
+    pip_conversion_base_per_school = MemInt32(752)
 
-    async def write_life_mastery(self, life_mastery: int):
-        await self.write_value_to_offset(828, life_mastery, "int")
+    shadow_pip_bonus_percent = MemFloat32(780)
 
-    async def myth_mastery(self) -> int:
-        return await self.read_value_from_offset(832, "int")
+    wisp_bonus_percent = MemFloat32(804)
 
-    async def write_myth_mastery(self, myth_mastery: int):
-        await self.write_value_to_offset(832, myth_mastery, "int")
+    balance_mastery = MemInt32(812)
+    death_mastery = MemInt32(816)
+    fire_mastery = MemInt32(820)
+    ice_mastery = MemInt32(824)
+    life_mastery = MemInt32(828)
+    myth_mastery = MemInt32(832)
+    storm_mastery = MemInt32(836)
+    maximum_number_of_islands = MemInt32(840)
+    gardening_level = MemUInt8(844)
 
-    async def storm_mastery(self) -> int:
-        return await self.read_value_from_offset(836, "int")
+    gardening_xp = MemInt32(848)
+    invisible_to_friends = MemBool(852)
+    show_item_lock = MemBool(853)
+    quest_finder_enabled = MemBool(854)
 
-    async def write_storm_mastery(self, storm_mastery: int):
-        await self.write_value_to_offset(836, storm_mastery, "int")
+    buddy_list_limit = MemInt32(856)
+    stun_resistance_percent = MemFloat32(860)
+    dont_allow_friend_finder_codes = MemBool(864)
 
-    async def maximum_number_of_islands(self) -> int:
-        return await self.read_value_from_offset(840, "int")
+    shadow_pip_max = MemInt32(868)
 
-    async def write_maximum_number_of_islands(self, maximum_number_of_islands: int):
-        await self.write_value_to_offset(840, maximum_number_of_islands, "int")
+    shadow_magic_unlocked = MemBool(872)
+    fishing_level = MemUInt8(873)
 
-    async def gardening_level(self) -> int:
-        return await self.read_value_from_offset(844, "unsigned char")
+    fishing_xp = MemInt32(876)
+    subscriber_benefit_flags = MemUInt32(880)
+    elixir_benefit_flags = MemUInt32(884)
+    monster_magic_level = MemUInt8(888)
 
-    async def write_gardening_level(self, gardening_level: int):
-        await self.write_value_to_offset(844, gardening_level, "unsigned char")
+    monster_magic_xp = MemInt32(892)
+    player_chat_channel_is_public = MemBool(896)
 
-    async def gardening_xp(self) -> int:
-        return await self.read_value_from_offset(848, "int")
+    extra_inventory_space = MemInt32(900)
+    remember_last_realm = MemBool(904)
+    new_spellbook_layout_warning = MemBool(905)
 
-    async def write_gardening_xp(self, gardening_xp: int):
-        await self.write_value_to_offset(848, gardening_xp, "int")
+    purchased_custom_emotes1 = MemUInt32(908)
+    purchased_custom_teleport_effects1 = MemUInt32(912)
+    equipped_teleport_effect = MemUInt32(916)
+    highest_world1_id = MemUInt32(920)
+    highest_world2_id = MemUInt32(924)
+    active_class_projects_list = MemUInt32(928)
 
-    async def invisible_to_friends(self) -> bool:
-        return await self.read_value_from_offset(852, "bool")
+    disabled_item_slot_ids = MemUInt32(944)
 
-    async def write_invisible_to_friends(self, invisible_to_friends: bool):
-        await self.write_value_to_offset(852, invisible_to_friends, "bool")
+    adventure_power_cooldown_time = MemUInt32(960)
+    purchased_custom_emotes2 = MemUInt32(964)
+    purchased_custom_teleport_effects2 = MemUInt32(968)
+    purchased_custom_emotes3 = MemUInt32(972)
+    purchased_custom_teleport_effects3 = MemUInt32(976)
+    shadow_pip_rating = MemFloat32(980)
+    bonus_shadow_pip_rating = MemFloat32(984)
+    shadow_pip_rate_accumulated = MemFloat32(988)
+    shadow_pip_rate_threshold = MemFloat32(992)
+    shadow_pip_rate_percentage = MemInt32(996)
+    friendly_player = MemBool(1000)
 
-    async def show_item_lock(self) -> bool:
-        return await self.read_value_from_offset(853, "bool")
+    emoji_skin_tone = MemInt32(1004)
+    show_pvp_option = MemUInt32(1008)
+    favorite_slot = MemInt32(1012)
+    cantrip_level = MemUInt8(1016)
 
-    async def write_show_item_lock(self, show_item_lock: bool):
-        await self.write_value_to_offset(853, show_item_lock, "bool")
-
-    async def quest_finder_enabled(self) -> bool:
-        return await self.read_value_from_offset(854, "bool")
-
-    async def write_quest_finder_enabled(self, quest_finder_enabled: bool):
-        await self.write_value_to_offset(854, quest_finder_enabled, "bool")
-
-    async def buddy_list_limit(self) -> int:
-        return await self.read_value_from_offset(856, "int")
-
-    async def write_buddy_list_limit(self, buddy_list_limit: int):
-        await self.write_value_to_offset(856, buddy_list_limit, "int")
-
-    async def dont_allow_friend_finder_codes(self) -> bool:
-        return await self.read_value_from_offset(864, "bool")
-
-    async def write_dont_allow_friend_finder_codes(
-        self, dont_allow_friend_finder_codes: bool
-    ):
-        await self.write_value_to_offset(864, dont_allow_friend_finder_codes, "bool")
-
-    async def stun_resistance_percent(self) -> float:
-        return await self.read_value_from_offset(860, "float")
-
-    async def write_stun_resistance_percent(self, stun_resistance_percent: float):
-        await self.write_value_to_offset(860, stun_resistance_percent, "float")
-
-    async def shadow_magic_unlocked(self) -> bool:
-        return await self.read_value_from_offset(872, "bool")
-
-    async def write_shadow_magic_unlocked(self, shadow_magic_unlocked: bool):
-        await self.write_value_to_offset(872, shadow_magic_unlocked, "bool")
-
-    async def shadow_pip_max(self) -> int:
-        return await self.read_value_from_offset(868, "int")
-
-    async def write_shadow_pip_max(self, shadow_pip_max: int):
-        await self.write_value_to_offset(868, shadow_pip_max, "int")
-
-    async def fishing_level(self) -> int:
-        return await self.read_value_from_offset(873, "unsigned char")
-
-    async def write_fishing_level(self, fishing_level: int):
-        await self.write_value_to_offset(873, fishing_level, "unsigned char")
-
-    async def fishing_xp(self) -> int:
-        return await self.read_value_from_offset(876, "int")
-
-    async def write_fishing_xp(self, fishing_xp: int):
-        await self.write_value_to_offset(876, fishing_xp, "int")
-
-    async def fishing_luck_bonus_percent(self) -> List[float]:
-        return await self.read_dynamic_vector(552, "float")
-
-    async def write_fishing_luck_bonus_percent(self, fishing_luck_bonus_percent: float):
-        await self.write_value_to_offset(552, fishing_luck_bonus_percent, "float")
-
-    async def fishing_luck_bonus_percent_all(self) -> float:
-        return await self.read_value_from_offset(732, "float")
-
-    async def write_fishing_luck_bonus_percent_all(
-        self, fishing_luck_bonus_percent_all: float
-    ):
-        await self.write_value_to_offset(732, fishing_luck_bonus_percent_all, "float")
-
-    async def subscriber_benefit_flags(self) -> int:
-        return await self.read_value_from_offset(880, "unsigned int")
-
-    async def write_subscriber_benefit_flags(self, subscriber_benefit_flags: int):
-        await self.write_value_to_offset(880, subscriber_benefit_flags, "unsigned int")
-
-    async def elixir_benefit_flags(self) -> int:
-        return await self.read_value_from_offset(884, "unsigned int")
-
-    async def write_elixir_benefit_flags(self, elixir_benefit_flags: int):
-        await self.write_value_to_offset(884, elixir_benefit_flags, "unsigned int")
-
-    async def shadow_pip_bonus_percent(self) -> float:
-        return await self.read_value_from_offset(780, "float")
-
-    async def write_shadow_pip_bonus_percent(self, shadow_pip_bonus_percent: float):
-        await self.write_value_to_offset(780, shadow_pip_bonus_percent, "float")
-
-    async def wisp_bonus_percent(self) -> float:
-        return await self.read_value_from_offset(804, "float")
-
-    async def write_wisp_bonus_percent(self, wisp_bonus_percent: float):
-        await self.write_value_to_offset(804, wisp_bonus_percent, "float")
-
-    async def pip_conversion_rating_all(self) -> float:
-        return await self.read_value_from_offset(280, "float")
-
-    async def write_pip_conversion_rating_all(self, pip_conversion_rating_all: float):
-        await self.write_value_to_offset(280, pip_conversion_rating_all, "float")
-
-    async def pip_conversion_rating_per_school(self) -> List[float]:
-        return await self.read_dynamic_vector(256, "float")
-
-    async def write_pip_conversion_rating_per_school(
-        self, pip_conversion_rating_per_school: float
-    ):
-        await self.write_value_to_offset(256, pip_conversion_rating_per_school, "float")
-
-    async def pip_conversion_percent_all(self) -> float:
-        return await self.read_value_from_offset(312, "float")
-
-    async def write_pip_conversion_percent_all(self, pip_conversion_percent_all: float):
-        await self.write_value_to_offset(312, pip_conversion_percent_all, "float")
-
-    async def pip_conversion_percent_per_school(self) -> List[float]:
-        return await self.read_dynamic_vector(288, "float")
-
-    async def write_pip_conversion_percent_per_school(
-        self, pip_conversion_percent_per_school: float
-    ):
-        await self.write_value_to_offset(
-            288, pip_conversion_percent_per_school, "float"
-        )
-
-    async def monster_magic_level(self) -> int:
-        return await self.read_value_from_offset(888, "unsigned char")
-
-    async def write_monster_magic_level(self, monster_magic_level: int):
-        await self.write_value_to_offset(888, monster_magic_level, "unsigned char")
-
-    async def monster_magic_xp(self) -> int:
-        return await self.read_value_from_offset(892, "int")
-
-    async def write_monster_magic_xp(self, monster_magic_xp: int):
-        await self.write_value_to_offset(892, monster_magic_xp, "int")
-
-    async def player_chat_channel_is_public(self) -> bool:
-        return await self.read_value_from_offset(896, "bool")
-
-    async def write_player_chat_channel_is_public(
-        self, player_chat_channel_is_public: bool
-    ):
-        await self.write_value_to_offset(896, player_chat_channel_is_public, "bool")
-
-    async def extra_inventory_space(self) -> int:
-        return await self.read_value_from_offset(900, "int")
-
-    async def write_extra_inventory_space(self, extra_inventory_space: int):
-        await self.write_value_to_offset(900, extra_inventory_space, "int")
-
-    async def remember_last_realm(self) -> bool:
-        return await self.read_value_from_offset(904, "bool")
-
-    async def write_remember_last_realm(self, remember_last_realm: bool):
-        await self.write_value_to_offset(904, remember_last_realm, "bool")
-
-    async def new_spellbook_layout_warning(self) -> bool:
-        return await self.read_value_from_offset(905, "bool")
-
-    async def write_new_spellbook_layout_warning(
-        self, new_spellbook_layout_warning: bool
-    ):
-        await self.write_value_to_offset(905, new_spellbook_layout_warning, "bool")
-
-    async def pip_conversion_base_all_schools(self) -> int:
-        return await self.read_value_from_offset(744, "int")
-
-    async def write_pip_conversion_base_all_schools(
-        self, pip_conversion_base_all_schools: int
-    ):
-        await self.write_value_to_offset(744, pip_conversion_base_all_schools, "int")
-
-    async def pip_conversion_base_per_school(self) -> List[int]:
-        return await self.read_dynamic_vector(752, "int")
-
-    async def write_pip_conversion_base_per_school(
-        self, pip_conversion_base_per_school: int
-    ):
-        await self.write_value_to_offset(752, pip_conversion_base_per_school, "int")
-
-    async def purchased_custom_emotes1(self) -> int:
-        return await self.read_value_from_offset(908, "unsigned int")
-
-    async def write_purchased_custom_emotes1(self, purchased_custom_emotes1: int):
-        await self.write_value_to_offset(908, purchased_custom_emotes1, "unsigned int")
-
-    async def purchased_custom_teleport_effects1(self) -> int:
-        return await self.read_value_from_offset(912, "unsigned int")
-
-    async def write_purchased_custom_teleport_effects1(
-        self, purchased_custom_teleport_effects1: int
-    ):
-        await self.write_value_to_offset(
-            912, purchased_custom_teleport_effects1, "unsigned int"
-        )
-
-    async def equipped_teleport_effect(self) -> int:
-        return await self.read_value_from_offset(916, "unsigned int")
-
-    async def write_equipped_teleport_effect(self, equipped_teleport_effect: int):
-        await self.write_value_to_offset(916, equipped_teleport_effect, "unsigned int")
-
-    async def highest_world1_id(self) -> int:
-        return await self.read_value_from_offset(920, "unsigned int")
-
-    async def write_highest_world1_id(self, highest_world1_id: int):
-        await self.write_value_to_offset(920, highest_world1_id, "unsigned int")
-
-    async def highest_world2_id(self) -> int:
-        return await self.read_value_from_offset(924, "unsigned int")
-
-    async def write_highest_world2_id(self, highest_world2_i_d: int):
-        await self.write_value_to_offset(924, highest_world2_i_d, "unsigned int")
-
-    async def active_class_projects_list(self) -> int:
-        return await self.read_value_from_offset(928, "unsigned int")
-
-    async def write_active_class_projects_list(self, active_class_projects_list: int):
-        await self.write_value_to_offset(
-            928, active_class_projects_list, "unsigned int"
-        )
-
-    async def disabled_item_slot_ids(self) -> int:
-        return await self.read_value_from_offset(944, "unsigned int")
-
-    async def write_disabled_item_slot_ids(self, disabled_item_slot_ids: int):
-        await self.write_value_to_offset(944, disabled_item_slot_ids, "unsigned int")
-
-    async def adventure_power_cooldown_time(self) -> int:
-        return await self.read_value_from_offset(960, "unsigned int")
-
-    async def write_adventure_power_cooldown_time(
-        self, adventure_power_cooldown_time: int
-    ):
-        await self.write_value_to_offset(
-            960, adventure_power_cooldown_time, "unsigned int"
-        )
-
-    async def purchased_custom_emotes2(self) -> int:
-        return await self.read_value_from_offset(964, "unsigned int")
-
-    async def write_purchased_custom_emotes2(self, purchased_custom_emotes2: int):
-        await self.write_value_to_offset(964, purchased_custom_emotes2, "unsigned int")
-
-    async def purchased_custom_teleport_effects2(self) -> int:
-        return await self.read_value_from_offset(968, "unsigned int")
-
-    async def write_purchased_custom_teleport_effects2(
-        self, purchased_custom_teleport_effects2: int
-    ):
-        await self.write_value_to_offset(
-            968, purchased_custom_teleport_effects2, "unsigned int"
-        )
-
-    async def purchased_custom_emotes3(self) -> int:
-        return await self.read_value_from_offset(972, "unsigned int")
-
-    async def write_purchased_custom_emotes3(self, purchased_custom_emotes3: int):
-        await self.write_value_to_offset(972, purchased_custom_emotes3, "unsigned int")
-
-    async def purchased_custom_teleport_effects3(self) -> int:
-        return await self.read_value_from_offset(976, "unsigned int")
-
-    async def write_purchased_custom_teleport_effects3(
-        self, purchased_custom_teleport_effects3: int
-    ):
-        await self.write_value_to_offset(
-            976, purchased_custom_teleport_effects3, "unsigned int"
-        )
-
-    async def shadow_pip_rating(self) -> float:
-        return await self.read_value_from_offset(980, "float")
-
-    async def write_shadow_pip_rating(self, shadow_pip_rating: float):
-        await self.write_value_to_offset(980, shadow_pip_rating, "float")
-
-    async def bonus_shadow_pip_rating(self) -> float:
-        return await self.read_value_from_offset(984, "float")
-
-    async def write_bonus_shadow_pip_rating(self, bonus_shadow_pip_rating: float):
-        await self.write_value_to_offset(984, bonus_shadow_pip_rating, "float")
-
-    async def shadow_pip_rate_accumulated(self) -> float:
-        return await self.read_value_from_offset(988, "float")
-
-    async def write_shadow_pip_rate_accumulated(
-        self, shadow_pip_rate_accumulated: float
-    ):
-        await self.write_value_to_offset(988, shadow_pip_rate_accumulated, "float")
-
-    async def shadow_pip_rate_threshold(self) -> float:
-        return await self.read_value_from_offset(992, "float")
-
-    async def write_shadow_pip_rate_threshold(self, shadow_pip_rate_threshold: float):
-        await self.write_value_to_offset(992, shadow_pip_rate_threshold, "float")
-
-    async def shadow_pip_rate_percentage(self) -> int:
-        return await self.read_value_from_offset(996, "int")
-
-    async def write_shadow_pip_rate_percentage(self, shadow_pip_rate_percentage: int):
-        await self.write_value_to_offset(996, shadow_pip_rate_percentage, "int")
-
-    async def friendly_player(self) -> bool:
-        return await self.read_value_from_offset(1000, "bool")
-
-    async def write_friendly_player(self, friendly_player: bool):
-        await self.write_value_to_offset(1000, friendly_player, "bool")
-
-    async def emoji_skin_tone(self) -> int:
-        return await self.read_value_from_offset(1004, "int")
-
-    async def write_emoji_skin_tone(self, emoji_skin_tone: int):
-        await self.write_value_to_offset(1004, emoji_skin_tone, "int")
-
-    async def show_pvp_option(self) -> int:
-        return await self.read_value_from_offset(1008, "unsigned int")
-
-    async def write_show_pvp_option(self, show_pvp_option: int):
-        await self.write_value_to_offset(1008, show_pvp_option, "unsigned int")
-
-    async def favorite_slot(self) -> int:
-        return await self.read_value_from_offset(1012, "int")
-
-    async def write_favorite_slot(self, favorite_slot: int):
-        await self.write_value_to_offset(1012, favorite_slot, "int")
-
-    async def cantrip_level(self) -> int:
-        return await self.read_value_from_offset(1016, "unsigned char")
-
-    async def write_cantrip_level(self, cantrip_level: int):
-        await self.write_value_to_offset(1016, cantrip_level, "unsigned char")
-
-    async def cantrip_xp(self) -> int:
-        return await self.read_value_from_offset(1020, "int")
-
-    async def write_cantrip_xp(self, cantrip_xp: int):
-        await self.write_value_to_offset(1020, cantrip_xp, "int")
-
-    async def base_archmastery_rating(self) -> float:
-        return await self.read_value_from_offset(1024, "float")
-
-    async def write_base_archmastery_rating(self, base_archmastery_rating: float):
-        return await self.write_value_to_offset(1024, base_archmastery_rating, "float")
-
-    async def bonus_archmastery_rating(self) -> float:
-        return await self.read_value_from_offset(1028, "float")
-
-    async def write_bonus_archmastery_rating(self, bonus_archmastery_rating: float):
-        return await self.write_value_to_offset(1028, bonus_archmastery_rating, "float")
-
-    async def highest_character_world_on_account(self) -> int:
-        return await self.read_value_from_offset(324, "int")
-
-    async def write_highest_character_world_on_account(self, highest_character_world_on_account: int):
-        return await self.write_value_to_offset(324, highest_character_world_on_account, "int")
-
+    cantrip_xp = MemInt32(1020)
+    base_archmastery_rating = MemFloat32(1024)
+    bonus_archmastery_rating = MemFloat32(1028)
 
 
 class CurrentGameStats(GameStats):
     async def read_base_address(self) -> int:
         return await self.hook_handler.read_current_player_stat_base()
-
-
-class DynamicGameStats(DynamicMemoryObject, GameStats):
-    pass
