@@ -1,353 +1,52 @@
-from typing import List
+from wizwalker.memory.memory_object import PropertyClass
 
-from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
-
-from memonster import LazyType
 from memonster.memtypes import *
 from .memtypes import *
 
 
 class GameStats(PropertyClass):
-    async def max_hitpoints(self) -> int:
+    def max_hitpoints(self) -> int:
         """
         Client's max hitpoints; base + bonus
         """
-        base = await self.base_hitpoints()
-        bonus = await self.bonus_hitpoints()
+        base = self.base_hitpoints.read()
+        bonus = self.bonus_hitpoints.read()
         return base + bonus
 
-    async def max_mana(self) -> int:
+    def max_mana(self) -> int:
         """
         Clients's max mana; base + bonus
         """
-        base = await self.base_mana()
-        bonus = await self.bonus_mana()
+        base = self.base_mana.read()
+        bonus = self.bonus_mana.read()
         return base + bonus
 
-    async def base_hitpoints(self) -> int:
-        return await self.read_value_from_offset(80, "int")
-
-    async def write_base_hitpoints(self, base_hitpoints: int):
-        await self.write_value_to_offset(80, base_hitpoints, "int")
-
-    async def base_mana(self) -> int:
-        return await self.read_value_from_offset(84, "int")
-
-    async def write_base_mana(self, base_mana: int):
-        await self.write_value_to_offset(84, base_mana, "int")
-
-    async def base_gold_pouch(self) -> int:
-        return await self.read_value_from_offset(88, "int")
-
-    async def write_base_gold_pouch(self, base_gold_pouch: int):
-        await self.write_value_to_offset(88, base_gold_pouch, "int")
-
-    async def base_event_currency1_pouch(self) -> int:
-        return await self.read_value_from_offset(92, "int")
-
-    async def write_base_event_currency1_pouch(self, base_event_currency1_pouch: int):
-        await self.write_value_to_offset(92, base_event_currency1_pouch, "int")
-
-    async def base_event_currency2_pouch(self) -> int:
-        return await self.read_value_from_offset(96, "int")
-
-    async def write_base_event_currency2_pouch(self, base_event_currency2_pouch: int):
-        await self.write_value_to_offset(96, base_event_currency2_pouch, "int")
-
-    async def base_pvp_currency_pouch(self) -> int:
-        return await self.read_value_from_offset(100, "int")
-
-    async def write_base_pvp_currency_pouch(self, base_pvp_currency_pouch: int):
-        await self.write_value_to_offset(100, base_pvp_currency_pouch, "int")
-
-    async def energy_max(self) -> int:
-        return await self.read_value_from_offset(104, "int")
-
-    async def write_energy_max(self, energy_max: int):
-        await self.write_value_to_offset(104, energy_max, "int")
-
-    async def current_hitpoints(self) -> int:
-        return await self.read_value_from_offset(108, "int")
-
-    async def write_current_hitpoints(self, current_hitpoints: int):
-        await self.write_value_to_offset(108, current_hitpoints, "int")
-
-    async def current_gold(self) -> int:
-        return await self.read_value_from_offset(112, "int")
-
-    async def write_current_gold(self, current_gold: int):
-        await self.write_value_to_offset(112, current_gold, "int")
-
-    async def current_event_currency1(self) -> int:
-        return await self.read_value_from_offset(116, "int")
-
-    async def write_current_event_currency1(self, current_event_currency1: int):
-        await self.write_value_to_offset(116, current_event_currency1, "int")
-
-    async def current_event_currency2(self) -> int:
-        return await self.read_value_from_offset(120, "int")
-
-    async def write_current_event_currency2(self, current_event_currency2: int):
-        await self.write_value_to_offset(120, current_event_currency2, "int")
-
-    async def current_pvp_currency(self) -> int:
-        return await self.read_value_from_offset(124, "int")
-
-    async def write_current_pvp_currency(self, current_pvp_currency: int):
-        await self.write_value_to_offset(124, current_pvp_currency, "int")
-
-    async def current_mana(self) -> int:
-        return await self.read_value_from_offset(128, "int")
-
-    async def write_current_mana(self, current_mana: int):
-        await self.write_value_to_offset(128, current_mana, "int")
-
-    async def current_arena_points(self) -> int:
-        return await self.read_value_from_offset(132, "int")
-
-    async def write_current_arena_points(self, current_arena_points: int):
-        await self.write_value_to_offset(132, current_arena_points, "int")
-
-    async def spell_charge_base(self) -> List[int]:
-        return await self.read_dynamic_vector(136, "int")
-
-    async def potion_max(self) -> float:
-        return await self.read_value_from_offset(160, "float")
-
-    async def write_potion_max(self, potion_max: float):
-        await self.write_value_to_offset(160, potion_max, "float")
-
-    async def potion_charge(self) -> float:
-        return await self.read_value_from_offset(164, "float")
-
-    async def write_potion_charge(self, potion_charge: float):
-        await self.write_value_to_offset(164, potion_charge, "float")
-
-    async def bonus_hitpoints(self) -> int:
-        return await self.read_value_from_offset(216, "int")
-
-    async def write_bonus_hitpoints(self, bonus_hitpoints: int):
-        await self.write_value_to_offset(216, bonus_hitpoints, "int")
-
-    async def bonus_mana(self) -> int:
-        return await self.read_value_from_offset(220, "int")
-
-    async def write_bonus_mana(self, bonus_mana: int):
-        await self.write_value_to_offset(220, bonus_mana, "int")
-
-    async def bonus_energy(self) -> int:
-        return await self.read_value_from_offset(236, "int")
-
-    async def write_bonus_energy(self, bonus_energy: int):
-        await self.write_value_to_offset(236, bonus_energy, "int")
-
-    async def critical_hit_percent_all(self) -> float:
-        return await self.read_value_from_offset(240, "float")
-
-    async def write_critical_hit_percent_all(self, critical_hit_percent_all: float):
-        await self.write_value_to_offset(240, critical_hit_percent_all, "float")
-
-    async def block_percent_all(self) -> float:
-        return await self.read_value_from_offset(244, "float")
-
-    async def write_block_percent_all(self, block_percent_all: float):
-        await self.write_value_to_offset(244, block_percent_all, "float")
-
-    async def critical_hit_rating_all(self) -> float:
-        return await self.read_value_from_offset(248, "float")
-
-    async def write_critical_hit_rating_all(self, critical_hit_rating_all: float):
-        await self.write_value_to_offset(248, critical_hit_rating_all, "float")
-
-    async def block_rating_all(self) -> float:
-        return await self.read_value_from_offset(252, "float")
-
-    async def write_block_rating_all(self, block_rating_all: float):
-        await self.write_value_to_offset(252, block_rating_all, "float")
-
-    async def reference_level(self) -> int:
-        return await self.read_value_from_offset(316, "int")
-
-    async def write_reference_level(self, reference_level: int):
-        await self.write_value_to_offset(316, reference_level, "int")
-
-    async def highest_character_level_on_account(self) -> int:
-        return await self.read_value_from_offset(320, "int")
-
-    async def write_highest_character_level_on_account(
-        self, highest_character_level_on_account: int
-    ):
-        await self.write_value_to_offset(320, highest_character_level_on_account, "int")
-
-    async def pet_act_chance(self) -> int:
-        return await self.read_value_from_offset(328, "int")
-
-    async def write_pet_act_chance(self, pet_act_chance: int):
-        await self.write_value_to_offset(328, pet_act_chance, "int")
-
-    async def dmg_bonus_percent(self) -> List[float]:
-        return await self.read_dynamic_vector(336, "float")
-
-    async def write_dmg_bonus_percent(self, dmg_bonus_percent: float):
-        await self.write_value_to_offset(336, dmg_bonus_percent, "float")
-
-    async def dmg_bonus_flat(self) -> List[float]:
-        return await self.read_dynamic_vector(360, "float")
-
-    async def write_dmg_bonus_flat(self, dmg_bonus_flat: float):
-        await self.write_value_to_offset(360, dmg_bonus_flat, "float")
-
-    async def acc_bonus_percent(self) -> List[float]:
-        return await self.read_dynamic_vector(384, "float")
-
-    async def write_acc_bonus_percent(self, acc_bonus_percent: float):
-        await self.write_value_to_offset(384, acc_bonus_percent, "float")
-
-    async def ap_bonus_percent(self) -> List[float]:
-        return await self.read_dynamic_vector(408, "float")
-
-    async def write_ap_bonus_percent(self, ap_bonus_percent: float):
-        await self.write_value_to_offset(408, ap_bonus_percent, "float")
-
-    async def dmg_reduce_percent(self) -> List[float]:
-        return await self.read_dynamic_vector(432, "float")
-
-    async def write_dmg_reduce_percent(self, dmg_reduce_percent: float):
-        await self.write_value_to_offset(432, dmg_reduce_percent, "float")
-
-    async def dmg_reduce_flat(self) -> List[float]:
-        return await self.read_dynamic_vector(456, "float")
-
-    async def write_dmg_reduce_flat(self, dmg_reduce_flat: float):
-        await self.write_value_to_offset(456, dmg_reduce_flat, "float")
-
-    async def acc_reduce_percent(self) -> List[float]:
-        return await self.read_dynamic_vector(480, "float")
-
-    async def write_acc_reduce_percent(self, acc_reduce_percent: float):
-        await self.write_value_to_offset(480, acc_reduce_percent, "float")
-
-    async def heal_bonus_percent(self) -> List[float]:
-        return await self.read_dynamic_vector(504, "float")
-
-    async def write_heal_bonus_percent(self, heal_bonus_percent: float):
-        await self.write_value_to_offset(504, heal_bonus_percent, "float")
-
-    async def heal_inc_bonus_percent(self) -> List[float]:
-        return await self.read_dynamic_vector(528, "float")
-
-    async def write_heal_inc_bonus_percent(self, heal_inc_bonus_percent: float):
-        await self.write_value_to_offset(528, heal_inc_bonus_percent, "float")
-
-    async def spell_charge_bonus(self) -> List[int]:
-        return await self.read_dynamic_vector(576, "int")
-
-    async def write_spell_charge_bonus(self, spell_charge_bonus: int):
-        await self.write_value_to_offset(576, spell_charge_bonus, "int")
-
-    async def dmg_bonus_percent_all(self) -> float:
-        return await self.read_value_from_offset(696, "float")
-
-    async def write_dmg_bonus_percent_all(self, dmg_bonus_percent_all: float):
-        await self.write_value_to_offset(696, dmg_bonus_percent_all, "float")
-
-    async def dmg_bonus_flat_all(self) -> float:
-        return await self.read_value_from_offset(700, "float")
-
-    async def write_dmg_bonus_flat_all(self, dmg_bonus_flat_all: float):
-        await self.write_value_to_offset(700, dmg_bonus_flat_all, "float")
-
-    async def acc_bonus_percent_all(self) -> float:
-        return await self.read_value_from_offset(704, "float")
-
-    async def write_acc_bonus_percent_all(self, acc_bonus_percent_all: float):
-        await self.write_value_to_offset(704, acc_bonus_percent_all, "float")
-
-    async def ap_bonus_percent_all(self) -> float:
-        return await self.read_value_from_offset(708, "float")
-
-    async def write_ap_bonus_percent_all(self, ap_bonus_percent_all: float):
-        await self.write_value_to_offset(708, ap_bonus_percent_all, "float")
-
-    async def dmg_reduce_percent_all(self) -> float:
-        return await self.read_value_from_offset(712, "float")
-
-    async def write_dmg_reduce_percent_all(self, dmg_reduce_percent_all: float):
-        await self.write_value_to_offset(712, dmg_reduce_percent_all, "float")
-
-    async def dmg_reduce_flat_all(self) -> float:
-        return await self.read_value_from_offset(716, "float")
-
-    async def write_dmg_reduce_flat_all(self, dmg_reduce_flat_all: float):
-        await self.write_value_to_offset(716, dmg_reduce_flat_all, "float")
-
-    async def acc_reduce_percent_all(self) -> float:
-        return await self.read_value_from_offset(720, "float")
-
-    async def write_acc_reduce_percent_all(self, acc_reduce_percent_all: float):
-        await self.write_value_to_offset(720, acc_reduce_percent_all, "float")
-
-    async def heal_bonus_percent_all(self) -> float:
-        return await self.read_value_from_offset(724, "float")
-
-    async def write_heal_bonus_percent_all(self, heal_bonus_percent_all: float):
-        await self.write_value_to_offset(724, heal_bonus_percent_all, "float")
-
-    async def heal_inc_bonus_percent_all(self) -> float:
-        return await self.read_value_from_offset(728, "float")
-
-    async def write_heal_inc_bonus_percent_all(self, heal_inc_bonus_percent_all: float):
-        await self.write_value_to_offset(728, heal_inc_bonus_percent_all, "float")
-
-    async def spell_charge_bonus_all(self) -> int:
-        return await self.read_value_from_offset(736, "int")
-
-    async def write_spell_charge_bonus_all(self, spell_charge_bonus_all: int):
-        await self.write_value_to_offset(736, spell_charge_bonus_all, "int")
-
-    async def power_pip_base(self) -> float:
-        return await self.read_value_from_offset(740, "float")
-
-    async def write_power_pip_base(self, power_pip_base: float):
-        await self.write_value_to_offset(740, power_pip_base, "float")
-
-    async def power_pip_bonus_percent_all(self) -> float:
-        return await self.read_value_from_offset(776, "float")
-
-    async def write_power_pip_bonus_percent_all(
-        self, power_pip_bonus_percent_all: float
-    ):
-        await self.write_value_to_offset(776, power_pip_bonus_percent_all, "float")
-
-    async def xp_percent_increase(self) -> float:
-        return await self.read_value_from_offset(784, "float")
-
-    async def write_xp_percent_increase(self, xp_percent_increase: float):
-        await self.write_value_to_offset(784, xp_percent_increase, "float")
-
-    async def critical_hit_percent_by_school(self) -> List[float]:
-        return await self.read_dynamic_vector(600, "float")
-
-    async def write_critical_hit_percent_by_school(
-        self, critical_hit_percent_by_school: float
-    ):
-        await self.write_value_to_offset(600, critical_hit_percent_by_school, "float")
-
-    async def block_percent_by_school(self) -> List[float]:
-        return await self.read_dynamic_vector(624, "float")
-
-    async def write_block_percent_by_school(self, block_percent_by_school: float):
-        await self.write_value_to_offset(624, block_percent_by_school, "float")
-
-    async def critical_hit_rating_by_school(self) -> List[float]:
-        return await self.read_dynamic_vector(648, "float")
-
-    async def write_critical_hit_rating_by_school(
-        self, critical_hit_rating_by_school: float
-    ):
-        await self.write_value_to_offset(648, critical_hit_rating_by_school, "float")
-
-
+    base_hitpoints = MemInt32(80)
+    base_mana = MemInt32(84)
+    base_gold_pouch = MemInt32(88)
+    base_event_currency1_pouch = MemInt32(92)
+    base_event_currency2_pouch = MemInt32(96)
+    base_pvp_currency_pouch = MemInt32(100)
+    energy_max = MemInt32(104)
+    current_hitpoints = MemInt32(108)
+    write_current_gold = MemInt32(112)
+    current_event_currency1 = MemInt32(116)
+    current_event_currency2 = MemInt32(120)
+    current_pvp_currency = MemInt32(124)
+    current_mana = MemInt32(128)
+    current_arena_points = MemInt32(132)
+    spell_charge_base = MemCppVector(136, MemInt32(0))
+    potion_max = MemFloat32(160)
+    potion_charge = MemFloat32(164)
+
+    bonus_hitpoints = MemInt32(216)
+    bonus_mana = MemInt32(220)
+
+    bonus_energy = MemInt32(236)
+    critical_hit_percent_all = MemFloat32(240)
+    block_percent_all = MemFloat32(244)
+    critical_hit_rating_all = MemFloat32(248)
+    block_rating_all = MemFloat32(252)
     pip_conversion_rating_per_school = MemFloat32(256)
 
     pip_conversion_rating_all = MemFloat32(280)
@@ -355,20 +54,45 @@ class GameStats(PropertyClass):
     pip_conversion_percent_per_school = MemFloat32(288)
 
     pip_conversion_percent_all = MemFloat32(312)
-
+    reference_level = MemInt32(316)
+    highest_character_level_on_account = MemInt32(320)
     highest_character_world_on_account = MemInt32(324)
+    pet_act_chance = MemInt32(328)
 
-    fishing_luck_bonus_percent = MemFloat32(552)
-
+    dmg_bonus_percent = MemCppVector(336, MemFloat32(0))
+    dmg_bonus_flat = MemCppVector(360, MemFloat32(0))
+    acc_bonus_percent = MemCppVector(384, MemFloat32(0))
+    ap_bonus_percent = MemCppVector(408, MemFloat32(0))
+    dmg_reduce_percent = MemCppVector(432, MemFloat32(0))
+    dmg_reduce_flat = MemCppVector(456, MemFloat32(0))
+    acc_reduce_percent = MemCppVector(480, MemFloat32(0))
+    heal_bonus_percent = MemCppVector(504, MemFloat32(0))
+    heal_inc_bonus_percent = MemCppVector(528, MemFloat32(0))
+    fishing_luck_bonus_percent = MemCppVector(552, MemFloat32(0))
+    spell_charge_bonus = MemCppVector(576, MemInt32(0))
+    critical_hit_percent_by_school = MemCppVector(600, MemFloat32(0))
+    block_percent_by_school = MemCppVector(624, MemFloat32(0))
+    critical_hit_rating_by_school = MemCppVector(648, MemFloat32(0))
     block_rating_by_school = MemCppVector(672, MemFloat32(0))
-
+    dmg_bonus_percent_all = MemFloat32(696)
+    dmg_bonus_flat_all = MemFloat32(700)
+    acc_bonus_percent_all = MemFloat32(704)
+    ap_bonus_percent_all = MemFloat32(708)
+    dmg_reduce_percent_all = MemFloat32(712)
+    dmg_reduce_flat_all = MemFloat32(716)
+    acc_reduce_percent_all = MemFloat32(720)
+    heal_bonus_percent_all = MemFloat32(724)
+    heal_inc_bonus_percent_all = MemFloat32(728)
     fishing_luck_bonus_percent_all = MemFloat32(732)
-
+    spell_charge_bonus_all = MemInt32(736)
+    power_pip_base = MemFloat32(740)
     pip_conversion_base_all_schools = MemInt32(744)
 
     pip_conversion_base_per_school = MemInt32(752)
 
+    power_pip_bonus_percent_all = MemFloat32(776)
     shadow_pip_bonus_percent = MemFloat32(780)
+    xp_percent_increase = MemFloat32(784)
 
     wisp_bonus_percent = MemFloat32(804)
 

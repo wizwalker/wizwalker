@@ -88,7 +88,7 @@ class MemCppVector(MemType, Generic[MT]):
         super().__init__(offset)
         self._dummy = dummy
         self.start_ptr = MemPointer(0, dummy)
-        self.end_ptr = MemPointer(0, dummy)
+        self.end_ptr = MemPointer(8, dummy)
 
     def count(self) -> int:
         # TODO: Change this once inference is added, for now only support types that add this method
