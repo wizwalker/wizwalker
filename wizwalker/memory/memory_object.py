@@ -12,7 +12,6 @@ from wizwalker.errors import (
 )
 from wizwalker.utils import XYZ, Orient
 from .handler import HookHandler
-from .memory_reader import MemoryReader
 
 from memonster import LazyType
 from memonster.memtypes import *

@@ -1,6 +1,7 @@
 import asyncio
 import ctypes
 import ctypes.wintypes
+import functools
 import io
 import math
 import struct
@@ -914,3 +915,18 @@ def make_ypr_matrix(base, orientation: Orient):
     base = multiply3x3matrices(base, pitch_matrix(orientation.pitch))
     base = multiply3x3matrices(base, roll_matrix(orientation.roll))
     return base
+
+
+async def run_in_executor(func, *args, **kwargs):
+    """
+    Run a function within an executor
+
+    Args:
+        func: The function to run
+        args: Args to pass to the function
+        kwargs: Kwargs to pass to the function
+    """
+    loop = asyncio.get_event_loop()
+    function = functools.partial(func, *args, **kwargs)
+
+    return await loop.run_in_executor(None, function)

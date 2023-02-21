@@ -18,7 +18,6 @@ from .hooks import (
     RenderContextHook,
     MovementTeleportHook,
 )
-from .memory_reader import MemoryReader
 
 
 # noinspection PyUnresolvedReferences

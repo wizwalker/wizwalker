@@ -4,27 +4,19 @@ import ctypes.wintypes
 import struct
 from typing import Any, Tuple
 from contextlib import suppress
-import warnings
 
 from loguru import logger
 
-from .memory_reader import MemoryReader
 from wizwalker.constants import kernel32
 
-
-# TODO: 2.0 delete (useless)
-def pack_to_int_or_longlong(num: int) -> bytes:
-    warnings.warn(DeprecationWarning("Will be removed in the next major release"))
-    try:
-        return struct.pack("<i", num)
-    except struct.error:
-        return struct.pack("<q", num)
+from memonster.memtypes import *
+from memonster.memanagers import BaseAllocator, CaveAllocator, WindowsBackend, MemoryView
 
 
-class MemoryHook(MemoryReader):
-    def __init__(self, hook_handler, hook_cache = {}):
-        super().__init__(hook_handler.process)
-        self.hook_handler = hook_handler
+class MemoryHook:
+    def __init__(self, memory_backend: WindowsBackend, hook_cache = {}):
+        self.base_allocator = BaseAllocator(memory_backend)
+        
         self._hook_cache = hook_cache
         self.jump_original_bytecode = None
 
@@ -33,9 +25,6 @@ class MemoryHook(MemoryReader):
 
         self.jump_bytecode = None
         self.hook_bytecode = None
-
-        # so we can dealloc it on unhook
-        self._allocated_addresses = []
 
     def _get_my_cache(self):
         if self._hook_cache is None:
@@ -53,43 +42,41 @@ class MemoryHook(MemoryReader):
     def _get_cached(self, name):
         return self._get_my_cache()[name]
 
-    async def alloc(self, size: int) -> int:
+    def alloc(self, size: int) -> MemoryView:
         """
         Allocate <size> bytes
         """
-        addr = await self.allocate(size)
-        self._allocated_addresses.append(addr)
-        return addr
+        return self.base_allocator.alloc0(size)
 
-    async def prehook(self):
+    def prehook(self):
         """
         Called after bytecode is prepared and before written
         """
         pass
 
-    async def posthook(self):
+    def posthook(self):
         """
         Called after bytecode is written
         """
         pass
 
-    async def get_jump_address(self, pattern: bytes, module: str = None) -> int:
+    def get_jump_address(self, pattern: bytes, module: str = None) -> int:
         """
         gets the address to write jump at
         """
         jump_address = await self.pattern_scan(pattern, module=module)
         return jump_address
 
-    async def get_hook_address(self, size: int) -> int:
+    def get_hook_address(self, size: int) -> int:
         return await self.alloc(size)
 
-    async def get_jump_bytecode(self) -> bytes:
+    def get_jump_bytecode(self) -> bytes:
         """
         Gets the bytecode to write to the jump address
         """
         raise NotImplemented()
 
-    async def get_hook_bytecode(self) -> bytes:
+    def get_hook_bytecode(self) -> bytes:
         """
         Gets the bytecord to write to the hook address
         """
@@ -140,8 +127,8 @@ class MemoryHook(MemoryReader):
             f"Writing original bytecode {self.jump_original_bytecode} to {self.jump_address}"
         )
         await self.write_bytes(self.jump_address, self.jump_original_bytecode)
-        for addr in self._allocated_addresses:
-            await self.free(addr)
+        for ptr in self.base_allocator._owned_pointers:
+            self.base_allocator.free(ptr[0])
 
 
 class AutoBotBaseHook(MemoryHook):
