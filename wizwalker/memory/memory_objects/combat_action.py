@@ -25,7 +25,7 @@ class CombatAction(MemType):
 
     blocks_calculated = MemBool(152)
 
-    serialized_blocks = MemCppString(160)
+    serialized_blocks = MemCppString(160, False)
 
     confused_target = MemBool(208)
     after_died = MemBool(209)
@@ -34,7 +34,7 @@ class CombatAction(MemType):
     string_key_message = MemCppString(216)
     sound_file_name = MemCppString(248)
     duration_modifier = MemFloat32(280)
-    serialized_targets_affected = MemCppString(288)
+    serialized_targets_affected = MemCppString(288, False)
 
     force_spell = MemBool(336)
     delayed = MemBool(337)

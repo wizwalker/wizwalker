@@ -10,4 +10,4 @@ class ClientZone(PropertyClass):
     """
     zone_id = MemInt64(72)
     
-    zone_Name = MemCppString(88)
+    zone_name = MemCppString(88)

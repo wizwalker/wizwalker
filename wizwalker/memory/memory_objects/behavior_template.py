@@ -1,4 +1,4 @@
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 
 from memonster.memtypes import *
 from .memtypes import *

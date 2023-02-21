@@ -1,6 +1,6 @@
 from typing import Optional
 
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import PropertyClass
 from .behavior_template import BehaviorTemplate
 
 from memonster.memtypes import *
@@ -25,12 +25,3 @@ class BehaviorInstance(PropertyClass):
     behavior_template = MemPointer(88, BehaviorTemplate(0))
 
     behavior_template_name_id = MemUInt32(104)
-
-
-
-class DynamicBehaviorInstance(DynamicMemoryObject, BehaviorInstance):
-    """
-    Dynamic behavior instance that can be given an address
-    """
-
-    pass

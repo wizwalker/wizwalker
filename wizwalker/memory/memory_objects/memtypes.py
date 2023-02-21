@@ -3,7 +3,7 @@ from typing import TypeVar, Generic
 from memonster import LazyType
 from memonster.memtypes import *
 
-from wizwalker.utils import XYZ, Orient
+from wizwalker.utils import XYZ, Orient, Rectangle, Point
 
 
 T = TypeVar("T")
@@ -31,6 +31,17 @@ class MemArray(MemType, Generic[MT]):
             self.cast_offset(i * tsize, self._dummy).write(data[i].cast(self._dummy).read())
 
 # TODO: Convert to use MemArray
+class MemPoint(MemType):
+    x = MemFloat32(0)
+    y = MemFloat32(4)
+
+    def read(self) -> Point:
+        return Point(self.x.read(), self.y.read())
+
+    def write(self, data: Point):
+        self.x.write(data.x)
+        self.y.write(data.y)
+
 class MemXYZ(MemType):
     x = MemFloat32(0)
     y = MemFloat32(4)
@@ -57,19 +68,63 @@ class MemOrient(MemType):
         self.roll.write(data.roll)
         self.yaw.write(data.yaw)
 
+class MemRectangle(MemType):
+    x1 = MemInt32(0)
+    y1 = MemInt32(4)
+    x2 = MemInt32(8)
+    y2 = MemInt32(12)
+
+    def read(self) -> Rectangle:
+        return Rectangle(
+            self.x1.read(),
+            self.y1.read(),
+            self.x2.read(),
+            self.y2.read()
+        )
+
+    def write(self, data: Rectangle):
+        self.x1.write(data.x1)
+        self.y1.write(data.y1)
+        self.x2.write(data.x2)
+        self.y2.write(data.y2)
+
 class MemCppString(MemType):
     sso_cstring = MemCString(0, 16)
     length = MemInt32(16)
 
-    def read(self) -> bytes:
+    def __init__(self, offset: int, should_decode=True) -> None:
+        super().__init__(offset)
+        self.should_decode = should_decode
+
+    def read(self) -> bytes | str:
         l = self.length.read()
 
-        cstring = self.sso_cstring
-        if l >= 16:
-            # TODO: Is this l+1 correct
-            cstring = cstring.cast(MemPointer(0, MemCString(0, l+1))).read()
+        if l < 1:
+            return ""
 
+        cstring = self.sso_cstring
+        if l >= self.sso_cstring.max_len:
+            cstring = cstring.cast(MemPointer(0, MemCString(0, l))).read()
+
+        if self.should_decode:
+            return cstring.read_bytes(l).decode("utf-8")
         return cstring.read_bytes(l)
+
+class MemCppWideString(MemType):
+    sso_cstring = MemCString(0, 16)
+    length = MemInt32(16)
+
+    def read(self) -> str:
+        l = self.length.read() * 2
+        if l < 1:
+            return ""
+
+        cstring = self.sso_cstring
+        if l >= self.sso_cstring.max_len:
+            cstring = cstring.cast(MemPointer(0, MemCString(0, l))).read()
+
+        return cstring.read_bytes(l).decode("utf-16")
+
 
 class MemCppSharedPointer(MemPointer, Generic[MT]):
     # Only here to make python's type inference work

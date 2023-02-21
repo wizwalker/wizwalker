@@ -38,6 +38,12 @@ async def async_sorted(iterable, /, *, key=None, reverse=False):
     ]
 
 
+class Point:
+    def __init__(self, x: float, y: float) -> None:
+        self.x = x
+        self.y = y
+
+
 class XYZ:
     def __init__(self, x: float, y: float, z: float):
         self.x = x

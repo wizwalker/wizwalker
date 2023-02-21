@@ -16,7 +16,7 @@ from .memory_reader import MemoryReader
 
 from memonster import LazyType
 from memonster.memtypes import *
-from .memtypes import *
+from wizwalker.memory.memory_objects.memtypes import *
 
 
 MAX_STRING = 5_000
@@ -74,68 +74,6 @@ class MemoryObject(MemoryReader):
             self._offset_lookup_cache[name] = offset
             return offset
 
-    async def read_wide_string(self, address: int, encoding: str = "utf-16") -> str:
-        string_len = await self.read_typed(address + 16, "int")
-        if string_len == 0:
-            return ""
-
-        # wide chars take 2 bytes
-        string_len *= 2
-
-        # wide strings larger than 8 bytes are pointers
-        if string_len >= 8:
-            string_address = await self.read_typed(address, "long long")
-        else:
-            string_address = address
-
-        try:
-            return (await self.read_bytes(string_address, string_len)).decode(encoding)
-        except UnicodeDecodeError:
-            return ""
-
-    async def read_wide_string_from_offset(
-        self, offset: int, encoding: str = "utf-16"
-    ) -> str:
-        base_address = await self.read_base_address()
-        return await self.read_wide_string(base_address + offset, encoding)
-
-    async def write_wide_string(
-        self, address: int, string: str, encoding: str = "utf-16"
-    ):
-        string_len_addr = address + 16
-        encoded = string.encode(encoding)
-        # len(encoded) instead of string bc it can be larger in some encodings
-        string_len = len(encoded)
-
-        current_string_len = await self.read_typed(address + 16, "int")
-
-        # we need to create a pointer to the string data
-        if string_len >= 7 > current_string_len:
-            # +1 for 0 byte after
-            pointer_address = await self.allocate(string_len + 1)
-
-            # need 0 byte for some c++ null termination standard
-            await self.write_bytes(pointer_address, encoded + b"\x00")
-            await self.write_typed(address, pointer_address, "long long")
-
-        # string is already a pointer
-        elif string_len >= 7 and current_string_len >= 8:
-            pointer_address = await self.read_typed(address, "long long")
-            await self.write_bytes(pointer_address, encoded + b"\x00")
-
-        # normal buffer string
-        else:
-            await self.write_bytes(address, encoded + b"\x00")
-
-        # take 2 bytes
-        await self.write_typed(string_len_addr, string_len // 2, "int")
-
-    async def write_wide_string_to_offset(
-        self, offset: int, string: str, encoding: str = "utf-16"
-    ):
-        base_address = await self.read_base_address()
-        await self.write_wide_string(base_address + offset, string, encoding)
-
     async def read_inlined_vector(
             self,
             offset: int,
@@ -155,24 +93,6 @@ class MemoryObject(MemoryReader):
             current_addr += object_size
 
         return res
-
-class DynamicMemoryObject(MemoryObject):
-    def __init__(self, hook_handler: HookHandler, base_address: int):
-        super().__init__(hook_handler)
-
-        # sanity check
-        if base_address == 0:
-            raise RuntimeError(
-                f"Dynamic object {type(self).__name__} passed 0 base address."
-            )
-
-        self.base_address = base_address
-
-    async def read_base_address(self) -> int:
-        return self.base_address
-
-    def __repr__(self):
-        return f"<{type(self).__name__} {self.base_address=}>"
 
 
 class PropertyClass(MemType):

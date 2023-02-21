@@ -20,7 +20,7 @@ class WizGameObjectTemplate(PropertyClass):
     icon = MemCppString(208)
 
     exempt_from_aoi = MemBool(240)
-    adjective_list = MemCppString(248)
+    adjective_list = MemCppString(248, False)
 
     # TODO: FIX OFFSETS; original version made no sense
     #loot_table = MemCppString(280)
