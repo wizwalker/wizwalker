@@ -1,14 +1,12 @@
-from wizwalker.memory.memory_object import MemoryObject
+from memonster.memtypes import *
+from .memtypes import *
 
 
-class RenderContext(MemoryObject):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
-    async def ui_scale(self) -> float:
-        return await self.read_value_from_offset(152, "float")
+class RenderContext(MemType):
+    ui_scale = MemFloat32(152)
 
 
+# TODO: Monster
 class CurrentRenderContext(RenderContext):
     async def read_base_address(self) -> int:
         return await self.hook_handler.read_current_render_context_base()

@@ -14,7 +14,9 @@ from wizwalker.utils import XYZ, Orient
 from .handler import HookHandler
 from .memory_reader import MemoryReader
 
-from memonster import MemType
+from memonster import LazyType
+from memonster.memtypes import *
+from .memtypes import *
 
 
 MAX_STRING = 5_000
@@ -174,38 +176,37 @@ class DynamicMemoryObject(MemoryObject):
 
 
 class PropertyClass(MemType):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
-    async def maybe_read_type_name(self) -> str:
+    def maybe_read_type_name(self) -> str:
+        # TODO: Better error handling
         try:
-            return await self.read_type_name()
-        except (MemoryReadError, UnicodeDecodeError):
+            return self.read_type_name()
+        except:
             return ""
 
-    async def read_type_name(self) -> str:
-        vtable = await self.read_value_from_offset(0, "long long")
+    # TODO: Check if monster impl works
+    def read_type_name(self) -> str:
+        vtable = self.cast_offset(0, MemPointer(0, MemPointer(0, MemUInt64(0)))).read()
         # first function
-        get_class_name = await self.read_typed(vtable, "long long")
+        get_class_name = vtable.read()
         # sometimes is a function with a jmp, sometimes just a body pointer
-        maybe_jmp = await self.read_bytes(get_class_name, 5)
+        maybe_jmp = get_class_name.read_bytes(5)
         # 233 is 0xE9 (jmp)
         if maybe_jmp[0] == 233:
-            offset = struct.unpack("<i", maybe_jmp[1:])[0]
+            offset: int = struct.unpack("<i", maybe_jmp[1:])[0]
             # 5 is length of this jmp instruction
-            actual_get_class_name = get_class_name + offset + 5
+            actual_get_class_name = get_class_name.read() + offset + 5
         else:
-            actual_get_class_name = get_class_name
+            actual_get_class_name = get_class_name.read()
 
         # 63 is the length of the function up to the lea instruction
         lea_instruction = actual_get_class_name + 63
         # 48 8D 0D (here)
         lea_target = actual_get_class_name + 66
-        rip_offset = await self.read_typed(lea_target, "int")
+        rip_offset = self.cast_address(lea_target, MemInt32(0)).read()
 
         # 7 is the size of this line (rip is set at the next instruction when this one is executed)
         type_name_addr = lea_instruction + rip_offset + 7
 
         # some of the class names can be quite long
         # i.e ClientShadowCreatureLevelTransitionCinematicAction
-        return await self.read_null_terminated_string(type_name_addr, 60)
+        return self.cast_address(type_name_addr, MemCString(0, 60))

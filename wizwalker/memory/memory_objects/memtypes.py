@@ -7,7 +7,7 @@ from wizwalker.utils import XYZ, Orient
 
 
 T = TypeVar("T")
-MT = TypeVar("MT", bound=MemType)
+MT = TypeVar("MT")
 
 # Maybe one day count can be part of generic signature
 class MemArray(MemType, Generic[MT]):
@@ -61,7 +61,7 @@ class MemCppString(MemType):
     sso_cstring = MemCString(0, 16)
     length = MemInt32(16)
 
-    def read(self) -> str:
+    def read(self) -> bytes:
         l = self.length.read()
 
         cstring = self.sso_cstring

@@ -1,6 +1,5 @@
 from wizwalker.memory.memory_objects.scene_manager import SceneManager
 
-from memonster import LazyType
 from memonster.memtypes import *
 from .memtypes import *
 
