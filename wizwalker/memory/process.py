@@ -8,7 +8,7 @@ import pymem.exception
 import pymem.process
 import pymem.ressources.structure
 
-from memonster.memanagers import WindowsBackend
+from memonster.memanagers import WindowsBackend, MemoryView
 
 from wizwalker import (
     PatternFailed,
@@ -115,7 +115,7 @@ class Process:
 
     def pattern_scan(
         self, pattern: bytes, *, module: str = None, return_multiple: bool = False
-    ) -> list | int:
+    ) -> list[MemoryView] | MemoryView:
         """
         Scan for a pattern
 
@@ -141,6 +141,8 @@ class Process:
 
         else:
             found_addresses = self._scan_all(pattern, return_multiple)
+
+        found_addresses = [MemoryView(x, self.memory_backend) for x in found_addresses]
 
         if (found_length := len(found_addresses)) == 0:
             raise PatternFailed(pattern)

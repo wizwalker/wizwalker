@@ -8,20 +8,24 @@ from contextlib import suppress
 from loguru import logger
 
 from wizwalker.constants import kernel32
+from wizwalker.memory import Process
 
 from memonster.memtypes import *
-from memonster.memanagers import BaseAllocator, CaveAllocator, WindowsBackend, MemoryView
+from memonster.memanagers import BaseAllocator, CaveAllocator, MemoryView
 
+
+# TODO: Vet async/non async
 
 class MemoryHook:
-    def __init__(self, memory_backend: WindowsBackend, hook_cache = {}):
-        self.base_allocator = BaseAllocator(memory_backend)
+    def __init__(self, process: Process, hook_cache = {}):
+        self.process = process
+        self.base_allocator = BaseAllocator(self.process.handle)
         
         self._hook_cache = hook_cache
         self.jump_original_bytecode = None
 
-        self.hook_address = None
-        self.jump_address = None
+        self.hook_ptr = None
+        self.jump_ptr = None
 
         self.jump_bytecode = None
         self.hook_bytecode = None
@@ -60,16 +64,12 @@ class MemoryHook:
         """
         pass
 
-    def get_jump_address(self, pattern: bytes, module: str = None) -> int:
+    def get_jump_ptr(self, pattern: bytes, module: str = None) -> MemoryView:
         """
         gets the address to write jump at
         """
-        jump_address = await self.pattern_scan(pattern, module=module)
-        return jump_address
-
-    def get_hook_address(self, size: int) -> int:
-        return await self.alloc(size)
-
+        return self.process.pattern_scan(pattern, module=module)
+        
     def get_jump_bytecode(self) -> bytes:
         """
         Gets the bytecode to write to the jump address
@@ -91,11 +91,11 @@ class MemoryHook:
         """
         pattern, module = await self.get_pattern()
 
-        self.jump_address = await self.get_jump_address(pattern, module=module)
-        self.hook_address = await self.get_hook_address(50)
+        self.jump_ptr = self.get_jump_ptr(pattern, module=module)
+        self.hook_ptr = self.alloc(50)
 
-        logger.debug(f"Got hook address {self.hook_address} in {type(self)}")
-        logger.debug(f"Got jump address {self.jump_address} in {type(self)}")
+        logger.debug(f"Got hook address {hex(self.hook_ptr.address)} in {type(self)}")
+        logger.debug(f"Got jump address {hex(self.jump_ptr.address)} in {type(self)}")
 
         self.hook_bytecode = await self.get_hook_bytecode()
         self.jump_bytecode = await self.get_jump_bytecode()
@@ -103,9 +103,7 @@ class MemoryHook:
         logger.debug(f"Got hook bytecode {self.hook_bytecode} in {type(self)}")
         logger.debug(f"Got jump bytecode {self.jump_bytecode} in {type(self)}")
 
-        self.jump_original_bytecode = await self.read_bytes(
-            self.jump_address, len(self.jump_bytecode)
-        )
+        self.jump_original_bytecode = self.jump_ptr.read_bytes(len(self.jump_bytecode))
 
         logger.debug(
             f"Got jump original bytecode {self.jump_original_bytecode} in {type(self)}"
@@ -113,8 +111,8 @@ class MemoryHook:
 
         await self.prehook()
 
-        await self.write_bytes(self.hook_address, self.hook_bytecode)
-        await self.write_bytes(self.jump_address, self.jump_bytecode)
+        self.hook_ptr.write_bytes(self.hook_bytecode)
+        self.jump_ptr.write_bytes(self.jump_bytecode)
 
         await self.posthook()
 
@@ -124,28 +122,36 @@ class MemoryHook:
         also called when a client is closed
         """
         logger.debug(
-            f"Writing original bytecode {self.jump_original_bytecode} to {self.jump_address}"
+            f"Writing original bytecode {self.jump_original_bytecode} to {hex(self.jump_ptr.address)}"
         )
-        await self.write_bytes(self.jump_address, self.jump_original_bytecode)
-        for ptr in self.base_allocator._owned_pointers:
-            self.base_allocator.free(ptr[0])
-
+        self.jump_ptr.write_bytes(self.jump_original_bytecode)
+        self.base_allocator.free_all()
 
 class AutoBotBaseHook(MemoryHook):
     """
     Subclass of MemoryHook that uses an autobot function for bytes so addresses aren't huge
     """
 
-    async def alloc(self, size: int) -> int:
+    def __init__(self, process: Process, cave_allocator: CaveAllocator, hook_cache={}):
+        super().__init__(process, hook_cache)
+        self.cave_allocator = cave_allocator
+        self._managed_pointers = []
+
+    def alloc(self, size: int) -> MemoryView:
         # noinspection PyProtectedMember
-        return await self.hook_handler._allocate_autobot_bytes(size)
+        ptr = self.cave_allocator.alloc0(size)
+        self._managed_pointers.append(ptr)
+        return ptr
 
     # TODO: tell handler those bytes are free now?
     async def unhook(self):
         logger.debug(
-            f"Writing original bytecode {self.jump_original_bytecode} to {self.jump_address}"
+            f"Writing original bytecode {self.jump_original_bytecode} to {self.jump_ptr.address}"
         )
-        await self.write_bytes(self.jump_address, self.jump_original_bytecode)
+        self.jump_ptr.write_bytes(self.jump_original_bytecode)
+        for ptr in self._managed_pointers:
+            self.cave_allocator.free(ptr)
+        self.base_allocator.free_all()
 
 
 class SimpleHook(AutoBotBaseHook):
@@ -163,15 +169,15 @@ class SimpleHook(AutoBotBaseHook):
         return self.pattern, self.module
 
     async def get_jump_bytecode(self) -> bytes:
-        distance = self.hook_address - self.jump_address
+        distance = self.hook_ptr.address - self.jump_ptr.address
 
-        relitive_jump = distance - 5
-        packed_relitive_jump = struct.pack("<i", relitive_jump)
+        relative_jump = distance - 5
+        packed_relitive_jump = struct.pack("<i", relative_jump)
 
         return b"\xE9" + packed_relitive_jump + (b"\x90" * self.noops)
 
     async def bytecode_generator(self, packed_exports):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     async def get_hook_bytecode(self) -> bytes:
         packed_exports = []
@@ -184,9 +190,9 @@ class SimpleHook(AutoBotBaseHook):
 
         bytecode = await self.bytecode_generator(packed_exports)
 
-        return_addr = self.jump_address + self.instruction_length
+        return_addr = self.jump_ptr.address + self.instruction_length
 
-        relitive_return_jump = return_addr - (self.hook_address + len(bytecode)) - 5
+        relitive_return_jump = return_addr - (self.hook_ptr.address + len(bytecode)) - 5
         packed_relitive_return_jump = struct.pack("<i", relitive_return_jump)
 
         bytecode += b"\xE9" + packed_relitive_return_jump
@@ -274,8 +280,9 @@ class ClientHook(SimpleHook):
         """
         gets the address to write jump at
         """
-        jump_address = await self.pattern_scan(pattern, module=module)
-        return jump_address + 1
+        res = self.process.pattern_scan(pattern, module=module)
+        res.address += 1
+        return res
 
     async def bytecode_generator(self, packed_exports):
         # fmt: off
@@ -465,11 +472,11 @@ class MovementTeleportHook(SimpleHook):
         """
         pattern, module = await self.get_pattern()
 
-        self.jump_address = await self.get_jump_address(pattern, module=module)
-        self.hook_address = await self.get_hook_address(200)
+        self.jump_ptr = self.get_jump_ptr(pattern, module=module)
+        self.hook_ptr = self.alloc(200)
 
-        logger.debug(f"Got hook address {self.hook_address} in {type(self)}")
-        logger.debug(f"Got jump address {self.jump_address} in {type(self)}")
+        logger.debug(f"Got hook address {self.hook_ptr.address} in {type(self)}")
+        logger.debug(f"Got jump address {self.jump_ptr.address} in {type(self)}")
 
         self.hook_bytecode = await self.get_hook_bytecode()
         self.jump_bytecode = await self.get_jump_bytecode()
@@ -477,9 +484,7 @@ class MovementTeleportHook(SimpleHook):
         logger.debug(f"Got hook bytecode {self.hook_bytecode} in {type(self)}")
         logger.debug(f"Got jump bytecode {self.jump_bytecode} in {type(self)}")
 
-        self.jump_original_bytecode = await self.read_bytes(
-            self.jump_address, len(self.jump_bytecode)
-        )
+        self.jump_original_bytecode = self.jump_ptr.read_bytes(len(self.jump_bytecode))
 
         logger.debug(
             f"Got jump original bytecode {self.jump_original_bytecode} in {type(self)}"
@@ -487,8 +492,8 @@ class MovementTeleportHook(SimpleHook):
 
         await self.prehook()
 
-        await self.write_bytes(self.hook_address, self.hook_bytecode)
-        await self.write_bytes(self.jump_address, self.jump_bytecode)
+        self.hook_ptr.write_bytes(self.hook_bytecode)
+        self.jump_ptr.write_bytes(self.jump_bytecode)
 
         await self.posthook()
 
@@ -548,7 +553,7 @@ class User32GetClassInfoBaseHook(AutoBotBaseHook):
 
     async def alloc(self, size: int) -> int:
         if self._autobot_addr is None:
-            addr = await self.get_address_from_symbol("user32.dll", "GetClassInfoExA")
+            addr = self.process.get_address_from_symbol("user32.dll", "GetClassInfoExA")
             # this is so all instances have the address
             User32GetClassInfoBaseHook._autobot_addr = addr
 
@@ -597,7 +602,7 @@ class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
         User32GetClassInfoBaseHook._hooked_instances += 1
 
         self.jump_address = await self.get_jump_address()
-        self.hook_address = await self.get_hook_address(50)
+        self.hook_address = self.alloc(50)
 
         logger.debug(f"Got hook address {self.hook_address} in {type(self)}")
         logger.debug(f"Got jump address {self.jump_address} in {type(self)}")

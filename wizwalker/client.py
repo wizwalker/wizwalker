@@ -27,6 +27,7 @@ from .memory import (
     CurrentRenderContext,
     TeleportHelper,
     MovementTeleportHook,
+    Process,
 )
 from .mouse_handler import MouseHandler
 from .utils import (
@@ -53,6 +54,7 @@ class Client:
 
         self._pymem = pymem.Pymem()
         self._pymem.open_process_from_id(self.process_id)
+        self.process = Process(self._pymem.process_handle)
         self.hook_handler = HookHandler(self._pymem, self)
 
         self.cache_handler = CacheHandler()
@@ -370,13 +372,13 @@ class Client:
         Client's current energy
         energy globe must be visible to use
         """
-        maybe_energy_text = await self.root_window.get_windows_with_name("textEnergy")
+        maybe_energy_text = self.root_window.get_windows_with_name("textEnergy")
 
         if not maybe_energy_text:
             # TODO: replace error
             raise ValueError("Energy globe not on screen")
 
-        text = await maybe_energy_text[0].maybe_text()
+        text = maybe_energy_text[0].maybe_text.read()
         text = text.replace("<center>", "")
         text = text.replace("</center>", "")
         return int(text)
@@ -430,13 +432,11 @@ class Client:
         await self.body.write_yaw(yaw)
         await utils.timed_send_key(self.window_handle, Keycode.W, move_seconds)
 
-    # TODO: 2.0 remove move_after as it isn't needed anymore
     async def teleport(
             self,
             xyz: XYZ,
             yaw: float = None,
             *,
-            move_after: bool = False,
             wait_on_inuse: bool = True,
             wait_on_inuse_timeout: float = 1.0,
             purge_on_after_unuser_fixer: bool = True,
@@ -450,7 +450,6 @@ class Client:
             yaw: yaw to set or None to not change
 
         Keyword Args:
-            move_after: depreciated
             wait_on_inuse: If we should wait for the update bool to be False
             wait_on_inuse_timeout: Time to wait for inuse flag to be setback
             purge_on_after_unuser_fixer: If should wait for inuse flag after and reset if not set
@@ -469,10 +468,6 @@ class Client:
             purge_on_after_unuser_fixer_timeout,
         )
 
-        if move_after:
-            warnings.warn(DeprecationWarning("Move after will be removed in 2.0"))
-            await self.send_key(Keycode.D, 0.1)
-
         if yaw is not None:
             await self.body.write_yaw(yaw)
 
@@ -481,7 +476,6 @@ class Client:
             xyz: XYZ,
             yaw: float = None,
             *,
-            move_after: bool = True,
             wait_on_inuse: bool = True,
             wait_on_inuse_timeout: float = 1.0,
             purge_on_after_unuser_fixer: bool = True,
@@ -495,7 +489,6 @@ class Client:
             yaw: yaw to set or None to not change
 
         Keyword Args:
-            move_after: depreciated
             wait_on_inuse: If should wait for inuse flag to be setback
             wait_on_inuse_timeout: Time to wait for inuse flag to be setback
             purge_on_after_unuser_fixer: If should wait for inuse flag after and reset if not set
@@ -511,10 +504,6 @@ class Client:
             purge_on_after_unuser_fixer,
             purge_on_after_unuser_fixer_timeout,
         )
-
-        if move_after:
-            warnings.warn(DeprecationWarning("Move after will be removed in 2.0"))
-            await self.send_key(Keycode.D, 0.1)
 
         if yaw is not None:
             await self.body.write_yaw(yaw)
