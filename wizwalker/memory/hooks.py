@@ -12,15 +12,6 @@ from .memory_reader import MemoryReader
 from wizwalker.constants import kernel32
 
 
-# TODO: 2.0 delete (useless)
-def pack_to_int_or_longlong(num: int) -> bytes:
-    warnings.warn(DeprecationWarning("Will be removed in the next major release"))
-    try:
-        return struct.pack("<i", num)
-    except struct.error:
-        return struct.pack("<q", num)
-
-
 class MemoryHook(MemoryReader):
     def __init__(self, hook_handler, hook_cache = {}):
         super().__init__(hook_handler.process)

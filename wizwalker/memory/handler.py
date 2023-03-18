@@ -251,34 +251,6 @@ class HookHandler(MemoryReader):
         """
         return await self._read_hook_base_addr("player_struct", "Player")
 
-    async def activate_duel_hook(
-        self, *, wait_for_ready: bool = False, timeout: float = None
-    ):
-        """
-        Deprecated
-        """
-        warnings.warn(DeprecationWarning("The duel hook is deprecated as it is unneeded. activate_duel_hook will remain as a noop until 2.0"))
-
-    async def deactivate_duel_hook(self):
-        """
-        Deprecated
-        """
-        warnings.warn(DeprecationWarning("The duel hook is deprecated as it is unneeded. deactivate_duel_hook will remain as a noop until 2.0"))
-
-    async def read_current_duel_base(self) -> int:
-        """
-        Deprecated
-        """
-        warnings.warn(DeprecationWarning("The duel hook is deprecated as it is unneeded. read_current_duel_base will remain as a noop until 2.0"))
-        return 0
-
-    async def read_current_duel_phase(self) -> int:
-        """
-        Deprecated
-        """
-        warnings.warn(DeprecationWarning("The duel hook is deprecated as it is unneeded. read_current_duel_phase will remain as a noop until 2.0"))
-        return 0
-
     async def activate_quest_hook(
         self, *, wait_for_ready: bool = False, timeout: float = None
     ):

@@ -16,8 +16,7 @@ class Window(PropertyClass):
     async def read_base_address(self) -> int:
         raise NotImplementedError()
 
-    async def debug_print_ui_tree(self, depth: int = 0):
-        # Deprecated: depth
+    async def debug_print_ui_tree(self):
         print(await self.get_ui_tree_stringified())
 
     async def get_ui_tree_stringified(self, indent_str = "-") -> str:
