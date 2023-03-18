@@ -1,5 +1,5 @@
 import ctypes
-from enum import Enum, IntFlag
+from enum import Enum
 
 
 user32 = ctypes.windll.user32
@@ -29,15 +29,6 @@ type_format_dict = {
     "double": "<d",
 }
 
-class ModifierKeys(IntFlag):
-    """
-    Key modifiers
-    """
-
-    ALT = 0x12
-    CTRL = 0x11
-    SHIFT = 0x10
-    NOREPEAT = 0x4000
 
 # noinspection PyPep8
 class Keycode(Enum):
