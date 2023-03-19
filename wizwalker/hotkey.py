@@ -240,7 +240,7 @@ class KeyListener:
 			self.hook.uninstall_hook()
 			self.hook = None
 
-		if self.message is not None:
+		if self.message_loop is not None:
 			self.message_loop.cancel()
 			self.message_loop = None
 
