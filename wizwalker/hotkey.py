@@ -98,6 +98,7 @@ class KeyListener:
 		self.mod_keycodes = (Keycode.Left_CONTROL, Keycode.Right_CONTROL, Keycode.Left_SHIFT, Keycode.Right_SHIFT, Keycode.Left_MENU, Keycode.Right_MENU)
 		self.hook = None
 		self.message_loop = None
+		self._message_loop_delay = 0.1
 
 
 	def LowLevelKeyboardProc(self, nCode, wParam, lParam):
@@ -248,13 +249,18 @@ class KeyListener:
 	async def message(self):
 		message = MSG()
 		while True:
-			msg = win32gui.PeekMessage(
-			0,
-			0,
-			0,
-			0
-			)
-			await asyncio.sleep(0)
+			msg = self.user32.PeekMessageW(
+				byref(message),
+				None,
+				0x311,
+				0x314,
+				1,
+				)
+
+			if msg:
+				self.user32.DispatchMessageW(byref(message))
+
+			await asyncio.sleep(self._message_loop_delay)
 			
 
 
