@@ -27,7 +27,6 @@ class Hook:
 	def __init__(self):
 		"""
 		Constructor for the hook class.
-
 		Responsible for allowing methods to call functions from
 		user32.dll 
 		"""
@@ -38,7 +37,6 @@ class Hook:
 	def install_hook(self, ptr) -> bool:
 		"""
 		Method for installing hook.
-
 		Arguments
 			ptr: pointer to the callback function
 		"""
@@ -69,7 +67,6 @@ class Hook:
 class Hotkey:
 	"""
 	A hotkey to be listened to
-
 	Args:
 		keycode: Keycode to listen for
 		callback: Coroutine to run when the key is pressed
@@ -98,18 +95,16 @@ class KeyListener:
 		self.mod_keycodes = (Keycode.Left_CONTROL, Keycode.Right_CONTROL, Keycode.Left_SHIFT, Keycode.Right_SHIFT, Keycode.Left_MENU, Keycode.Right_MENU)
 		self.hook = None
 		self.message_loop = None
-		self._message_loop_delay = 0.1
+		self._message_loop_delay = 0
 
 
 	def LowLevelKeyboardProc(self, nCode, wParam, lParam):
 		"""
 		Hook procedure to monitor and log keyboard events.
-
 		Arguments:
 			nCode       = HC_ACTION code
 			wParam      = Keyboard event message code
 			lParam      = Address of keyboard input event
-
 		"""
 
 		if wParam == WM_SYSKEYDOWN:
@@ -274,7 +269,6 @@ class Listener():
         .. code-block:: py
 			import asyncio
 			from wizwalker import Hotkey, Keycode, Listener, ModifierKeys
-
 			async def main():
 				async def callback():
 					print("a was pressed")
@@ -284,7 +278,6 @@ class Listener():
 				# your program here
 				while True:
 					await asyncio.sleep(1)
-
 			if __name__ == "__main__":
 				asyncio.run(main())
     """
