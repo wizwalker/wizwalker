@@ -14,7 +14,7 @@ class CombatMember:
 
         self._combatant_control = combatant_control
 
-    async def get_participant(self):
+    async def get_participant(self) -> "wizwalker.memory.CombatParticipant":
         """
         Get the underlying participant object
         """
@@ -27,7 +27,7 @@ class CombatMember:
 
         return part
 
-    async def get_stats(self):
+    async def get_stats(self) -> "wizwalker.memory.game_stats.DynamicGameStats":
         """
         Get the underlying game stats object
         """
