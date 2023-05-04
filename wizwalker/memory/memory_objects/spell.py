@@ -4,7 +4,7 @@ from typing import List, Optional
 from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
 from .enums import DelayOrder
 from .spell_template import DynamicSpellTemplate
-from .spell_effect import DynamicSpellEffect
+from .spell_effect import DynamicSpellEffect, HangingConversionSpellEffect
 
 
 @dataclass
@@ -80,7 +80,12 @@ class Spell(PropertyClass):
     async def spell_effects(self) -> List[DynamicSpellEffect]:
         effects = []
         for addr in await self.read_shared_vector(88):
-            effects.append(DynamicSpellEffect(self.hook_handler, addr))
+            effect = DynamicSpellEffect(self.hook_handler, addr)
+
+            if await effect.read_type_name() == "HangingConversionSpellEffect":
+                effect = HangingConversionSpellEffect(self.hook_handler, addr)
+
+            effects.append(effect)
 
         return effects
 

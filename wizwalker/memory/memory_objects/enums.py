@@ -337,3 +337,16 @@ class AccountPermissions(IntFlag):
     # 5 and 6 are probably not used
     unknown5 = 0b100000000000000
     unknown6 = 0b1000000000000000
+
+
+class HangingEffectType(Enum):
+    Any = 0
+    Ward = 1
+    Charm = 2
+    OverTime = 3
+    Specific = 4
+
+
+class OutputEffectSelector(Enum):
+    All = 0
+    MatchedSelectRank = 1
