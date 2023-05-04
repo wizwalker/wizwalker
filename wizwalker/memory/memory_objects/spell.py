@@ -81,9 +81,9 @@ class Spell(PropertyClass):
         effects = []
         for addr in await self.read_shared_vector(88):
             effect = DynamicSpellEffect(self.hook_handler, addr)
-
-            if await effect.read_type_name() == "HangingConversionSpellEffect":
-                effect = HangingConversionSpellEffect(self.hook_handler, addr)
+            match await effect.read_type_name():
+                case "HangingConversionSpellEffect":
+                    effect = HangingConversionSpellEffect(self.hook_handler, addr)
 
             effects.append(effect)
 
