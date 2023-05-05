@@ -1,7 +1,7 @@
 from typing import List
 
 from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
-from .enums import SpellEffects, EffectTarget, HangingDisposition
+from .enums import SpellEffects, EffectTarget, HangingDisposition, HangingEffectType, OutputEffectSelector
 
 
 class SpellEffect(PropertyClass):
@@ -153,3 +153,65 @@ class SpellEffect(PropertyClass):
 
 class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
     pass
+
+
+class HangingConversionSpellEffect(DynamicSpellEffect):
+    async def hangingEffectType(self) -> HangingEffectType:
+        return await self.read_enum(224, HangingEffectType)
+
+
+    async def specificEffectTypes(self) -> list[SpellEffects]:
+        results = []
+        for i in await self.read_shared_linked_list(232):
+            effect = DynamicSpellEffect(self.hook_handler, i)
+            results.append(await effect.effect_type())
+
+        return results
+
+
+    async def minEffectValue(self) -> int:
+        return await self.read_value_from_offset(248, 'int')
+
+
+    async def maxEffectValue(self) -> int:
+        return await self.read_value_from_offset(252, 'int')
+
+
+    async def notDamageType(self) -> bool:
+        return await self.read_value_from_offset(256, 'bool')
+
+
+    async def minEffectCount(self) -> int:
+        return await self.read_value_from_offset(260, 'int')
+
+
+    async def maxEffectCount(self) -> int:
+        return await self.read_value_from_offset(264, 'int')
+
+
+    async def bypassProtection(self) -> bool:
+        return await self.read_value_from_offset(159, 'bool')
+
+
+    async def outputSelector(self) -> OutputEffectSelector:
+        return await self.read_enum(268, OutputEffectSelector)
+
+
+    async def scaleSourceEffectValue(self) -> bool:
+        return await self.read_value_from_offset(272, 'bool')
+
+
+    async def scaleSourceEffectPercent(self) -> float:
+        return await self.read_value_from_offset(276, 'float')
+
+
+    async def applyToEffectSource(self) -> bool:
+        return await self.read_value_from_offset(280, 'bool')
+
+
+    async def outputEffect(self) -> list[DynamicSpellEffect]:
+        results = []
+        for i in await self.read_shared_linked_list(288):
+            results.append(DynamicSpellEffect(self.hook_handler, i))
+
+        return results
