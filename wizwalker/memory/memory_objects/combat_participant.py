@@ -661,43 +661,45 @@ class CombatParticipant(PropertyClass):
 
     async def player_time_eliminated(self) -> bool:
         return await self.read_value_from_offset(865, "bool")
+    
+    async def write_player_time_eliminated(self, player_time_eliminated: bool):
+        await self.write_value_to_offset(865, player_time_eliminated, "bool")
 
-    # BELOW HERE MARKS ALL NEW FUNCTIONS ADDED
-    # async def player_time_warning(self, player_time_warning: bool):
-    #     await self.write_value_to_offset(866, player_time_warning, "bool")
+    async def player_time_warning(self) -> bool:
+        return await self.read_value_from_offset(866, "bool")
     
-    # async def write_player_time_warning(self, player_time_warning: bool):
-    #     await self.write_value_to_offset(866, player_time_warning, "bool")
+    async def write_player_time_warning(self, player_time_warning: bool):
+        await self.write_value_to_offset(866, player_time_warning, "bool")
 
-    # async def deck_fullness(self, player_time_eliminated: float):
-    #     await self.write_value_to_offset(868, player_time_eliminated, "float")
+    async def deck_fullness(self) -> float:
+        return await self.read_value_from_offset(868, "float")
     
-    # async def write_deck_fullness(self, deck_fullness: float):
-    #     await self.write_value_to_offset(868, deck_fullness, "float")
+    async def write_deck_fullness(self, deck_fullness: float):
+        await self.write_value_to_offset(868, deck_fullness, "float")
     
-    # async def archmastery_points(self, archmastery_points: float):
-    #     await self.write_value_to_offset(872, archmastery_points, "float")
+    async def archmastery_points(self) -> float:
+        return await self.read_value_from_offset(872, "float")
     
-    # async def write_archmastery_points(self, archmastery_points: float):
-    #     await self.write_value_to_offset(872, archmastery_points, "float")
+    async def write_archmastery_points(self, archmastery_points: float):
+        await self.write_value_to_offset(872, archmastery_points, "float")
 
-    # async def max_archmastery_points(self, max_archmastery_points: float):
-    #     await self.write_value_to_offset(876, max_archmastery_points, "float")
+    async def max_archmastery_points(self) -> float:
+        return await self.read_value_from_offset(876, "float")
     
-    # async def write_max_archmastery_points(self, max_archmastery_points: float):
-    #     await self.write_value_to_offset(876, max_archmastery_points, "float")
+    async def write_max_archmastery_points(self, max_archmastery_points: float):
+        await self.write_value_to_offset(876, max_archmastery_points, "float")
         
-    # async def archmastery_school(self, archmastery_school: int):
-    #     await self.write_value_to_offset(880, archmastery_school, "unsigned int")
+    async def archmastery_school(self) -> int:
+        return await self.read_value_from_offset(880, "unsigned int")
     
-    # async def write_archmastery_school(self, archmastery_school: int):
-    #     await self.write_value_to_offset(880, archmastery_school, "unsigned int")
+    async def write_archmastery_school(self, archmastery_school: int):
+        await self.write_value_to_offset(880, archmastery_school, "unsigned int")
         
-    # async def archmastery_flags(self, archmastery_flags: int):
-    #     await self.write_value_to_offset(884, archmastery_flags, "unsigned int")
+    async def archmastery_flags(self) -> int:
+        return await self.read_value_from_offset(884, "unsigned int")
     
-    # async def write_archmastery_flags(self, archmastery_flags: int):
-    #     await self.write_value_to_offset(884, archmastery_flags, "unsigned int")
+    async def write_archmastery_flags(self, archmastery_flags: int):
+        await self.write_value_to_offset(884, archmastery_flags, "unsigned int")
 
 class DynamicCombatParticipant(DynamicMemoryObject, CombatParticipant):
     pass

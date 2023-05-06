@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Optional
 
 from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
 from .enums import DelayOrder, SpellSourceType
 from .spell_effect import DynamicSpellEffect
+from .spell_rank import DynamicSpellRank
 
 
 class SpellTemplate(PropertyClass):
@@ -298,8 +299,12 @@ class SpellTemplate(PropertyClass):
     async def write_backrow_friendly(self, backrow_friendly: bool):
         await self.write_value_to_offset(745, backrow_friendly, "bool")
 
-    # async def spell_rank(self) -> class SpellRank:
-    #    return await self.read_value_from_offset(752, "class SharedPointer<class SpellRank>")
+    async def spell_rank(self) -> Optional[DynamicSpellRank]:
+        addr = await self.read_value_from_offset(752, "long long")
+        if addr == 0:
+            return None
+
+        return DynamicSpellRank(self.hook_handler, addr)
 
 class DynamicSpellTemplate(DynamicMemoryObject, SpellTemplate):
     pass
