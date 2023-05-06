@@ -167,10 +167,13 @@ class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
 
 
 class HangingConversionSpellEffect(DynamicSpellEffect):
-    async def hangingEffectType(self) -> HangingEffectType:
+    async def hanging_effect_type(self) -> HangingEffectType:
         return await self.read_enum(224, HangingEffectType)
 
-    async def specificEffectTypes(self) -> list[SpellEffects]:
+    async def write_hanging_effect_type(self, hanging_effect_type: HangingEffectType):
+        await self.write_enum(self, hanging_effect_type)
+
+    async def specific_effect_types(self) -> list[SpellEffects]:
         results = []
         for i in await self.read_shared_linked_list(232):
             effect = DynamicSpellEffect(self.hook_handler, i)
@@ -178,42 +181,74 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
 
         return results
 
-    async def minEffectValue(self) -> int:
+    async def min_effect_value(self) -> int:
         return await self.read_value_from_offset(248, "int")
 
-    async def maxEffectValue(self) -> int:
+    async def write_min_effect_value(self, min_effect_value: int):
+        await self.write_value_to_offset(248, min_effect_value, "int")
+
+    async def max_effect_value(self) -> int:
         return await self.read_value_from_offset(252, "int")
 
-    async def notDamageType(self) -> bool:
+    async def write_max_effect_value(self, max_effect_value: int):
+        await self.write_value_to_offset(252, max_effect_value, "int")
+
+    async def not_damage_type(self) -> bool:
         return await self.read_value_from_offset(256, "bool")
 
-    async def minEffectCount(self) -> int:
+    async def write_not_damage_type(self, not_damage_type: bool):
+        await self.write_value_to_offset(256, not_damage_type, "bool")
+
+    async def min_effect_count(self) -> int:
         return await self.read_value_from_offset(260, "int")
 
-    async def maxEffectCount(self) -> int:
+    async def write_min_effect_count(self, min_effect_count: int):
+        await self.write_value_to_offset(260, min_effect_count, "int")
+
+    async def max_effect_count(self) -> int:
         return await self.read_value_from_offset(264, "int")
 
-    async def bypassProtection(self) -> bool:
+    async def write_max_effect_count(self, max_effect_count: int):
+        await self.write_value_to_offset(264, max_effect_count, "int")
+
+    async def bypass_protection(self) -> bool:
         return await self.read_value_from_offset(159, "bool")
 
-    async def outputSelector(self) -> OutputEffectSelector:
+    async def write_bypass_protection(self, bypass_protection: bool):
+        await self.write_value_to_offset(159, bypass_protection, "bool")
+
+    async def output_selector(self) -> OutputEffectSelector:
         return await self.read_enum(268, OutputEffectSelector)
 
-    async def scaleSourceEffectValue(self) -> bool:
+    async def write_output_selector(self, output_selector: OutputEffectSelector):
+        await self.write_enum(268, output_selector)
+
+    async def scale_source_effect_value(self) -> bool:
         return await self.read_value_from_offset(272, "bool")
 
-    async def scaleSourceEffectPercent(self) -> float:
+    async def write_scale_source_effect_value(self, scale_source_effect_value: bool):
+        await self.write_value_to_offset(272, scale_source_effect_value, "bool")
+
+    async def scale_source_effect_percent(self) -> float:
         return await self.read_value_from_offset(276, "float")
 
-    async def applyToEffectSource(self) -> bool:
+    async def write_scale_source_effect_percent(self, scale_source_effect_percent: float):
+        await self.write_value_to_offset(276, scale_source_effect_percent, "float")
+
+    async def apply_to_effect_source(self) -> bool:
         return await self.read_value_from_offset(280, "bool")
 
-    async def outputEffect(self) -> list[DynamicSpellEffect]:
+    async def write_apply_to_effect_source(self, apply_to_effect_source: bool):
+        await self.write_value_to_offset(280, apply_to_effect_source, "bool")
+
+    async def output_effect(self) -> list[DynamicSpellEffect]:
         results = []
         for i in await self.read_shared_linked_list(288):
             results.append(DynamicSpellEffect(self.hook_handler, i))
 
         return results
+
+    # TODO: Write functions for specific_effect_types and output_effects? This is beyond my current knowledge. -slack
 
 
 class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
