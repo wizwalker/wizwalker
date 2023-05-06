@@ -80,7 +80,7 @@ class Spell(PropertyClass):
     async def spell_effects(self) -> List[DynamicSpellEffect]:
         effects = []
         for addr in await self.read_shared_vector(88):
-            effect = DynamicSpellEffect(self.hook_handler, addr) #TODO: Is there a way to read the type name without creating a spell effect object? That would make my code for roshambo reading a lot simpler. -slack
+            effect = DynamicSpellEffect(self.hook_handler, addr)
             match await effect.read_type_name():
                 case "HangingConversionSpellEffect":
                     effect = HangingConversionSpellEffect(self.hook_handler, addr)
