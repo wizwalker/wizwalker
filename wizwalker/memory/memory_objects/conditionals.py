@@ -174,11 +174,11 @@ class RequirementTarget(Enum):
     Target = 1
 
 class MinionType(Enum):
-    Is_Minion = 0,
-    Has_Minion = 1,
-    On_Team = 2,
-    On_Other_Team = 3,
-    On_Any_Team = 4
+    IsMinion = 0,
+    HasMinion = 1,
+    OnTeam = 2,
+    OnOtherTeam = 3,
+    OnAnyTeam = 4
 
 class StatusEffect(Enum):
     Stunned = 0
@@ -187,16 +187,16 @@ class StatusEffect(Enum):
 class Requirement(DynamicMemoryObject, PropertyClass):
     async def applyNOT(self) -> bool:
         return await self.read_value_from_offset(72, 'bool')
-        
+
     async def operator(self) -> Operator:
         return await self.read_enum(76, Operator)
-    
+
     async def _evaluate(self, data: dict[str, Any]) -> bool:
         # data can contain:
         # - combat: CombatHandler instance
         # - target_idx: combat member index
         raise NotImplementedError()
-    
+
     async def _do_ops(self, original_state: bool, new_state: bool) -> bool:
         state = new_state ^ (await self.applyNOT())
         match await self.operator():
@@ -204,7 +204,7 @@ class Requirement(DynamicMemoryObject, PropertyClass):
                 return original_state and state
             case Operator.OR:
                 return original_state or state
-            
+
     async def apply(self, original_state: bool, data: dict[str, Any]) -> bool:
         return await self._do_ops(original_state, await self._evaluate(data))
 
@@ -215,7 +215,7 @@ class RequirementList(Requirement):
             preq = await promote_requirement(req)
             state = await preq.apply(state, data)
         return state
-    
+
     async def requirements(self) -> list[Requirement]:
         results = []
         for items in await self.read_shared_linked_list(80):
@@ -225,7 +225,7 @@ class RequirementList(Requirement):
 class ConditionalSpellEffectRequirement(Requirement):
     async def targetType(self) -> RequirementTarget:
         return await self.read_enum(80, RequirementTarget)
-    
+
     async def get_target(self, data: dict[str, Any]):
         combat: CombatHandler = data['combat']
         if await self.targetType() == RequirementTarget.Caster:
@@ -240,7 +240,7 @@ class ReqHangingCharm(ConditionalSpellEffectRequirement):
     async def _evaluate(self, data: dict[str, Any]) -> bool:
         member = await self.get_target(data)
         participant = await member.get_participant()
-        
+
         hanging_effects = await participant.hanging_effects()
         valid_effects = []
         for effect in hanging_effects:
@@ -255,7 +255,7 @@ class ReqHangingCharm(ConditionalSpellEffectRequirement):
 
     async def minCount(self) -> int:
         return await self.read_value_from_offset(92, 'int')
-    
+
     async def maxCount(self) -> int:
         return await self.read_value_from_offset(96, 'int')
 
@@ -267,7 +267,7 @@ class ReqCombatHealth(ConditionalSpellEffectRequirement):
 
     async def fMinPercent(self) -> float:
         return await self.read_value_from_offset(88, 'float')
-    
+
     async def fMaxPercent(self) -> float:
         return await self.read_value_from_offset(92, 'float')
 
@@ -288,7 +288,7 @@ class ReqHangingOverTime(ConditionalSpellEffectRequirement):
 
     async def minCount(self) -> int:
         return await self.read_value_from_offset(92, 'int')
-    
+
     async def maxCount(self) -> int:
         return await self.read_value_from_offset(96, 'int')
 
@@ -301,7 +301,7 @@ class ReqIsSchool(ConditionalSpellEffectRequirement):
         participant = await member.get_participant()
         school_id = await participant.primary_magic_school_id()
         return await self.magicSchoolName() == school_to_str[school_id]
-        
+
     async def magicSchoolName(self) -> str:
         return await self.read_string_from_offset(88)
 
@@ -335,16 +335,16 @@ class ReqHangingEffectType(ConditionalSpellEffectRequirement):
 
     async def effectType(self) -> HangingSpellEffect:
         return await self.read_enum(88, HangingSpellEffect)
-    
+
     async def param_low(self) -> int:
         return await self.read_value_from_offset(92, 'int')
-    
+
     async def param_high(self) -> int:
         return await self.read_value_from_offset(96, 'int')
-    
+
     async def min_count(self) -> int:
         return await self.read_value_from_offset(100, 'int')
-    
+
     async def max_count(self) -> int:
         return await self.read_value_from_offset(104, 'int')
 
@@ -383,32 +383,32 @@ class ReqPipCount(ConditionalSpellEffectRequirement):
 class ReqMinion(ConditionalSpellEffectRequirement):
     async def _evaluate(self, data: dict[str, Any]) -> bool:
         combat: CombatHandler = data['combat']
-        
+
         member = await self.get_target(data)
         participant = await member.get_participant()
         match await self.minionType():
-            case MinionType.Is_Minion:
+            case MinionType.IsMinion:
                 return await participant.is_minion()
-            case MinionType.Has_Minion:
+            case MinionType.HasMinion:
                 #TODO find out what in the world this means
                 raise NotImplementedError()
-            case MinionType.On_Team:
+            case MinionType.OnTeam:
                 for combatmember in await combat.get_members():
                     if combatmember in await combat.get_members():
                         part = await combatmember.get_participant()
                         if combatmember.is_minion() and await part.team_id() == await participant.team_id():
                             return True
-            case MinionType.On_Other_Team:
+            case MinionType.OnOtherTeam:
                 for combatmember in await combat.get_members():
                     if combatmember in await combat.get_members():
                         part = await combatmember.get_participant()
                         if combatmember.is_minion() and not await part.team_id() == await participant.team_id():
                             return True
-            case MinionType.On_Any_Team:
+            case MinionType.OnAnyTeam:
                 for combatmember in await combat.get_members():
                     if await combatmember.is_minion():
                         return True
-                    
+
         return False
 
     async def minionType(self) -> MinionType:
@@ -455,5 +455,5 @@ async def promote_requirement(req: Requirement):
             prom_type = ReqCombatStatus
         case _:
             raise RuntimeError(f"Unknown requirement type: {await req.read_type_name()}")
-        
+
     return prom_type(req.hook_handler, await req.read_base_address())
