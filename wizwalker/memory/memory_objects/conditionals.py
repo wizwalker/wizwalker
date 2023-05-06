@@ -428,7 +428,6 @@ class ReqCombatStatus(ConditionalSpellEffectRequirement):
         return await self.read_enum(88, StatusEffect)
 
 async def promote_requirement(req: Requirement):
-    print(await req.read_type_name())
     match await req.read_type_name():
         case 'ReqCombatHealth':
             prom_type = ReqCombatHealth
