@@ -130,7 +130,9 @@ class CombatCard:
         Raises:
             ExceptionalTimeout: if passed timeout; getting graphical spell took too long
         """
-        return await wizwalker.utils.maybe_wait_for_value_with_timeout(self.get_graphical_spell, inverse_value=True, timeout=timeout)
+        return await wizwalker.utils.maybe_wait_for_value_with_timeout(
+            self.get_graphical_spell, inverse_value=True, timeout=timeout
+        )
 
     async def get_spell_effects(
         self,
@@ -245,10 +247,12 @@ class CombatCard:
         """
         graphical_spell = await self.wait_for_graphical_spell()
         return await graphical_spell.pve()
-    
-    async def get_conditionals(self,
-        ) -> List["wizwalker.memory.memory_objects.spell_effect.DynamicConditionalSpellElement"]:
-        
+
+    async def get_conditionals(
+        self,
+    ) -> List[
+        "wizwalker.memory.memory_objects.spell_effect.DynamicConditionalSpellElement"
+    ]:
         spell = await self.wait_for_graphical_spell()
         conditional_spell_elements = await spell.get_conditional_spell_elements()
         return conditional_spell_elements

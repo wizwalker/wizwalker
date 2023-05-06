@@ -1,8 +1,15 @@
 from typing import List
 
 from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
-from .enums import SpellEffects, EffectTarget, HangingDisposition, HangingEffectType, OutputEffectSelector
+from .enums import (
+    SpellEffects,
+    EffectTarget,
+    HangingDisposition,
+    HangingEffectType,
+    OutputEffectSelector,
+)
 from wizwalker.memory.memory_objects.conditionals import RequirementList
+
 
 class SpellEffect(PropertyClass):
     async def read_base_address(self) -> int:
@@ -137,7 +144,11 @@ class SpellEffect(PropertyClass):
     ) -> List["DynamicSpellEffect"]:
         if check_type:
             type_name = await self.maybe_read_type_name()
-            if type_name not in ("RandomSpellEffect", "RandomPerTargetSpellEffect", "VariableSpellEffect"):
+            if type_name not in (
+                "RandomSpellEffect",
+                "RandomPerTargetSpellEffect",
+                "VariableSpellEffect",
+            ):
                 raise ValueError(
                     f"This object is a {type_name} not a"
                     f" Random/RandomPerTarget/Variable SpellEffect."
@@ -159,7 +170,6 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
     async def hangingEffectType(self) -> HangingEffectType:
         return await self.read_enum(224, HangingEffectType)
 
-
     async def specificEffectTypes(self) -> list[SpellEffects]:
         results = []
         for i in await self.read_shared_linked_list(232):
@@ -168,46 +178,35 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
 
         return results
 
-
     async def minEffectValue(self) -> int:
-        return await self.read_value_from_offset(248, 'int')
-
+        return await self.read_value_from_offset(248, "int")
 
     async def maxEffectValue(self) -> int:
-        return await self.read_value_from_offset(252, 'int')
-
+        return await self.read_value_from_offset(252, "int")
 
     async def notDamageType(self) -> bool:
-        return await self.read_value_from_offset(256, 'bool')
-
+        return await self.read_value_from_offset(256, "bool")
 
     async def minEffectCount(self) -> int:
-        return await self.read_value_from_offset(260, 'int')
-
+        return await self.read_value_from_offset(260, "int")
 
     async def maxEffectCount(self) -> int:
-        return await self.read_value_from_offset(264, 'int')
-
+        return await self.read_value_from_offset(264, "int")
 
     async def bypassProtection(self) -> bool:
-        return await self.read_value_from_offset(159, 'bool')
-
+        return await self.read_value_from_offset(159, "bool")
 
     async def outputSelector(self) -> OutputEffectSelector:
         return await self.read_enum(268, OutputEffectSelector)
 
-
     async def scaleSourceEffectValue(self) -> bool:
-        return await self.read_value_from_offset(272, 'bool')
-
+        return await self.read_value_from_offset(272, "bool")
 
     async def scaleSourceEffectPercent(self) -> float:
-        return await self.read_value_from_offset(276, 'float')
-
+        return await self.read_value_from_offset(276, "float")
 
     async def applyToEffectSource(self) -> bool:
-        return await self.read_value_from_offset(280, 'bool')
-
+        return await self.read_value_from_offset(280, "bool")
 
     async def outputEffect(self) -> list[DynamicSpellEffect]:
         results = []
@@ -216,17 +215,24 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
 
         return results
 
+
 class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
     pass
 
+
 class ConditionalSpellElement(PropertyClass):
     async def reqs(self) -> RequirementList:
-        return RequirementList(self.hook_handler, 
-                            await self.read_value_from_offset(72, 'unsigned long long'))
-    
-    async def effect(self)-> DynamicSpellEffect:
-        return DynamicSpellEffect(self.hook_handler,
-                            await self.read_value_from_offset(88, 'unsigned long long'))
+        return RequirementList(
+            self.hook_handler,
+            await self.read_value_from_offset(72, "unsigned long long"),
+        )
+
+    async def effect(self) -> DynamicSpellEffect:
+        return DynamicSpellEffect(
+            self.hook_handler,
+            await self.read_value_from_offset(88, "unsigned long long"),
+        )
+
 
 class DynamicConditionalSpellElement(DynamicMemoryObject, ConditionalSpellElement):
     pass
