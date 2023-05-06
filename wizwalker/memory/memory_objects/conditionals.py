@@ -190,7 +190,7 @@ class StatusEffect(Enum):
 
 
 class Requirement(DynamicMemoryObject, PropertyClass):
-    async def applyNOT(self) -> bool:
+    async def apply_not(self) -> bool:
         return await self.read_value_from_offset(72, "bool")
 
     async def operator(self) -> Operator:
@@ -203,7 +203,7 @@ class Requirement(DynamicMemoryObject, PropertyClass):
         raise NotImplementedError()
 
     async def _do_ops(self, original_state: bool, new_state: bool) -> bool:
-        state = new_state ^ (await self.applyNOT())
+        state = new_state ^ (await self.apply_not())
         match await self.operator():
             case Operator.AND:
                 return original_state and state
@@ -230,12 +230,12 @@ class RequirementList(Requirement):
 
 
 class ConditionalSpellEffectRequirement(Requirement):
-    async def targetType(self) -> RequirementTarget:
+    async def target_type(self) -> RequirementTarget:
         return await self.read_enum(80, RequirementTarget)
 
     async def get_target(self, data: dict[str, Any]):
         combat: CombatHandler = data["combat"]
-        if await self.targetType() == RequirementTarget.Caster:
+        if await self.target_type() == RequirementTarget.Caster:
             member = await combat.get_client_member()
         else:
             member = (await combat.get_members())[data["target_idx"]]
@@ -262,15 +262,15 @@ class ReqHangingCharm(ConditionalSpellEffectRequirement):
                 ):
                     valid_effects.append(effect)
 
-        return await self.minCount() <= len(valid_effects) <= await self.maxCount()
+        return await self.min_count() <= len(valid_effects) <= await self.max_count()
 
     async def disposition(self) -> HangingDisposition:
         return await self.read_enum(88, HangingDisposition)
 
-    async def minCount(self) -> int:
+    async def min_count(self) -> int:
         return await self.read_value_from_offset(92, "int")
 
-    async def maxCount(self) -> int:
+    async def max_count(self) -> int:
         return await self.read_value_from_offset(96, "int")
 
 
@@ -279,15 +279,15 @@ class ReqCombatHealth(ConditionalSpellEffectRequirement):
         member = await self.get_target(data)
         member_health_percentage = await member.health() / await member.max_health()
         return (
-            await self.fMinPercent()
+            await self.min_percent()
             <= member_health_percentage
-            <= await self.fMaxPercent()
+            <= await self.max_percent()
         )
 
-    async def fMinPercent(self) -> float:
+    async def min_percent(self) -> float:
         return await self.read_value_from_offset(88, "float")
 
-    async def fMaxPercent(self) -> float:
+    async def max_percent(self) -> float:
         return await self.read_value_from_offset(92, "float")
 
 
@@ -305,15 +305,15 @@ class ReqHangingOverTime(ConditionalSpellEffectRequirement):
                     or await effect.disposition() == await self.disposition()
                 ):
                     valid_effects.append(effect)
-        return await self.minCount() <= len(valid_effects) <= await self.maxCount()
+        return await self.min_count() <= len(valid_effects) <= await self.max_count()
 
     async def disposition(self) -> HangingDisposition:
         return await self.read_enum(88, HangingDisposition)
 
-    async def minCount(self) -> int:
+    async def min_count(self) -> int:
         return await self.read_value_from_offset(92, "int")
 
-    async def maxCount(self) -> int:
+    async def max_count(self) -> int:
         return await self.read_value_from_offset(96, "int")
 
 
@@ -343,9 +343,9 @@ class ReqIsSchool(ConditionalSpellEffectRequirement):
         member = await self.get_target(data)
         participant = await member.get_participant()
         school_id = await participant.primary_magic_school_id()
-        return await self.magicSchoolName() == school_to_str[school_id]
+        return await self.magic_school_name() == school_to_str[school_id]
 
-    async def magicSchoolName(self) -> str:
+    async def magic_school_name(self) -> str:
         return await self.read_string_from_offset(88)
 
 
@@ -363,15 +363,15 @@ class ReqHangingWard(ConditionalSpellEffectRequirement):
                     or await effect.disposition() == await self.disposition()
                 ):
                     valid_effects.append(effect)
-        return await self.minCount() <= len(valid_effects) <= await self.maxCount()
+        return await self.min_count() <= len(valid_effects) <= await self.max_count()
 
     async def disposition(self) -> HangingDisposition:
         return await self.read_enum(88, HangingDisposition)
 
-    async def minCount(self) -> int:
+    async def min_count(self) -> int:
         return await self.read_value_from_offset(92, "int")
 
-    async def maxCount(self) -> int:
+    async def max_count(self) -> int:
         return await self.read_value_from_offset(96, "int")
 
 
@@ -382,7 +382,7 @@ class ReqHangingEffectType(ConditionalSpellEffectRequirement):
         hanging_effects = await participant.hanging_effects()
         # TODO finsh this
 
-    async def effectType(self) -> HangingSpellEffect:
+    async def effect_type(self) -> HangingSpellEffect:
         return await self.read_enum(88, HangingSpellEffect)
 
     async def param_low(self) -> int:
@@ -410,12 +410,12 @@ class ReqShadowPipCount(ConditionalSpellEffectRequirement):
         member = await self.get_target(data)
         participant = await member.get_participant()
         num_shadow_pip = await participant.num_shadow_pips()
-        return await self.minPips() <= num_shadow_pip <= await self.maxPips()
+        return await self.min_pips() <= num_shadow_pip <= await self.max_pips()
 
-    async def minPips(self) -> int:
+    async def min_pips(self) -> int:
         return await self.read_value_from_offset(88, "int")
 
-    async def maxPips(self) -> int:
+    async def max_pips(self) -> int:
         return await self.read_value_from_offset(92, "int")
 
 
@@ -424,12 +424,12 @@ class ReqPipCount(ConditionalSpellEffectRequirement):
         member = await self.get_target(data)
         participant = await member.get_participant()
         num_power_pip = await participant.num_power_pips()
-        return await self.minPips() <= num_power_pip <= await self.maxPips()
+        return await self.min_pips() <= num_power_pip <= await self.max_pips()
 
-    async def minPips(self) -> int:
+    async def min_pips(self) -> int:
         return await self.read_value_from_offset(88, "int")
 
-    async def maxPips(self) -> int:
+    async def max_pips(self) -> int:
         return await self.read_value_from_offset(92, "int")
 
 
@@ -439,7 +439,7 @@ class ReqMinion(ConditionalSpellEffectRequirement):
 
         member = await self.get_target(data)
         participant = await member.get_participant()
-        match await self.minionType():
+        match await self.minion_type():
             case MinionType.IsMinion:
                 return await participant.is_minion()
             case MinionType.HasMinion:
@@ -470,7 +470,7 @@ class ReqMinion(ConditionalSpellEffectRequirement):
 
         return False
 
-    async def minionType(self) -> MinionType:
+    async def minion_type(self) -> MinionType:
         return await self.read_enum(88, MinionType)
 
 
