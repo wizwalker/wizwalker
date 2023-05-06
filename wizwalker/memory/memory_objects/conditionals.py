@@ -278,8 +278,9 @@ class ReqHangingOverTime(ConditionalSpellEffectRequirement):
         hanging_effects = await participant.hanging_effects()
         valid_effects = []
         for effect in hanging_effects:
-            if await effect.effect_type() in over_time_effect_types and await effect.disposition == await self.disposition:
-                valid_effects.append(effect)
+            if await effect.effect_type() in over_time_effect_types:
+                if await effect.disposition() == HangingDisposition.both or await self.disposition() == HangingDisposition.both or await effect.disposition() == await self.disposition():
+                    valid_effects.append(effect)
         return await self.minCount() <= len(valid_effects) <= await self.maxCount()
 
     async def disposition(self) -> HangingDisposition:
@@ -311,8 +312,9 @@ class ReqHangingWard(ConditionalSpellEffectRequirement):
         hanging_effects = await participant.hanging_effects()
         valid_effects = []
         for effect in hanging_effects:
-            if await effect.effect_type() in ward_effect_types and await effect.disposition == await self.disposition:
-                valid_effects.append(effect)
+            if await effect.effect_type() in ward_effect_types:
+                if await effect.disposition() == HangingDisposition.both or await self.disposition() == HangingDisposition.both or await effect.disposition() == await self.disposition():
+                    valid_effects.append(effect)
         return await self.minCount() <= len(valid_effects) <= await self.maxCount()
 
     async def disposition(self) -> HangingDisposition:
