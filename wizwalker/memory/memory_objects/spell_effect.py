@@ -215,3 +215,18 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
             results.append(DynamicSpellEffect(self.hook_handler, i))
 
         return results
+
+class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
+    pass
+
+class ConditionalSpellElement(PropertyClass):
+    async def reqs(self) -> RequirementList:
+        return RequirementList(self.hook_handler, 
+                            await self.read_value_from_offset(72, 'unsigned long long'))
+    
+    async def effects(self)-> DynamicSpellEffect:
+        return DynamicSpellEffect(self.hook_handler,
+                            await self.read_value_from_offset(88, 'unsigned long long'))
+
+class DynamicConditionalSpellElement(DynamicMemoryObject, ConditionalSpellElement):
+    pass
