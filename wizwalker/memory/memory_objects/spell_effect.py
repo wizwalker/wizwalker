@@ -2,7 +2,7 @@ from typing import List
 
 from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
 from .enums import SpellEffects, EffectTarget, HangingDisposition, HangingEffectType, OutputEffectSelector
-
+from wizwalker.memory.memory_objects.conditionals import RequirementList
 
 class SpellEffect(PropertyClass):
     async def read_base_address(self) -> int:
