@@ -248,9 +248,6 @@ class ReqHangingCharm(ConditionalSpellEffectRequirement):
                 if await effect.disposition() == HangingDisposition.both or await self.disposition() == HangingDisposition.both or await effect.disposition() == await self.disposition():
                     valid_effects.append(effect)
 
-        # print(str(await self.minCount()) + ' minimum')
-        # print(str(len(valid_effects)) + ' current')
-        # print(str(await self.maxCount()) + ' maximum')
         return await self.minCount() <= len(valid_effects) <= await self.maxCount()
 
     async def disposition(self) -> HangingDisposition:
