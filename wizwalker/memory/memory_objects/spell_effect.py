@@ -248,7 +248,7 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
 
         return results
 
-    # TODO: Write functions for specific_effect_types and output_effects? This is beyond my current knowledge. -slack
+    # TODO: Write write functions for specific_effect_types and output_effects? This is beyond my current knowledge. -slack
 
 
 class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
