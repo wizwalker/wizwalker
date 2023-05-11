@@ -148,10 +148,11 @@ class SpellEffect(PropertyClass):
                 "RandomSpellEffect",
                 "RandomPerTargetSpellEffect",
                 "VariableSpellEffect",
+                "EffectListSpellEffect",
             ):
                 raise ValueError(
                     f"This object is a {type_name} not a"
-                    f" Random/RandomPerTarget/Variable SpellEffect."
+                    f" Random/RandomPerTarget/Variable/EffectList SpellEffect."
                 )
 
         effects = []
