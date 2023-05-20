@@ -275,9 +275,9 @@ class DynamicConditionalSpellElement(DynamicMemoryObject, ConditionalSpellElemen
 
 
 class ConditionalSpellEffect(DynamicSpellEffect):
-    async def elements(self) -> List[ConditionalSpellElement]:
+    async def elements(self) -> List[DynamicConditionalSpellElement]:
         subeffects = await self.maybe_effect_list()
-        conditionals: List[ConditionalSpellElement] = []
+        conditionals = []
         for effect in subeffects:
             if await effect.read_type_name() == "ConditionalSpellElement":
                 element = DynamicConditionalSpellElement(self.hook_handler, await effect.read_base_address())
