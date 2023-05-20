@@ -283,4 +283,4 @@ class ConditionalSpellEffect(DynamicSpellEffect):
                 element = DynamicConditionalSpellElement(self.hook_handler, await effect.read_base_address())
                 conditionals.append(element)
 
-        return subeffects
+        return conditionals
