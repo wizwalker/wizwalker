@@ -37,7 +37,7 @@ class SpellTemplate(PropertyClass):
     async def write_spell_base(self, spell_base: str):
         await self.write_string_to_offset(216, spell_base)
 
-    async def spell_effects(self) -> List[DynamicSpellEffect]:
+    async def effects(self) -> List[DynamicSpellEffect]:
         effects = []
         for addr in await self.read_shared_vector(248):
             effect = DynamicSpellEffect(self.hook_handler, addr)
