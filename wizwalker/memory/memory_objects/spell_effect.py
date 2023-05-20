@@ -252,7 +252,7 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
     # TODO: Write write functions for specific_effect_types and output_effects? This is beyond my current knowledge. -slack
 
 
-class ConditionalSpellEffect(DynamicMemoryObject, SpellEffect):
+class ConditionalSpellEffect(DynamicSpellEffect):
     async def elements(self):
         conditionals: List[ConditionalSpellElement] = []
         for i in await self.read_shared_linked_list(288):
