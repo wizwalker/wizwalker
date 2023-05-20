@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
 from .enums import DelayOrder, SpellSourceType
-from .spell_effect import DynamicSpellEffect, HangingConversionSpellEffect
+from .spell_effect import DynamicSpellEffect, HangingConversionSpellEffect, ConditionalSpellEffect, ShadowSpellEffect, CountBasedSpellEffect, DelaySpellEffect
 from .spell_rank import DynamicSpellRank
 
 
@@ -37,13 +37,25 @@ class SpellTemplate(PropertyClass):
     async def write_spell_base(self, spell_base: str):
         await self.write_string_to_offset(216, spell_base)
 
-    async def effects(self) -> List[DynamicSpellEffect]:
+    async def spell_effects(self) -> List[DynamicSpellEffect]:
         effects = []
         for addr in await self.read_shared_vector(248):
             effect = DynamicSpellEffect(self.hook_handler, addr)
             match await effect.read_type_name():
                 case "HangingConversionSpellEffect":
                     effect = HangingConversionSpellEffect(self.hook_handler, addr)
+
+                case "ConditionalSpellEffect":
+                    effect = ConditionalSpellEffect(self.hook_handler, addr)
+
+                case "ShadowSpellEffect":
+                    effect = ShadowSpellEffect(self.hook_handler, addr)
+
+                case "CountBasedSpellEffect":
+                    effect = CountBasedSpellEffect(self.hook_handler, addr)
+
+                case "DelaySpellEffect":
+                    effect = DelaySpellEffect(self.hook_handler, addr)
 
             effects.append(effect)
 
