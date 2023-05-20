@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
 from .enums import DelayOrder, SpellSourceType
+
 from .spell_effect import DynamicSpellEffect, HangingConversionSpellEffect, ConditionalSpellEffect, ShadowSpellEffect, CountBasedSpellEffect, DelaySpellEffect
 from .spell_rank import DynamicSpellRank
 
