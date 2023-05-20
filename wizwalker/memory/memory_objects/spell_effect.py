@@ -280,6 +280,7 @@ class ConditionalSpellEffect(DynamicSpellEffect):
         conditionals: List[ConditionalSpellElement] = []
         for effect in subeffects:
             if await effect.read_type_name() == "ConditionalSpellElement":
-                conditionals.append(self.hook_handler, await effect.read_base_address())
+                element = DynamicConditionalSpellElement(self.hook_handler, await effect.read_base_address())
+                conditionals.append(element)
 
         return subeffects
