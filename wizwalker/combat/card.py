@@ -248,11 +248,11 @@ class CombatCard:
         graphical_spell = await self.wait_for_graphical_spell()
         return await graphical_spell.pve()
 
-    async def get_conditionals(
-        self,
-    ) -> List[
-        "wizwalker.memory.memory_objects.spell_effect.DynamicConditionalSpellElement"
-    ]:
-        spell = await self.wait_for_graphical_spell()
-        conditional_spell_elements = await spell.get_conditional_spell_elements()
-        return conditional_spell_elements
+    # async def get_conditionals(
+    #     self,
+    # ) -> List[
+    #     "wizwalker.memory.memory_objects.spell_effect.DynamicConditionalSpellElement"
+    # ]:
+    #     spell = await self.wait_for_graphical_spell()
+    #     conditional_spell_elements = await spell.get_conditional_spell_elements()
+    #     return conditional_spell_elements
