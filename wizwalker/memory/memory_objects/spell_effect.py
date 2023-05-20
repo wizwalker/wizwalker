@@ -7,8 +7,10 @@ from .enums import (
     HangingDisposition,
     HangingEffectType,
     OutputEffectSelector,
+    CountBasedType,
 )
 from wizwalker.memory.memory_objects.conditionals import RequirementList
+from wizwalker.memory.memory_objects.spell import DynamicSpell
 
 
 class SpellEffect(PropertyClass):
@@ -149,6 +151,7 @@ class SpellEffect(PropertyClass):
                 "RandomPerTargetSpellEffect",
                 "VariableSpellEffect",
                 "EffectListSpellEffect",
+                "ShadowSpellEffect"
             ):
                 raise ValueError(
                     f"This object is a {type_name} not a"
@@ -174,7 +177,7 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
     async def write_hanging_effect_type(self, hanging_effect_type: HangingEffectType):
         await self.write_enum(self, hanging_effect_type)
 
-    async def specific_effect_types(self) -> list[SpellEffects]:
+    async def specific_effect_types(self) -> list[SpellEffects]: #TODO: missing a write function, doesn't really matter -slack
         results = []
         for i in await self.read_shared_linked_list(232):
             effect = DynamicSpellEffect(self.hook_handler, i)
@@ -242,14 +245,12 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
     async def write_apply_to_effect_source(self, apply_to_effect_source: bool):
         await self.write_value_to_offset(280, apply_to_effect_source, "bool")
 
-    async def output_effect(self) -> List[DynamicSpellEffect]:
+    async def output_effect(self) -> List[DynamicSpellEffect]: #TODO: missing a write function, doesn't really matter -slack
         results = []
         for i in await self.read_shared_linked_list(288):
             results.append(DynamicSpellEffect(self.hook_handler, i))
 
         return results
-
-    # TODO: Write write functions for specific_effect_types and output_effects? This is beyond my current knowledge. -slack
 
 
 class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
@@ -284,3 +285,74 @@ class ConditionalSpellEffect(DynamicSpellEffect):
                 conditionals.append(element)
 
         return conditionals
+
+
+class ShadowSpellEffect(DynamicSpellEffect):
+    async def initial_backlash(self) -> int:
+        return await self.read_value_from_offset(240, "int")
+    
+    async def write_initial_backlash(self, intial_backlash: int):
+        await self.write_value_to_offset(240, intial_backlash, "int")
+
+
+class CountBasedSpellEffect(DynamicSpellEffect):
+    async def mode(self) -> CountBasedType:
+        return await self.read_enum(224, CountBasedType)
+
+    async def write_mode(self, mode: CountBasedType):
+        await self.write_enum(224, mode)
+
+    async def effect_list(self) -> List[DynamicSpellEffect]: #TODO: missing a write function, doesn't really matter -slack
+        effects = []
+        for addr in await self.read_shared_linked_list(232):
+            effects.append(DynamicSpellEffect(self.hook_handler, addr))
+
+        return effects
+
+
+class DelaySpellEffect(DynamicSpellEffect):
+    async def damage(self) -> int:
+        return await self.read_value_from_offset(236, "int")
+
+    async def write_damage(self, damage: int):
+        await self.write_value_to_offset(236, damage, "int")
+
+    async def rounds(self) -> int:
+        return await self.read_value_from_offset(240, "int")
+
+    async def write_rounds(self, rounds: int):
+        await self.write_value_to_offset(240, rounds, "int")
+
+    async def spell_delayed_template_id(self) -> int:
+        return await self.read_value_from_offset(244, "unsigned int")
+
+    async def write_spell_delayed_template_id(self, spell_delayed_template_id: int):
+        await self.write_value_to_offset(244, spell_delayed_template_id, "unsigned int")
+
+    async def spell_delayed_template_damage_id(self) -> int:
+        return await self.read_value_from_offset(248, "unsigned int")
+
+    async def write_spell_delayed_template_damage_id(self, spell_delayed_template_damage_id: int):
+        await self.write_value_to_offset(248, spell_delayed_template_damage_id, "unsigned int")
+
+    async def spell_enchanter_template_id(self) -> int:
+        return await self.read_value_from_offset(252, "unsigned int")
+
+    async def write_spell_enchanter_template_id(self, spell_enchanter_template_id: int):
+        await self.write_value_to_offset(252, spell_enchanter_template_id, "unsigned int")
+
+    async def target_subcircle_list(self) -> List[int]: #TODO: missing a write function, doesn't really matter -slack
+        return await self.read_value_from_offset(264, "int")
+
+    async def spell_hits(self) -> int:
+        return await self.read_value_from_offset(280, "char")
+
+    async def write_spell_hits(self, spell_hits: int):
+        await self.write_value_to_offset(280, spell_hits, "char")
+
+    async def spell(self) -> DynamicSpell: #TODO: missing a write function, doesn't really matter -slack
+        addr = await self.read_value_from_offset(288, "long long")
+        if addr == 0:
+            return None
+
+        return DynamicSpell(self.hook_handler, addr)
