@@ -350,3 +350,8 @@ class HangingEffectType(Enum):
 class OutputEffectSelector(Enum):
     All = 0
     MatchedSelectRank = 1
+
+
+class CountBasedType(Enum):
+    SpellKills = 0
+    SpellCrits = 1

@@ -8,6 +8,10 @@ from .spell_effect import (
     DynamicSpellEffect,
     DynamicConditionalSpellElement,
     HangingConversionSpellEffect,
+    ConditionalSpellEffect,
+    ShadowSpellEffect,
+    CountBasedSpellEffect,
+    DelaySpellEffect
 )
 
 
@@ -88,6 +92,18 @@ class Spell(PropertyClass):
             match await effect.read_type_name():
                 case "HangingConversionSpellEffect":
                     effect = HangingConversionSpellEffect(self.hook_handler, addr)
+
+                case "ConditionalSpellEffect":
+                    effect = ConditionalSpellEffect(self.hook_handler, addr)
+
+                case "ShadowSpellEffect":
+                    effect = ShadowSpellEffect(self.hook_handler, addr)
+
+                case "CountBasedSpellEffect":
+                    effect = CountBasedSpellEffect(self.hook_handler, addr)
+
+                case "DelaySpellEffect":
+                    effect = DelaySpellEffect(self.hook_handler, addr)
 
             effects.append(effect)
 
@@ -186,26 +202,6 @@ class Spell(PropertyClass):
 
     async def write_round_added_tc(self, round_added_t_c: int):
         await self.write_value_to_offset(260, round_added_t_c, "int")
-
-    async def get_conditional_spell_elements(
-        self,
-    ) -> list[DynamicConditionalSpellElement]:
-        elements = []
-        spell_effects = await self.spell_effects()
-        for effect in spell_effects:
-            spell_effect_name = await effect.read_type_name()
-            if spell_effect_name == "ConditionalSpellEffect":
-                maybe_spell_conditional_effects = await effect.maybe_effect_list()
-                for spell_conditional in maybe_spell_conditional_effects:
-                    conditional_effect_name = await spell_conditional.read_type_name()
-                    if conditional_effect_name == "ConditionalSpellElement":
-                        elements.append(
-                            DynamicConditionalSpellElement(
-                                self.hook_handler,
-                                await spell_conditional.read_base_address(),
-                            )
-                        )
-        return elements
 
 
 class GraphicalSpell(Spell):
