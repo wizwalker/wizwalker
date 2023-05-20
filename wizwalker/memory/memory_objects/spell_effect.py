@@ -242,7 +242,7 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
     async def write_apply_to_effect_source(self, apply_to_effect_source: bool):
         await self.write_value_to_offset(280, apply_to_effect_source, "bool")
 
-    async def output_effect(self) -> list[DynamicSpellEffect]:
+    async def output_effect(self) -> List[DynamicSpellEffect]:
         results = []
         for i in await self.read_shared_linked_list(288):
             results.append(DynamicSpellEffect(self.hook_handler, i))
@@ -250,18 +250,6 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
         return results
 
     # TODO: Write write functions for specific_effect_types and output_effects? This is beyond my current knowledge. -slack
-
-
-class ConditionalSpellEffect(DynamicSpellEffect):
-    async def elements(self):
-        conditionals: List[ConditionalSpellElement] = []
-        for i in await self.read_shared_linked_list(288):
-            conditionals.append(DynamicConditionalSpellElement(self.hook_handler, i))
-
-        return conditionals
-        # subeffects = await self.maybe_effect_list()
-
-
 
 
 class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
@@ -284,3 +272,14 @@ class ConditionalSpellElement(PropertyClass):
 
 class DynamicConditionalSpellElement(DynamicMemoryObject, ConditionalSpellElement):
     pass
+
+
+class ConditionalSpellEffect(DynamicSpellEffect):
+    async def elements(self) -> List[ConditionalSpellElement]:
+        subeffects = await self.maybe_effect_list()
+        conditionals: List[ConditionalSpellElement] = []
+        for effect in subeffects:
+            if await effect.read_type_name() == "ConditionalSpellElement":
+                conditionals.append(self.hook_handler, await effect.read_base_address())
+
+        return subeffects
