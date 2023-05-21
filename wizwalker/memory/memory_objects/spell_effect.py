@@ -10,7 +10,6 @@ from .enums import (
     CountBasedType,
 )
 from wizwalker.memory.memory_objects.conditionals import RequirementList
-from wizwalker.memory.memory_objects.spell import DynamicSpell
 
 
 class SpellEffect(PropertyClass):
@@ -310,49 +309,90 @@ class CountBasedSpellEffect(DynamicSpellEffect):
         return effects
 
 
-class DelaySpellEffect(DynamicSpellEffect):
-    async def damage(self) -> int:
-        return await self.read_value_from_offset(236, "int")
+class CountBasedSpellEffect(DynamicSpellEffect):
+    async def mode(self) -> CountBasedType:
+        return await self.read_enum(224, CountBasedType)
 
-    async def write_damage(self, damage: int):
-        await self.write_value_to_offset(236, damage, "int")
+    async def write_mode(self, mode: CountBasedType):
+        await self.write_enum(224, mode)
 
-    async def rounds(self) -> int:
+    async def effect_list(self) -> List[DynamicSpellEffect]: #TODO: missing a write function, doesn't really matter -slack
+        effects = []
+        for addr in await self.read_shared_linked_list(232):
+            effects.append(DynamicSpellEffect(self.hook_handler, addr))
+
+        return effects
+
+
+#NOTE: This isn't specified by type dump, and is here to reduce code repetition
+class CompoundSpellEffect(DynamicSpellEffect):
+    async def effects_list(self) -> List[DynamicSpellEffect]:
+        results = []
+        for i in await self.read_shared_linked_list(224):
+            results.append(DynamicSpellEffect(self.hook_handler, i))
+
+        return results
+
+
+class RandomSpellEffect(CompoundSpellEffect):
+    pass
+
+
+class RandomPerTargetSpellEffect(RandomSpellEffect):
+    pass
+
+
+class VariableSpellEffect(CompoundSpellEffect):
+    pass
+
+
+class EffectListSpellEffect(CompoundSpellEffect):
+    pass
+
+
+class ShadowSpellEffect(EffectListSpellEffect):
+    async def initial_backlash(self) -> int:
         return await self.read_value_from_offset(240, "int")
+    
+    async def write_initial_backlash(self, intial_backlash: int):
+        await self.write_value_to_offset(240, intial_backlash, "int")
 
-    async def write_rounds(self, rounds: int):
-        await self.write_value_to_offset(240, rounds, "int")
 
-    async def spell_delayed_template_id(self) -> int:
-        return await self.read_value_from_offset(244, "unsigned int")
+async def get_spell_effects(base: PropertyClass, offset: int) -> List[DynamicSpellEffect]:
+    '''
+    Gets spell effects from a PropertyClass (spell and spell_template), and properly assigns the variant SpellEffect type to each.\n
+    Args:
+    - base (PropertyClass): An instance of the class to read from
+    - offset (int): The offset to use
+    '''
+    effects = []
+    for addr in await base.read_shared_vector(offset):
+        effect = DynamicSpellEffect(base.hook_handler, addr)
+        match await effect.read_type_name():
+            case "HangingConversionSpellEffect":
+                effect = HangingConversionSpellEffect(base.hook_handler, addr)
 
-    async def write_spell_delayed_template_id(self, spell_delayed_template_id: int):
-        await self.write_value_to_offset(244, spell_delayed_template_id, "unsigned int")
+            case "ConditionalSpellEffect":
+                effect = ConditionalSpellEffect(base.hook_handler, addr)
 
-    async def spell_delayed_template_damage_id(self) -> int:
-        return await self.read_value_from_offset(248, "unsigned int")
+            case "ShadowSpellEffect":
+                effect = ShadowSpellEffect(base.hook_handler, addr)
 
-    async def write_spell_delayed_template_damage_id(self, spell_delayed_template_damage_id: int):
-        await self.write_value_to_offset(248, spell_delayed_template_damage_id, "unsigned int")
+            case "CountBasedSpellEffect":
+                effect = CountBasedSpellEffect(base.hook_handler, addr)
 
-    async def spell_enchanter_template_id(self) -> int:
-        return await self.read_value_from_offset(252, "unsigned int")
+            case "RandomSpellEffect":
+                effect = RandomSpellEffect(base.hook_handler, addr)
 
-    async def write_spell_enchanter_template_id(self, spell_enchanter_template_id: int):
-        await self.write_value_to_offset(252, spell_enchanter_template_id, "unsigned int")
+            case "RandomPerTargetSpellEffect":
+                effect = RandomPerTargetSpellEffect(base.hook_handler, addr)
 
-    async def target_subcircle_list(self) -> List[int]: #TODO: missing a write function, doesn't really matter -slack
-        return await self.read_value_from_offset(264, "int")
+            case "VariableSpellEffect":
+                effect = VariableSpellEffect(base.hook_handler, addr)
 
-    async def spell_hits(self) -> int:
-        return await self.read_value_from_offset(280, "char")
+            case "EffectListSpellEffect":
+                effect = EffectListSpellEffect(base.hook_handler, addr)
 
-    async def write_spell_hits(self, spell_hits: int):
-        await self.write_value_to_offset(280, spell_hits, "char")
+        effects.append(effect)
 
-    async def spell(self) -> DynamicSpell: #TODO: missing a write function, doesn't really matter -slack
-        addr = await self.read_value_from_offset(288, "long long")
-        if addr == 0:
-            return None
-
-        return DynamicSpell(self.hook_handler, addr)
+    return effects
