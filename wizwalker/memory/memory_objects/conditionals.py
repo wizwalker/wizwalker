@@ -224,8 +224,9 @@ class RequirementList(Requirement):
 
     async def requirements(self) -> list[Requirement]:
         results = []
-        for items in await self.read_shared_linked_list(80):
-            results.append(Requirement(self.hook_handler, items))
+        for addr in await self.read_shared_linked_list(80):
+            requirement = await promote_requirement(Requirement(self.hook_handler, addr))
+            results.append(requirement)
         return results
 
 
