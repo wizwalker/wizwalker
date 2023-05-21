@@ -160,7 +160,8 @@ class SpellEffect(PropertyClass):
         effects = []
 
         for addr in await self.read_shared_linked_list(224):
-            effects.append(DynamicSpellEffect(self.hook_handler, addr))
+            effect = await cast_effect_variant(DynamicSpellEffect(self.hook_handler, addr))
+            effects.append(effect)
 
         return effects
 
@@ -247,9 +248,21 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
     async def output_effect(self) -> List[DynamicSpellEffect]: #TODO: missing a write function, doesn't really matter -slack
         results = []
         for i in await self.read_shared_linked_list(288):
+            effect = await cast_effect_variant(DynamicSpellEffect(self.hook_handler, i))
+            results.append(effect)
+
+        return results
+
+
+#NOTE: This isn't specified by type dump, and is here to reduce code repetition
+class CompoundSpellEffect(DynamicSpellEffect):
+    async def effects_list(self) -> List[DynamicSpellEffect]:
+        results = []
+        for i in await self.read_shared_linked_list(224):
             results.append(DynamicSpellEffect(self.hook_handler, i))
 
         return results
+
 
 
 class DynamicSpellEffect(DynamicMemoryObject, SpellEffect):
@@ -264,26 +277,22 @@ class ConditionalSpellElement(PropertyClass):
         )
 
     async def effect(self) -> DynamicSpellEffect:
-        return DynamicSpellEffect(
-            self.hook_handler,
-            await self.read_value_from_offset(88, "unsigned long long"),
-        )
+        addr = await self.read_value_from_offset(88, "unsigned long long")
+        return await cast_effect_variant(DynamicSpellEffect(self.hook_handler, addr))
 
 
 class DynamicConditionalSpellElement(DynamicMemoryObject, ConditionalSpellElement):
     pass
 
 
-class ConditionalSpellEffect(DynamicSpellEffect):
+class ConditionalSpellEffect(CompoundSpellEffect):
     async def elements(self) -> List[DynamicConditionalSpellElement]:
-        subeffects = await self.maybe_effect_list()
-        conditionals = []
-        for effect in subeffects:
-            if await effect.read_type_name() == "ConditionalSpellElement":
-                element = DynamicConditionalSpellElement(self.hook_handler, await effect.read_base_address())
-                conditionals.append(element)
+        elements = []
+        for addr in await self.read_shared_linked_list(224):
+            element = DynamicConditionalSpellElement(self.hook_handler, addr)
+            elements.append(element)
 
-        return conditionals
+        return elements
 
 
 class ShadowSpellEffect(DynamicSpellEffect):
@@ -304,7 +313,8 @@ class CountBasedSpellEffect(DynamicSpellEffect):
     async def effect_list(self) -> List[DynamicSpellEffect]: #TODO: missing a write function, doesn't really matter -slack
         effects = []
         for addr in await self.read_shared_linked_list(232):
-            effects.append(DynamicSpellEffect(self.hook_handler, addr))
+            effect = cast_effect_variant(DynamicSpellEffect(self.hook_handler, addr))
+            effects.append(effect)
 
         return effects
 
@@ -322,16 +332,6 @@ class CountBasedSpellEffect(DynamicSpellEffect):
             effects.append(DynamicSpellEffect(self.hook_handler, addr))
 
         return effects
-
-
-#NOTE: This isn't specified by type dump, and is here to reduce code repetition
-class CompoundSpellEffect(DynamicSpellEffect):
-    async def effects_list(self) -> List[DynamicSpellEffect]:
-        results = []
-        for i in await self.read_shared_linked_list(224):
-            results.append(DynamicSpellEffect(self.hook_handler, i))
-
-        return results
 
 
 class RandomSpellEffect(CompoundSpellEffect):
@@ -358,6 +358,43 @@ class ShadowSpellEffect(EffectListSpellEffect):
         await self.write_value_to_offset(240, intial_backlash, "int")
 
 
+async def cast_effect_variant(read_effect: DynamicSpellEffect) -> DynamicSpellEffect:
+    '''
+    Creates an effect variant based on the output of read_type_name for an effect PropertyClass.\n
+    Args:
+    - read_effect (DynamicSpellEffect): Effect read from memory. Must be a child or instance of DynamicSpellEffect.
+    '''
+    addr = await read_effect.read_base_address()
+
+    match await read_effect.read_type_name():
+        case "HangingConversionSpellEffect":
+            return HangingConversionSpellEffect(read_effect.hook_handler, addr)
+
+        case "ConditionalSpellEffect":
+            return ConditionalSpellEffect(read_effect.hook_handler, addr)
+
+        case "ShadowSpellEffect":
+            return ShadowSpellEffect(read_effect.hook_handler, addr)
+
+        case "CountBasedSpellEffect":
+            return CountBasedSpellEffect(read_effect.hook_handler, addr)
+
+        case "RandomSpellEffect":
+            return RandomSpellEffect(read_effect.hook_handler, addr)
+
+        case "RandomPerTargetSpellEffect":
+            return RandomPerTargetSpellEffect(read_effect.hook_handler, addr)
+
+        case "VariableSpellEffect":
+            return VariableSpellEffect(read_effect.hook_handler, addr)
+
+        case "EffectListSpellEffect":
+            return EffectListSpellEffect(read_effect.hook_handler, addr)
+
+        case _:
+            return read_effect
+
+
 async def get_spell_effects(base: PropertyClass, offset: int) -> List[DynamicSpellEffect]:
     '''
     Gets spell effects from a PropertyClass (spell and spell_template), and properly assigns the variant SpellEffect type to each.\n
@@ -367,32 +404,7 @@ async def get_spell_effects(base: PropertyClass, offset: int) -> List[DynamicSpe
     '''
     effects = []
     for addr in await base.read_shared_vector(offset):
-        effect = DynamicSpellEffect(base.hook_handler, addr)
-        match await effect.read_type_name():
-            case "HangingConversionSpellEffect":
-                effect = HangingConversionSpellEffect(base.hook_handler, addr)
-
-            case "ConditionalSpellEffect":
-                effect = ConditionalSpellEffect(base.hook_handler, addr)
-
-            case "ShadowSpellEffect":
-                effect = ShadowSpellEffect(base.hook_handler, addr)
-
-            case "CountBasedSpellEffect":
-                effect = CountBasedSpellEffect(base.hook_handler, addr)
-
-            case "RandomSpellEffect":
-                effect = RandomSpellEffect(base.hook_handler, addr)
-
-            case "RandomPerTargetSpellEffect":
-                effect = RandomPerTargetSpellEffect(base.hook_handler, addr)
-
-            case "VariableSpellEffect":
-                effect = VariableSpellEffect(base.hook_handler, addr)
-
-            case "EffectListSpellEffect":
-                effect = EffectListSpellEffect(base.hook_handler, addr)
-
+        effect = await cast_effect_variant(DynamicSpellEffect(base.hook_handler, addr))
         effects.append(effect)
 
     return effects
