@@ -285,7 +285,7 @@ class DynamicConditionalSpellElement(DynamicMemoryObject, ConditionalSpellElemen
     pass
 
 
-class ConditionalSpellEffect(CompoundSpellEffect):
+class ConditionalSpellEffect(DynamicSpellEffect):
     async def elements(self) -> List[DynamicConditionalSpellElement]:
         elements = []
         for addr in await self.read_shared_linked_list(224):
