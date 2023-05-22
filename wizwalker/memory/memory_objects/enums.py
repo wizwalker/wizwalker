@@ -340,18 +340,41 @@ class AccountPermissions(IntFlag):
 
 
 class HangingEffectType(Enum):
-    Any = 0
-    Ward = 1
-    Charm = 2
-    OverTime = 3
-    Specific = 4
+    any = 0
+    ward = 1
+    charm = 2
+    over_time = 3
+    specific = 4
 
 
 class OutputEffectSelector(Enum):
-    All = 0
-    MatchedSelectRank = 1
+    all = 0
+    matched_select_rank = 1
 
 
 class CountBasedType(Enum):
-    SpellKills = 0
-    SpellCrits = 1
+    spell_kills = 0
+    spell_crits = 1
+
+
+class Operator(Enum):
+    AND = 0
+    OR = 1
+
+
+class RequirementTarget(Enum):
+    caster = 0
+    target = 1
+
+
+class MinionType(Enum):
+    is_minion = 0,
+    has_minion = 1,
+    on_team = 2,
+    on_other_team = 3,
+    on_any_team = 4
+
+
+class StatusEffect(Enum):
+    stunned = 0
+    confused = 1
