@@ -319,21 +319,6 @@ class CountBasedSpellEffect(DynamicSpellEffect):
         return effects
 
 
-class CountBasedSpellEffect(DynamicSpellEffect):
-    async def mode(self) -> CountBasedType:
-        return await self.read_enum(224, CountBasedType)
-
-    async def write_mode(self, mode: CountBasedType):
-        await self.write_enum(224, mode)
-
-    async def effect_list(self) -> List[DynamicSpellEffect]: #TODO: missing a write function, doesn't really matter -slack
-        effects = []
-        for addr in await self.read_shared_linked_list(232):
-            effects.append(DynamicSpellEffect(self.hook_handler, addr))
-
-        return effects
-
-
 class RandomSpellEffect(CompoundSpellEffect):
     pass
 

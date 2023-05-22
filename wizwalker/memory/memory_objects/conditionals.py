@@ -235,7 +235,7 @@ class ConditionalSpellEffectRequirement(Requirement):
         return await self.read_enum(80, RequirementTarget)
 
     async def get_target(self, data: dict[str, Any]):
-        combat: CombatHandler = data["combat"]
+        combat = data["combat"]
         if await self.target_type() == RequirementTarget.Caster:
             member = await combat.get_client_member()
         else:
@@ -436,7 +436,7 @@ class ReqPipCount(ConditionalSpellEffectRequirement):
 
 class ReqMinion(ConditionalSpellEffectRequirement):
     async def _evaluate(self, data: dict[str, Any]) -> bool:
-        combat: CombatHandler = data["combat"]
+        combat = data["combat"]
 
         member = await self.get_target(data)
         participant = await member.get_participant()
