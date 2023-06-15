@@ -368,10 +368,10 @@ class RequirementTarget(Enum):
 
 
 class MinionType(Enum):
-    is_minion = 0,
-    has_minion = 1,
-    on_team = 2,
-    on_other_team = 3,
+    is_minion = 0
+    has_minion = 1
+    on_team = 2
+    on_other_team = 3
     on_any_team = 4
 
 
