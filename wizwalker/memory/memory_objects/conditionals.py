@@ -1,6 +1,7 @@
-from wizwalker.memory.memory_objects.enums import *
+from wizwalker.memory.memory_objects.enums import SpellEffects, Operator, RequirementTarget, HangingDisposition, MinionType, StatusEffect
 from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
 from typing import Any
+from enum import Enum
 
 
 charm_effect_types = [
@@ -60,133 +61,110 @@ ward_effect_types = [
 
 
 class HangingSpellEffect(Enum):
-    InvalidSpellEffect = 0,
-    AbsorbDamage = 35,
-    AbsorbHeal = 36,
-    AddCombatTriggerList = 85,
-    Afterlife = 80,
-    BacklashDamage = 87,
-    BounceAll = 34,
-    BounceBack = 33,
-    BounceNext = 31,
-    BouncePrevious = 32,
-    CloakedCharm = 40,
-    CloakedWard = 41,
-    CloakedWardNoRemove = 84,
-    Confusion = 39,
-    ConfusionBlock = 107,
-    CritBlock = 45,
-    CritBoost = 44,
-    CritBoostSchoolSpecific = 95,
-    Damage = 1,
-    DamageNoCrit = 2,
-    DamageOverTime = 73,
-    DamagePerTotalPipPower = 82,
-    Dampen = 66,
-    DeferredDamage = 81,
-    DelayCast = 47,
-    DetonateOverTime = 7,
-    Dispel = 38,
-    DivideDamage = 103,
-    Heal = 3,
-    HealOverTime = 74,
-    InstantKill = 79,
-    Intercept = 89,
-    MaxHealthDamage = 110,
-    MaximumIncomingDamage = 23,
-    MindControl = 68,
-    ModifyAccuracy = 37,
-    ModifyBacklash = 88,
-    ModifyCardAccuracy = 51,
-    ModifyCardArmorPiercing = 54,
-    ModifyCardCloak = 48,
-    ModifyCardDamage = 49,
-    ModifyCardMutation = 52,
-    ModifyCardRank = 53,
-    ModifyHate = 72,
-    ModifyIncomingArmorPiercing = 26,
-    ModifyIncomingDamage = 22,
-    ModifyIncomingDamageFlat = 117,
-    ModifyIncomingDamageType = 25,
-    ModifyIncomingHeal = 24,
-    ModifyIncomingHealFlat = 116,
-    ModifyIncomingHealOverTime = 136,
-    ModifyOutgoingArmorPiercing = 30,
-    ModifyOutgoingDamage = 27,
-    ModifyOutgoingDamageFlat = 119,
-    ModifyOutgoingDamageType = 29,
-    ModifyOutgoingHeal = 28,
-    ModifyOutgoingHealFlat = 118,
-    ModifyPipRoundRate = 108,
-    ModifyPips = 69,
-    ModifyPowerPipChance = 75,
-    ModifyPowerPips = 70,
-    ModifyRank = 76,
-    ModifyShadowCreatureLevel = 92,
-    ModifyShadowPips = 71,
-    PipConversion = 43,
-    Polymorph = 46,
-    PowerPipConversion = 98,
-    ProtectBeneficial = 101,
-    ProtectCardBeneficial = 99,
-    ProtectCardHarmful = 100,
-    ProtectHarmful = 102,
-    PushCharm = 8,
-    PushOverTime = 12,
-    PushWard = 10,
-    ReduceOverTime = 6,
-    RemoveAura = 17,
-    RemoveCharm = 14,
-    RemoveCombatTriggerList = 86,
-    RemoveOverTime = 16,
-    RemoveWard = 15,
-    Reshuffle = 67,
-    RevealCloak = 78,
-    SelectShadowCreatureAttackTarget = 93,
-    ShadowCreature = 91,
-    ShadowDecrementTurn = 94,
-    ShadowSelf = 90,
-    SpawnCreature = 96,
-    StealCharm = 9,
-    StealHealth = 5,
-    StealOverTime = 13,
-    StealWard = 11,
-    Stun = 65,
-    StunBlock = 77,
-    StunResist = 42,
-    SummonCreature = 63,
-    SwapCharm = 19,
-    SwapOverTime = 21,
-    SwapWard = 20,
-    TeleportPlayer = 64,
-    UnPolymorph = 97,
-    MaxHealthHeal = 127,
-    HealByWard = 128,
-    Taunt = 129,
-    Pacify = 130
-
-
-class Operator(Enum):
-    AND = 0
-    OR = 1
-
-
-class RequirementTarget(Enum):
-    Caster = 0
-    Target = 1
-
-
-class MinionType(Enum):
-    IsMinion = 0,
-    HasMinion = 1,
-    OnTeam = 2,
-    OnOtherTeam = 3,
-    OnAnyTeam = 4
-
-
-class StatusEffect(Enum):
-    Stunned = 0
-    Confused = 1
+    invalid_spell_effect = 0,
+    absorb_damage = 35,
+    absorb_heal = 36,
+    add_combat_trigger_list = 85,
+    afterlife = 80,
+    backlash_damage = 87,
+    bounce_all = 34,
+    bounce_back = 33,
+    bounce_next = 31,
+    bounce_previous = 32,
+    cloaked_charm = 40,
+    cloaked_ward = 41,
+    cloaked_ward_no_remove = 84,
+    confusion = 39,
+    confusion_block = 107,
+    crit_block = 45,
+    crit_boost = 44,
+    crit_boost_school_specific = 95,
+    damage = 1,
+    damage_no_crit = 2,
+    damage_over_time = 73,
+    damage_per_total_pip_power = 82,
+    dampen = 66,
+    deferred_damage = 81,
+    delay_cast = 47,
+    detonate_over_time = 7,
+    dispel = 38,
+    divide_damage = 103,
+    heal = 3,
+    heal_over_time = 74,
+    instant_kill = 79,
+    intercept = 89,
+    max_health_damage = 110,
+    maximum_incoming_damage = 23,
+    mind_control = 68,
+    modify_accuracy = 37,
+    modify_backlash = 88,
+    modify_card_accuracy = 51,
+    modify_card_armor_piercing = 54,
+    modify_card_cloak = 48,
+    modify_card_damage = 49,
+    modify_card_mutation = 52,
+    modify_card_rank = 53,
+    modify_hate = 72,
+    modify_incoming_armor_piercing = 26,
+    modify_incoming_damage = 22,
+    modify_incoming_damage_flat = 117,
+    modify_incoming_damage_type = 25,
+    modify_incoming_heal = 24,
+    modify_incoming_heal_flat = 116,
+    modify_incoming_heal_over_time = 136,
+    modify_outgoing_armor_piercing = 30,
+    modify_outgoing_damage = 27,
+    modify_outgoing_damage_flat = 119,
+    modify_outgoing_damage_type = 29,
+    modify_outgoing_heal = 28,
+    modify_outgoing_heal_flat = 118,
+    modify_pip_round_rate = 108,
+    modify_pips = 69,
+    modify_power_pip_chance = 75,
+    modify_power_pips = 70,
+    modify_rank = 76,
+    modify_shadow_creature_level = 92,
+    modify_shadow_pips = 71,
+    pip_conversion = 43,
+    polymorph = 46,
+    power_pip_conversion = 98,
+    protect_beneficial = 101,
+    protect_card_beneficial = 99,
+    protect_card_harmful = 100,
+    protect_harmful = 102,
+    push_charm = 8,
+    push_over_time = 12,
+    push_ward = 10,
+    reduce_over_time = 6,
+    remove_aura = 17,
+    remove_charm = 14,
+    remove_combat_trigger_list = 86,
+    remove_over_time = 16,
+    remove_ward = 15,
+    reshuffle = 67,
+    reveal_cloak = 78,
+    select_shadow_creature_attack_target = 93,
+    shadow_creature = 91,
+    shadow_decrement_turn = 94,
+    shadow_self = 90,
+    spawn_creature = 96,
+    steal_charm = 9,
+    steal_health = 5,
+    steal_over_time = 13,
+    steal_ward = 11,
+    stun = 65,
+    stun_block = 77,
+    stun_resist = 42,
+    summon_creature = 63,
+    swap_charm = 19,
+    swap_over_time = 21,
+    swap_ward = 20,
+    teleport_player = 64,
+    un_polymorph = 97,
+    max_health_heal = 127,
+    heal_by_ward = 128,
+    taunt = 129,
+    pacify = 130
 
 
 class Requirement(DynamicMemoryObject, PropertyClass):
@@ -224,8 +202,9 @@ class RequirementList(Requirement):
 
     async def requirements(self) -> list[Requirement]:
         results = []
-        for items in await self.read_shared_linked_list(80):
-            results.append(Requirement(self.hook_handler, items))
+        for addr in await self.read_shared_linked_list(80):
+            requirement = await promote_requirement(Requirement(self.hook_handler, addr))
+            results.append(requirement)
         return results
 
 
@@ -234,8 +213,8 @@ class ConditionalSpellEffectRequirement(Requirement):
         return await self.read_enum(80, RequirementTarget)
 
     async def get_target(self, data: dict[str, Any]):
-        combat: CombatHandler = data["combat"]
-        if await self.target_type() == RequirementTarget.Caster:
+        combat = data["combat"]
+        if await self.target_type() == RequirementTarget.caster:
             member = await combat.get_client_member()
         else:
             member = (await combat.get_members())[data["target_idx"]]
@@ -435,17 +414,17 @@ class ReqPipCount(ConditionalSpellEffectRequirement):
 
 class ReqMinion(ConditionalSpellEffectRequirement):
     async def _evaluate(self, data: dict[str, Any]) -> bool:
-        combat: CombatHandler = data["combat"]
+        combat = data["combat"]
 
         member = await self.get_target(data)
         participant = await member.get_participant()
         match await self.minion_type():
-            case MinionType.IsMinion:
+            case MinionType.is_minion:
                 return await participant.is_minion()
-            case MinionType.HasMinion:
+            case MinionType.has_minion:
                 # TODO find out what in the world this means
                 raise NotImplementedError()
-            case MinionType.OnTeam:
+            case MinionType.on_team:
                 for combatmember in await combat.get_members():
                     if combatmember in await combat.get_members():
                         part = await combatmember.get_participant()
@@ -454,7 +433,7 @@ class ReqMinion(ConditionalSpellEffectRequirement):
                             and await part.team_id() == await participant.team_id()
                         ):
                             return True
-            case MinionType.OnOtherTeam:
+            case MinionType.on_other_team:
                 for combatmember in await combat.get_members():
                     if combatmember in await combat.get_members():
                         part = await combatmember.get_participant()
@@ -463,7 +442,7 @@ class ReqMinion(ConditionalSpellEffectRequirement):
                             and not await part.team_id() == await participant.team_id()
                         ):
                             return True
-            case MinionType.OnAnyTeam:
+            case MinionType.on_any_team:
                 for combatmember in await combat.get_members():
                     if await combatmember.is_minion():
                         return True
@@ -479,9 +458,9 @@ class ReqCombatStatus(ConditionalSpellEffectRequirement):
         member = await self.get_target(data)
         participant = await member.get_participant()
         match await self.status():
-            case StatusEffect.Stunned:
+            case StatusEffect.stunned:
                 return await participant.stunned() != 0
-            case StatusEffect.Confused:
+            case StatusEffect.confused:
                 return await participant.confused() != 0
 
     async def status(self) -> StatusEffect:

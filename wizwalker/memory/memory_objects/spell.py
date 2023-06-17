@@ -6,12 +6,7 @@ from .enums import DelayOrder
 from .spell_template import DynamicSpellTemplate
 from .spell_effect import (
     DynamicSpellEffect,
-    DynamicConditionalSpellElement,
-    HangingConversionSpellEffect,
-    ConditionalSpellEffect,
-    ShadowSpellEffect,
-    CountBasedSpellEffect,
-    DelaySpellEffect
+    get_spell_effects
 )
 
 
@@ -86,28 +81,7 @@ class Spell(PropertyClass):
         await self.write_value_to_offset(132, accuracy, "unsigned char")
 
     async def spell_effects(self) -> List[DynamicSpellEffect]:
-        effects = []
-        for addr in await self.read_shared_vector(88):
-            effect = DynamicSpellEffect(self.hook_handler, addr)
-            match await effect.read_type_name():
-                case "HangingConversionSpellEffect":
-                    effect = HangingConversionSpellEffect(self.hook_handler, addr)
-
-                case "ConditionalSpellEffect":
-                    effect = ConditionalSpellEffect(self.hook_handler, addr)
-
-                case "ShadowSpellEffect":
-                    effect = ShadowSpellEffect(self.hook_handler, addr)
-
-                case "CountBasedSpellEffect":
-                    effect = CountBasedSpellEffect(self.hook_handler, addr)
-
-                case "DelaySpellEffect":
-                    effect = DelaySpellEffect(self.hook_handler, addr)
-
-            effects.append(effect)
-
-        return effects
+        return await get_spell_effects(self, 88)
 
     async def treasure_card(self) -> bool:
         return await self.read_value_from_offset(197, "bool")
