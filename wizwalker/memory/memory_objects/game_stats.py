@@ -786,16 +786,16 @@ class GameStats(PropertyClass):
 
     async def write_highest_character_world_on_account(self, highest_character_world_on_account: int):
         return await self.write_value_to_offset(332, highest_character_world_on_account, "int")
-            
+
     async def school_id(self) -> int:
         return await self.read_value_from_offset(320, "unsigned int")
-    
+
     async def write_school_id(self, school_id: int):
         return await self.write_value_to_offset(320, school_id, "unsigned int")
-    
+
     async def level_scaled(self) -> int:
         return await self.read_value_from_offset(324, "int")
-    
+
     async def write_level_scaled(self, level_scaled: int):
         return await self.write_value_to_offset(324, level_scaled, "int")
 
