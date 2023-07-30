@@ -540,21 +540,20 @@ class User32GetClassInfoBaseHook(AutoBotBaseHook):
     )
     # rounded down
     AUTOBOT_SIZE = 1200
-
-    _autobot_addr = None
-    # How far into the function we are
-    _autobot_bytes_offset = 0
-
-    _autobot_original_bytes = None
-
-    # this is really hacky
-    _hooked_instances = 0
+    
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._hooked_instances = 0
+        # How far into the function we are
+        self._autobot_bytes_offset = 0 
+        self._autobot_addr = None
+        self._autobot_original_bytes = None
 
     async def alloc(self, size: int) -> int:
         if self._autobot_addr is None:
             addr = await self.get_address_from_symbol("user32.dll", "GetClassInfoExA")
             # this is so all instances have the address
-            User32GetClassInfoBaseHook._autobot_addr = addr
+            self._autobot_addr = addr
 
         if self._autobot_bytes_offset + size > self.AUTOBOT_SIZE:
             raise RuntimeError(
@@ -562,28 +561,28 @@ class User32GetClassInfoBaseHook(AutoBotBaseHook):
             )
 
         if self._autobot_original_bytes is None:
-            User32GetClassInfoBaseHook._autobot_original_bytes = await self.read_bytes(
+            self._autobot_original_bytes = await self.read_bytes(
                 self._autobot_addr, self.AUTOBOT_SIZE
             )
             # this is so instructions don't collide
             await self.write_bytes(self._autobot_addr, b"\x00" * self.AUTOBOT_SIZE)
 
         addr = self._autobot_addr + self._autobot_bytes_offset
-        User32GetClassInfoBaseHook._autobot_bytes_offset += size
+        self._autobot_bytes_offset += size
 
         return addr
 
     async def hook(self) -> Any:
-        User32GetClassInfoBaseHook._hooked_instances += 1
+        self._hooked_instances += 1
         return await super().hook()
 
     async def unhook(self):
-        User32GetClassInfoBaseHook._hooked_instances -= 1
+        self._hooked_instances -= 1
         await self.write_bytes(self.jump_address, self.jump_original_bytecode)
 
         if self._hooked_instances == 0:
             await self.write_bytes(self._autobot_addr, self._autobot_original_bytes)
-            User32GetClassInfoBaseHook._autobot_bytes_offset = 0
+            self._autobot_bytes_offset = 0
 
 
 class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
@@ -598,7 +597,7 @@ class MouselessCursorMoveHook(User32GetClassInfoBaseHook):
         """
         Writes jump_bytecode to jump address and hook bytecode to hook address
         """
-        User32GetClassInfoBaseHook._hooked_instances += 1
+        self._hooked_instances += 1
 
         self.jump_address = await self.get_jump_address()
         self.hook_address = await self.get_hook_address(50)
