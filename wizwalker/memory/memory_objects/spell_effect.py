@@ -295,12 +295,7 @@ class ConditionalSpellEffect(DynamicSpellEffect):
         return elements
 
 
-class ShadowSpellEffect(DynamicSpellEffect):
-    async def initial_backlash(self) -> int:
-        return await self.read_value_from_offset(240, "int")
-    
-    async def write_initial_backlash(self, intial_backlash: int):
-        await self.write_value_to_offset(240, intial_backlash, "int")
+
 
 
 class CountBasedSpellEffect(DynamicSpellEffect):
