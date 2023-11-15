@@ -153,6 +153,14 @@ class Client:
         root_client = await self.client_object.parent()
         return await root_client.children()
 
+    async def get_base_entity_list_pet(self):
+        """
+        List of WizClientObjects currently loaded while in pet mode
+        """
+        pet_parent_object = await self.client_object.parent()
+        root_client = await pet_parent_object.parent()
+        return await root_client.children()
+
     # TODO: add example
     async def get_base_entities_with_predicate(self, predicate: Callable):
         """
@@ -583,7 +591,7 @@ class Client:
 
         return self._je_instruction_forward_backwards
 
-    async def camera_swap(self):
+    async def camera_swap(self, seamless_freecam=True):
         """
         Swaps the current camera controller
         """
@@ -591,9 +599,9 @@ class Client:
             await self.camera_elastic()
 
         else:
-            await self.camera_freecam()
+            await self.camera_freecam(seamless_from_elastic=seamless_freecam)
 
-    async def camera_freecam(self):
+    async def camera_freecam(self, seamless_from_elastic=True):
         """
         Switches to the freecam camera controller
         """
@@ -608,6 +616,10 @@ class Client:
         free_address = await free.read_base_address()
 
         await self._switch_camera(free_address, elastic_address)
+
+        if seamless_from_elastic:
+            await free.write_position(await elastic.position())
+            await free.update_orientation(await elastic.orientation())
 
     async def camera_elastic(self):
         """
@@ -654,8 +666,10 @@ class Client:
 
         self._movement_update_address = await self.hook_handler.pattern_scan(
             rb"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48"
-            rb"\x8D\xA8\xE8\xFD\xFF\xFF\x48\x81\xEC\xE0\x02\x00\x00\x48\xC7"
-            rb"\x45\x28\xFE\xFF\xFF\xFF",
+            rb"\x8D\xA8....\x48\x81\xEC....\x48\xC7.........\x48\x89\x58."
+            rb"\x0F\x29\x70.\x0F\x29\x78.\x44\x0F\x29\x40.\x44\x0F\x29\x48."
+            rb"\x44\x0F\x29.....\x44\x0F\x29.....\x44\x0F\x29.....\x48\x8B"
+            rb"\x05....\x48\x33\xC4\x48\x89\x85....\x44",
             module="WizardGraphicalClient.exe",
         )
 
@@ -685,7 +699,7 @@ class Client:
                 b"\x48\xBA" + packed_new_camera_address +  # mov rdx, new_cam_addr
                 b"\x49\xC7\xC0\x01\x00\x00\x00"  # mov r8, 0x1
                 b"\x48\x8B\x01"  # mov rax, [rcx]
-                b"\x48\x8B\x80\x40\x04\x00\x00"  # mov rax, [rax+0x440]
+                b"\x48\x8B\x80\x48\x04\x00\x00"  # mov rax, [rax+0x448]
                 b"\x49\x89\xC1"  # mov r9, rax
                 b"\xFF\xD0"  # call rax
 
