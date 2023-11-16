@@ -150,8 +150,13 @@ class Client:
         """
         List of WizClientObjects currently loaded
         """
-        root_client = await self.client_object.parent()
-        return await root_client.children()
+        maybe_root_client = await self.client_object.parent()
+
+        if root_client := await maybe_root_client.parent():
+            return await root_client.children()
+        
+        else:
+            return await maybe_root_client.children()
 
     # TODO: add example
     async def get_base_entities_with_predicate(self, predicate: Callable):
