@@ -150,8 +150,15 @@ class Client:
         """
         List of WizClientObjects currently loaded
         """
-        root_client = await self.client_object.parent()
-        return await root_client.children()
+        maybe_root_client = await self.client_object.parent()
+
+        # Checks if the user is in pet mode
+        if root_client := await maybe_root_client.parent():
+            return await root_client.children()
+        
+        # Runs normally as the user is not in pet mode
+        else:
+            return await maybe_root_client.children()
 
     # TODO: add example
     async def get_base_entities_with_predicate(self, predicate: Callable):
