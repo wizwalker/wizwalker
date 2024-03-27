@@ -247,18 +247,19 @@ class PlayerStatHook(SimpleHook):
 
 
 class QuestHook(SimpleHook):
-    pattern = rb".........\xF3\x0F\x11\x45\xE0.........\xF3\x0F\x11\x4D\xE4.........\xF3\x0F\x11\x45\xE8\x48"
+    pattern = rb"\xF3\x41\x0F\x10\x87\xFC\x0C\x00\x00"
     exports = [("cord_struct", 4)]
     noops = 4
 
     async def bytecode_generator(self, packed_exports):
         # fmt: off
         bytecode = (
-                b"\x50"  # push rcx
-                b"\x49\x8D\x86\xFC\x0C\x00\x00"  # lea rcx,[r14+CFC]
-                b"\x48\xA3" + packed_exports[0][1] +  # mov [export],rcx
-                b"\x58"  # pop rcx
-                b"\xF3\x41\x0F\x10\x86\xFC\x0C\x00\x00"  # original code
+                b"\x50"  # push rax
+                b"\x49\x8D\x87\xFC\x0C\x00\x00"  #lea rax,[r15+00000CFC]
+
+                b"\x48\xA3" + packed_exports[0][1] +  # mov [export],rax
+                b"\x58"  # pop rax
+                b"\xF3\x41\x0F\x10\x87\xFC\x0C\x00\x00"  # original code 
         )
         # fmt: on
         return bytecode
