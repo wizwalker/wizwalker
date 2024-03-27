@@ -388,7 +388,7 @@ class MovementTeleportHook(SimpleHook):
         target_address = jes[0]
 
         inside_event_je_addr = await self.pattern_scan(
-            rb"\x74.\xF3\x0F\x10\x55\xA8",
+            rb"\x74.\xF3\x0F\x10\x55\x88",
             module="WizardGraphicalClient.exe",
         )
         event_dispatch_je_addr = await self.pattern_scan(
