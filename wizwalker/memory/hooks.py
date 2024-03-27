@@ -247,7 +247,7 @@ class PlayerStatHook(SimpleHook):
 
 
 class QuestHook(SimpleHook):
-    pattern = rb"\xF3\x41\x0F\x10\x87\xFC\x0C\x00\x00"
+    pattern = rb"\xF3\x41\x0F\x10.\xFC\x0C\x00\x00\xF3\x0F\x11"
     exports = [("cord_struct", 4)]
     noops = 4
 
