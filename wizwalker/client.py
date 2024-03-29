@@ -645,8 +645,8 @@ class Client:
 
         movement_update_address = await self._get_movement_update_address()
         self._movement_update_original_bytes = await self.hook_handler.read_bytes(movement_update_address, 3)
-        # ret
-        await self.hook_handler.write_bytes(movement_update_address, b"\xC3\x90\x90")
+        # 3x nop
+        await self.hook_handler.write_bytes(movement_update_address, b"\x90\x90\x90")
 
         self._movement_update_patched = True
 
@@ -664,13 +664,19 @@ class Client:
             return self._movement_update_address
 
         self._movement_update_address = await self.hook_handler.pattern_scan(
-            rb"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48"
-            rb"\x8D\xA8....\x48\x81\xEC....\x48\xC7.........\x48\x89\x58."
-            rb"\x0F\x29\x70.\x0F\x29\x78.\x44\x0F\x29\x40.\x44\x0F\x29\x48."
-            rb"\x44\x0F\x29.....\x44\x0F\x29.....\x44\x0F\x29.....\x48\x8B"
-            rb"\x05....\x48\x33\xC4\x48\x89\x85....\x44",
-            module="WizardGraphicalClient.exe",
+            rb"\xFF\x50.\x48\x8B\x83....\x48\x8D..\x48\x2B",
+            module="WizardGraphicalClient.exe"
         )
+
+        # OLD PATTERN; DO NOT REMOVE. Might be helpful to update the new pattern in case it breaks.
+        # self._movement_update_address = await self.hook_handler.pattern_scan(
+        #     rb"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48"
+        #     rb"\x8D\xA8....\x48\x81\xEC....\x48\xC7.........\x48\x89\x58."
+        #     rb"\x0F\x29\x70.\x0F\x29\x78.\x44\x0F\x29\x40.\x44\x0F\x29\x48."
+        #     rb"\x44\x0F\x29.....\x44\x0F\x29.....\x44\x0F\x29.....\x48\x8B"
+        #     rb"\x05....\x48\x33\xC4\x48\x89\x85....\x44",
+        #     module="WizardGraphicalClient.exe",
+        # )
 
         return self._movement_update_address
 
@@ -698,7 +704,7 @@ class Client:
                 b"\x48\xBA" + packed_new_camera_address +  # mov rdx, new_cam_addr
                 b"\x49\xC7\xC0\x01\x00\x00\x00"  # mov r8, 0x1
                 b"\x48\x8B\x01"  # mov rax, [rcx]
-                b"\x48\x8B\x80\x48\x04\x00\x00"  # mov rax, [rax+0x448]
+                b"\x48\x8B\x80\x58\x04\x00\x00"  # mov rax, [rax+0x458]
                 b"\x49\x89\xC1"  # mov r9, rax
                 b"\xFF\xD0"  # call rax
 
