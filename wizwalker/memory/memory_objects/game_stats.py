@@ -270,10 +270,10 @@ class GameStats(PropertyClass):
         await self.write_value_to_offset(708, dmg_bonus_flat_all, "float")
 
     async def acc_bonus_percent_all(self) -> float:
-        return await self.read_value_from_offset(708, "float")
+        return await self.read_value_from_offset(712, "float")
 
     async def write_acc_bonus_percent_all(self, acc_bonus_percent_all: float):
-        await self.write_value_to_offset(708, acc_bonus_percent_all, "float")
+        await self.write_value_to_offset(712, acc_bonus_percent_all, "float")
 
     async def ap_bonus_percent_all(self) -> float:
         return await self.read_value_from_offset(716, "float")
@@ -450,12 +450,12 @@ class GameStats(PropertyClass):
         await self.write_value_to_offset(864, buddy_list_limit, "int")
 
     async def dont_allow_friend_finder_codes(self) -> bool:
-        return await self.read_value_from_offset(864, "bool")
+        return await self.read_value_from_offset(872, "bool")
 
     async def write_dont_allow_friend_finder_codes(
         self, dont_allow_friend_finder_codes: bool
     ):
-        await self.write_value_to_offset(864, dont_allow_friend_finder_codes, "bool")
+        await self.write_value_to_offset(872, dont_allow_friend_finder_codes, "bool")
 
     async def stun_resistance_percent(self) -> float:
         return await self.read_value_from_offset(868, "float")
@@ -634,71 +634,71 @@ class GameStats(PropertyClass):
         await self.write_value_to_offset(924, equipped_teleport_effect, "unsigned int")
 
     async def highest_world1_id(self) -> int:
-        return await self.read_value_from_offset(928, "unsigned int")
+        return await self.read_value_from_offset(944, "unsigned int")
 
     async def write_highest_world1_id(self, highest_world1_id: int):
-        await self.write_value_to_offset(928, highest_world1_id, "unsigned int")
+        await self.write_value_to_offset(944, highest_world1_id, "unsigned int")
 
     async def highest_world2_id(self) -> int:
-        return await self.read_value_from_offset(932, "unsigned int")
+        return await self.read_value_from_offset(948, "unsigned int")
 
     async def write_highest_world2_id(self, highest_world2_i_d: int):
-        await self.write_value_to_offset(932, highest_world2_i_d, "unsigned int")
+        await self.write_value_to_offset(948, highest_world2_i_d, "unsigned int")
 
     async def active_class_projects_list(self) -> int:
-        return await self.read_value_from_offset(936, "unsigned int")
+        return await self.read_value_from_offset(952, "unsigned int")
 
     async def write_active_class_projects_list(self, active_class_projects_list: int):
         await self.write_value_to_offset(
-            936, active_class_projects_list, "unsigned int"
+            952, active_class_projects_list, "unsigned int"
         )
 
     async def disabled_item_slot_ids(self) -> int:
-        return await self.read_value_from_offset(952, "unsigned int")
+        return await self.read_value_from_offset(968, "unsigned int")
 
     async def write_disabled_item_slot_ids(self, disabled_item_slot_ids: int):
-        await self.write_value_to_offset(952, disabled_item_slot_ids, "unsigned int")
+        await self.write_value_to_offset(968, disabled_item_slot_ids, "unsigned int")
 
     async def adventure_power_cooldown_time(self) -> int:
-        return await self.read_value_from_offset(968, "unsigned int")
+        return await self.read_value_from_offset(984, "unsigned int")
 
     async def write_adventure_power_cooldown_time(
         self, adventure_power_cooldown_time: int
     ):
         await self.write_value_to_offset(
-            968, adventure_power_cooldown_time, "unsigned int"
+            984, adventure_power_cooldown_time, "unsigned int"
         )
 
     async def purchased_custom_emotes2(self) -> int:
-        return await self.read_value_from_offset(972, "unsigned int")
+        return await self.read_value_from_offset(928, "unsigned int")
 
     async def write_purchased_custom_emotes2(self, purchased_custom_emotes2: int):
-        await self.write_value_to_offset(972, purchased_custom_emotes2, "unsigned int")
+        await self.write_value_to_offset(928, purchased_custom_emotes2, "unsigned int")
 
     async def purchased_custom_teleport_effects2(self) -> int:
-        return await self.read_value_from_offset(976, "unsigned int")
+        return await self.read_value_from_offset(932, "unsigned int")
 
     async def write_purchased_custom_teleport_effects2(
         self, purchased_custom_teleport_effects2: int
     ):
         await self.write_value_to_offset(
-            976, purchased_custom_teleport_effects2, "unsigned int"
+            932, purchased_custom_teleport_effects2, "unsigned int"
         )
 
     async def purchased_custom_emotes3(self) -> int:
-        return await self.read_value_from_offset(980, "unsigned int")
+        return await self.read_value_from_offset(936, "unsigned int")
 
     async def write_purchased_custom_emotes3(self, purchased_custom_emotes3: int):
-        await self.write_value_to_offset(980, purchased_custom_emotes3, "unsigned int")
+        await self.write_value_to_offset(936, purchased_custom_emotes3, "unsigned int")
 
     async def purchased_custom_teleport_effects3(self) -> int:
-        return await self.read_value_from_offset(984, "unsigned int")
+        return await self.read_value_from_offset(940, "unsigned int")
 
     async def write_purchased_custom_teleport_effects3(
         self, purchased_custom_teleport_effects3: int
     ):
         await self.write_value_to_offset(
-            984, purchased_custom_teleport_effects3, "unsigned int"
+            940, purchased_custom_teleport_effects3, "unsigned int"
         )
 
     async def shadow_pip_rating(self) -> float:
