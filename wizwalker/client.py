@@ -1,7 +1,7 @@
 import asyncio
 import struct
 import warnings
-from functools import cached_property
+from functools import cached_property, partial
 from typing import Callable, List, Optional
 
 import pymem
@@ -150,15 +150,18 @@ class Client:
         """
         List of WizClientObjects currently loaded
         """
-        maybe_root_client = await self.client_object.parent()
-
-        # Checks if the user is in pet mode
-        if root_client := await maybe_root_client.parent():
-            return await root_client.children()
+        # A wizard101 update made this cause race conditions.
+        # It now tries to find the root of the tree until it works or runs out of time.
+        async def _impl(self):
+            async def _is_root_object(x):
+                object_template = await x.object_template()
+                return object_template == None
         
-        # Runs normally as the user is not in pet mode
-        else:
-            return await maybe_root_client.children()
+            root_client = await self.client_object.parent()
+            while not (await _is_root_object(root_client)):
+                root_client = await root_client.parent()
+            return await root_client.children()
+        return await maybe_wait_for_any_value_with_timeout(partial(_impl, self), sleep_time=0.05, timeout=1.0)
 
     # TODO: add example
     async def get_base_entities_with_predicate(self, predicate: Callable):
