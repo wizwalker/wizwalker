@@ -440,13 +440,11 @@ class Client:
         await self.body.write_yaw(yaw)
         await utils.timed_send_key(self.window_handle, Keycode.W, move_seconds)
 
-    # TODO: 2.0 remove move_after as it isn't needed anymore
     async def teleport(
             self,
             xyz: XYZ,
             yaw: float = None,
             *,
-            move_after: bool = False,
             wait_on_inuse: bool = True,
             wait_on_inuse_timeout: float = 1.0,
             purge_on_after_unuser_fixer: bool = True,
@@ -460,53 +458,7 @@ class Client:
             yaw: yaw to set or None to not change
 
         Keyword Args:
-            move_after: depreciated
             wait_on_inuse: If we should wait for the update bool to be False
-            wait_on_inuse_timeout: Time to wait for inuse flag to be setback
-            purge_on_after_unuser_fixer: If should wait for inuse flag after and reset if not set
-            purge_on_after_unuser_fixer_timeout: Time to wait for inuse flag to reset if not set
-        """
-        # we do this because the old teleport only required the body hook
-        client_object = await self.body.parent_client_object()
-        client_object_addr = await client_object.read_base_address()
-
-        await self._teleport_object(
-            client_object_addr,
-            xyz,
-            wait_on_inuse,
-            wait_on_inuse_timeout,
-            purge_on_after_unuser_fixer,
-            purge_on_after_unuser_fixer_timeout,
-        )
-
-        if move_after:
-            warnings.warn(DeprecationWarning("Move after will be removed in 2.0"))
-            await self.send_key(Keycode.D, 0.1)
-
-        if yaw is not None:
-            await self.body.write_yaw(yaw)
-
-    async def pet_teleport(
-            self,
-            xyz: XYZ,
-            yaw: float = None,
-            *,
-            move_after: bool = True,
-            wait_on_inuse: bool = True,
-            wait_on_inuse_timeout: float = 1.0,
-            purge_on_after_unuser_fixer: bool = True,
-            purge_on_after_unuser_fixer_timeout: float = 0.6,
-    ):
-        """
-        Teleport while playing as pet
-
-        Args:
-            xyz: xyz to teleport to
-            yaw: yaw to set or None to not change
-
-        Keyword Args:
-            move_after: depreciated
-            wait_on_inuse: If should wait for inuse flag to be setback
             wait_on_inuse_timeout: Time to wait for inuse flag to be setback
             purge_on_after_unuser_fixer: If should wait for inuse flag after and reset if not set
             purge_on_after_unuser_fixer_timeout: Time to wait for inuse flag to reset if not set
@@ -521,10 +473,6 @@ class Client:
             purge_on_after_unuser_fixer,
             purge_on_after_unuser_fixer_timeout,
         )
-
-        if move_after:
-            warnings.warn(DeprecationWarning("Move after will be removed in 2.0"))
-            await self.send_key(Keycode.D, 0.1)
 
         if yaw is not None:
             await self.body.write_yaw(yaw)
