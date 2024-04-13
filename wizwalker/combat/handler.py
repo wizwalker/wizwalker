@@ -100,6 +100,7 @@ class CombatHandler:
         spell_checkbox_windows = await self.client.root_window.get_windows_with_type(
             "SpellCheckBox"
         )
+        spell_checkbox_windows = [x for x in spell_checkbox_windows if await x.name() != "PetCard"]
 
         self._spell_check_boxes = spell_checkbox_windows
         return self._spell_check_boxes
