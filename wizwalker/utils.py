@@ -349,6 +349,11 @@ def calculate_perfect_yaw(current_xyz: XYZ, target_xyz: XYZ) -> float:
     target_to_origin_line = math.dist(
         (target_xyz.x, target_xyz.y), (current_xyz.x, current_xyz.y - 1)
     )
+
+    if 1.0 - abs(origin_line) > 0.0 or 1.0 - abs(target_line) > 0.0:
+        # will lead to division by 0 if left alone
+        return 0
+
     # target_angle = math.cos(origin_line / target_line)
     target_angle = math.acos(
         (pow(target_line, 2) + pow(origin_line, 2) - pow(target_to_origin_line, 2))
