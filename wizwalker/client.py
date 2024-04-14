@@ -429,11 +429,11 @@ class Client:
             x: X to move to
             y: Y to move to
         """
-        client_obj = self.client_obj
+        client_obj = self.client_object
         body = await client_obj.actor_body()
         current_xyz = await body.position()
         # (40 / 100) + 1 = 1.4
-        speed_multiplier = ((await self.client_object.speed_multiplier()) / 100) + 1
+        speed_multiplier = ((await client_obj.speed_multiplier()) / 100) + 1
         target_xyz = utils.XYZ(x, y, current_xyz.z)
         distance = current_xyz - target_xyz
         move_seconds = distance / (WIZARD_SPEED * speed_multiplier)
