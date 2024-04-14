@@ -429,7 +429,9 @@ class Client:
             x: X to move to
             y: Y to move to
         """
-        current_xyz = await self.body.position()
+        client_obj = self.client_obj
+        body = await client_obj.actor_body()
+        current_xyz = await body.position()
         # (40 / 100) + 1 = 1.4
         speed_multiplier = ((await self.client_object.speed_multiplier()) / 100) + 1
         target_xyz = utils.XYZ(x, y, current_xyz.z)
@@ -437,7 +439,7 @@ class Client:
         move_seconds = distance / (WIZARD_SPEED * speed_multiplier)
         yaw = utils.calculate_perfect_yaw(current_xyz, target_xyz)
 
-        await self.body.write_yaw(yaw)
+        await body.write_yaw(yaw)
         await utils.timed_send_key(self.window_handle, Keycode.W, move_seconds)
 
     async def teleport(
