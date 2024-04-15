@@ -14,6 +14,7 @@ from . import (
     utils, ExceptionalTimeout,
 )
 from .constants import WIZARD_SPEED
+from .errors import PatternMultipleResults
 from .memory import (
     CurrentActorBody,
     CurrentClientObject,
@@ -27,6 +28,9 @@ from .memory import (
     CurrentRenderContext,
     TeleportHelper,
     MovementTeleportHook,
+)
+from .memory.memory_objects.character_registry import (
+    DynamicCharacterRegistry
 )
 from .mouse_handler import MouseHandler
 from .utils import (
@@ -72,6 +76,7 @@ class Client:
         self._template_ids = None
         self._is_loading_addr = None
         self._world_view_window = None
+        self._character_registry_addr = None
 
         self._movement_update_address = None
         self._movement_update_original_bytes = None
@@ -156,7 +161,7 @@ class Client:
             async def _is_root_object(x):
                 object_template = await x.object_template()
                 return object_template == None
-        
+
             root_client = await self.client_object.parent()
             while not (await _is_root_object(root_client)):
                 root_client = await root_client.parent()
@@ -267,18 +272,39 @@ class Client:
         self._template_ids = await self.cache_handler.get_template_ids()
         return self._template_ids
 
+    async def character_registy(self) -> DynamicCharacterRegistry:
+        if not self._character_registry_addr:
+            # WizardGraphicalClient.exe+FC46F0 - 48 8B 05 89AA4202     - mov rax,[WizardGraphicalClient.exe+33EF180] { (20EA3A70810) }
+            # WizardGraphicalClient.exe+FC46F7 - 48 8B 88 30010000     - mov rcx,[rax+00000130]
+            # WizardGraphicalClient.exe+FC46FE - 48 8B C2              - mov rax,rdx
+            # WizardGraphicalClient.exe+FC4701 - 48 89 0A              - mov [rdx],rcx
+            mov_instruction_addrs = await self.hook_handler.pattern_scan(
+                b"\x48\x8B\x05....\x48\x8B\x88\x30\x01\x00\x00",
+                module="WizardGraphicalClient.exe",
+                return_multiple=True
+            )
+            if len(mov_instruction_addrs) != 2:
+                raise PatternMultipleResults("")
+            mov_instruction_addr = mov_instruction_addrs[0]
+            rip_offset = await self.hook_handler.read_typed(
+                mov_instruction_addr + 3, "int"
+            )
+            # 7 is the length of this instruction
+            self._character_registry_addr = await self.hook_handler.read_typed(mov_instruction_addr + 7 + rip_offset, "unsigned long long")
+        return DynamicCharacterRegistry(self.hook_handler, self._character_registry_addr)
+
     async def quest_id(self) -> int:
         """
         Get the client's current quest id
         """
-        registry = await self.game_client.character_registry()
+        registry = await self.character_registy()
         return await registry.active_quest_id()
 
     async def goal_id(self) -> int:
         """
         Get the client's current goal id
         """
-        registry = await self.game_client.character_registry()
+        registry = await self.character_registy()
         return await registry.active_goal_id()
 
     async def in_battle(self) -> bool:
