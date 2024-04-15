@@ -29,9 +29,8 @@ from .memory import (
     TeleportHelper,
     MovementTeleportHook,
 )
-from .memory.memory_objects.character_registry import (
-    DynamicCharacterRegistry
-)
+from .memory.memory_objects.character_registry import DynamicCharacterRegistry
+from .memory.memory_objects.quest_client_manager import QuestClientManager
 from .mouse_handler import MouseHandler
 from .utils import (
     XYZ,
@@ -77,6 +76,7 @@ class Client:
         self._is_loading_addr = None
         self._world_view_window = None
         self._character_registry_addr = None
+        self._quest_client_manager_addr = None
 
         self._movement_update_address = None
         self._movement_update_original_bytes = None
@@ -272,7 +272,21 @@ class Client:
         self._template_ids = await self.cache_handler.get_template_ids()
         return self._template_ids
 
-    async def character_registy(self) -> DynamicCharacterRegistry:
+    async def quest_manager(self) -> QuestClientManager:
+        if not self._quest_client_manager_addr:
+            mov_instruction_addr = await self.hook_handler.pattern_scan(
+                b"\x48\x8B.....\x48\x8B\x97....\x48\x8B.\xE8....\x33\xD2",
+                module="WizardGraphicalClient.exe",
+                return_multiple=False
+            )
+            rip_offset = await self.hook_handler.read_typed(
+                mov_instruction_addr + 3, "int"
+            )
+            # 7 is the length of this instruction
+            self._quest_client_manager_addr = await self.hook_handler.read_typed(mov_instruction_addr + 7 + rip_offset, "unsigned long long")
+        return QuestClientManager(self.hook_handler, self._quest_client_manager_addr)
+
+    async def character_registry(self) -> DynamicCharacterRegistry:
         if not self._character_registry_addr:
             # WizardGraphicalClient.exe+FC46F0 - 48 8B 05 89AA4202     - mov rax,[WizardGraphicalClient.exe+33EF180] { (20EA3A70810) }
             # WizardGraphicalClient.exe+FC46F7 - 48 8B 88 30010000     - mov rcx,[rax+00000130]
@@ -297,14 +311,14 @@ class Client:
         """
         Get the client's current quest id
         """
-        registry = await self.character_registy()
+        registry = await self.character_registry()
         return await registry.active_quest_id()
 
     async def goal_id(self) -> int:
         """
         Get the client's current goal id
         """
-        registry = await self.character_registy()
+        registry = await self.character_registry()
         return await registry.active_goal_id()
 
     async def in_battle(self) -> bool:
