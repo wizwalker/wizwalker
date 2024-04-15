@@ -137,6 +137,9 @@ class Window(PropertyClass):
 
         return DynamicGraphicalSpell(self.hook_handler, addr)
 
+    async def maybe_checked(self) -> bool:
+        return await self.read_value_from_offset(884, "bool")
+
     # see maybe_graphical_spell
     # note: not defined
     async def maybe_spell_grayed(self, *, check_type: bool = False) -> bool:
