@@ -339,7 +339,7 @@ class Client:
         view = await self.get_world_view_window()
         try:
             # if this window exists we are loading
-            await self.view.get_child_by_name("TransitionWindow")
+            await view.get_child_by_name("TransitionWindow")
         except ValueError:
             return False
         else:
