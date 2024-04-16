@@ -73,7 +73,6 @@ class Client:
         self._teleport_helper = TeleportHelper(self.hook_handler)
 
         self._template_ids = None
-        self._is_loading_addr = None
         self._world_view_window = None
         self._character_registry_addr = None
         self._quest_client_manager_addr = None
@@ -337,20 +336,14 @@ class Client:
         If the client is currently in a loading screen
         (does not apply to character load in)
         """
-        if not self._is_loading_addr:
-            mov_instruction_addr = await self.hook_handler.pattern_scan(
-                b"\xC6\x05....\x00\xC6\x80.....\x48\x8B",
-                module="WizardGraphicalClient.exe",
-            )
-            # first 2 bytes are the mov instruction and mov type (C6 05)
-            rip_offset = await self.hook_handler.read_typed(
-                mov_instruction_addr + 2, "int"
-            )
-            # 7 is the length of this instruction
-            self._is_loading_addr = mov_instruction_addr + 7 + rip_offset
-
-        # 1 -> can't move (loading) 0 -> can move (not loading)
-        return await self.hook_handler.read_typed(self._is_loading_addr, "bool")
+        view = await self.get_world_view_window()
+        try:
+            # if this window exists we are loading
+            await view.get_child_by_name("TransitionWindow")
+        except ValueError:
+            return False
+        else:
+            return True
 
     async def is_in_dialog(self) -> bool:
         """
