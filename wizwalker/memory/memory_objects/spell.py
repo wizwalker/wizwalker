@@ -1,3 +1,4 @@
+import warnings
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -8,6 +9,7 @@ from .spell_effect import (
     DynamicSpellEffect,
     get_spell_effects
 )
+from .spell_rank import DynamicSpellRank
 
 
 @dataclass
@@ -43,17 +45,27 @@ class Spell(PropertyClass):
     async def write_enchantment(self, enchantment: int):
         await self.write_value_to_offset(80, enchantment, "unsigned int")
 
+    # TODO: depreciate this method because it doesnt work
     # note: this struct is just within the Spell class; wild
     async def rank(self) -> RankStruct:
+        warnings.warn("Spell.rank is garbage; use spell.pip_cost", DeprecationWarning)
         # further note: check RankStruct class for the 72 and 73 offsets
         regular_rank = await self.read_value_from_offset(176 + 72, "unsigned char")
         shadow_rank = await self.read_value_from_offset(176 + 73, "unsigned char")
         return RankStruct(regular_rank, shadow_rank)
 
     async def write_rank(self, rank: RankStruct):
+        warnings.warn("Spell.rank is garbage; use spell.pip_cost", DeprecationWarning)
         # see above for offset info
         await self.write_value_to_offset(176 + 72, rank.regular_rank, "unsigned char")
         await self.write_value_to_offset(176 + 73, rank.shadow_rank, "unsigned char")
+
+    async def pip_cost(self) -> DynamicSpellRank | None:
+        addr = await self.read_value_from_offset(176, "long long")
+        if addr == 0:
+            return None
+
+        return DynamicSpellRank(self.hook_handler, addr)
 
     async def regular_adjust(self) -> int:
         return await self.read_value_from_offset(192, "int")

@@ -139,3 +139,5 @@ cache/*
 
 # local tests
 tests_local/
+
+scratchpad.py

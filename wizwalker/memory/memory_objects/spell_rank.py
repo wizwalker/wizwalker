@@ -3,7 +3,22 @@ from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
 class SpellRank(PropertyClass):
     async def read_base_address(self) -> int:
         raise NotImplementedError
-    
+
+    async def spell_rank(self) -> int:
+        """
+        The number of regular pips this spell costs
+        """
+        return await self.read_value_from_offset(80, "unsigned char") 
+
+    async def write_spell_rank(self, spell_rank: int):
+        """
+        Write the number of regular pips this spell costs
+
+        Args:
+            spell_rank: The regular pip cost to write
+        """
+        await self.write_value_to_offset(80, spell_rank, "unsigned char")
+
     async def balance_pips(self) -> int:
         """
         The number of balance pips this spell costs
