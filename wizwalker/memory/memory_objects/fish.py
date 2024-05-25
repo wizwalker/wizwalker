@@ -1,12 +1,30 @@
+from enum import Enum
+
 from wizwalker.memory.memory_object import DynamicMemoryObject
 from .actor_body import DynamicActorBody
 from .fish_template import FishTemplate
+
+
+class FishStatusCode(Enum):
+    neutral = 0
+    scared = 1
+    unknown2 = 2
+    unknown3 = 3 # works on sentinels
+    escaped = 4 # works on sentinels
+    unknown5 = 5
+    unknown6 = 6
 
 
 class Fish(DynamicMemoryObject):
     async def body(self) -> DynamicActorBody:
         addr = await self.read_value_from_offset(0x48, "unsigned long long")
         return DynamicActorBody(self.hook_handler, addr)
+
+    async def status_code(self) -> FishStatusCode:
+        return await self.read_enum(0xB8, FishStatusCode)
+
+    async def write_status_code(self, val: FishStatusCode):
+        await self.write_enum(0xB8, val)
 
     async def template(self) -> FishTemplate:
         addr = await self.read_value_from_offset(0xD8, "unsigned long long")
