@@ -30,6 +30,13 @@ class Fish(DynamicMemoryObject):
         addr = await self.read_value_from_offset(0xD8, "unsigned long long")
         return FishTemplate(self.hook_handler, addr)
 
+    async def bobber_submerge_ease(self) -> float:
+        return await self.read_value_from_offset(0xE0, "float")
+
+    async def write_bobber_submerge_ease(self, val: float):
+        ## At 1.0 the bobber is guaranteed to go down
+        await self.write_value_to_offset(0xE0, val, "float")
+
     async def fish_id(self) -> int:
         return await self.read_value_from_offset(0xE4, "int")
 
