@@ -11,6 +11,7 @@ from .client_object import DynamicClientObject
 from .character_registry import DynamicCharacterRegistry
 from .enums import AccountPermissions
 from .gamebryo_presenter import DynamicGamebryoPresenter
+from .fishing_manager import FishingManager
 
 
 # note: not defined
@@ -244,6 +245,10 @@ class GameClient(MemoryObject):
             return None
 
         return DynamicGamebryoPresenter(self.hook_handler, addr)
+
+    async def fishing_manager(self) -> FishingManager:
+        addr = await self.read_value_from_offset(0x22ec8, "unsigned long long")
+        return FishingManager(self.hook_handler, addr)
 
 class CurrentGameClient(GameClient):
     _base_address = None

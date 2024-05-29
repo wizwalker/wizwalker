@@ -104,11 +104,12 @@ class CacheHandler:
         Returns:
             the loaded template ids
         """
-        await self.cache()
-        async with aiofiles.open(self.cache_dir / "template_ids.json") as fp:
-            message_data = await fp.read()
-
-        return json.loads(message_data)
+        if self._template_ids is None:
+            await self.cache()
+            async with aiofiles.open(self.cache_dir / "template_ids.json") as fp:
+                message_data = await fp.read()
+            self._template_ids = json.loads(message_data)
+        return self._template_ids
 
     @staticmethod
     def _parse_lang_file(file_data):
