@@ -491,7 +491,7 @@ async def maybe_wait_for_any_value_with_timeout(
         return await asyncio.wait_for(_inner(), timeout)
     except asyncio.TimeoutError:
         raise ExceptionalTimeout(
-            f"Timed out waiting for coro {coro.__name__}", possible_exception
+            f"Timed out waiting for coro", possible_exception
         )
 
 

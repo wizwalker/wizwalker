@@ -165,7 +165,7 @@ class Client:
             while not (await _is_root_object(root_client)):
                 root_client = await root_client.parent()
             return await root_client.children()
-        return await maybe_wait_for_any_value_with_timeout(partial(_impl, self), sleep_time=0.05, timeout=1.0)
+        return await maybe_wait_for_any_value_with_timeout(partial(_impl, self), sleep_time=0.05, timeout=3.0)
 
     # TODO: add example
     async def get_base_entities_with_predicate(self, predicate: Callable):
