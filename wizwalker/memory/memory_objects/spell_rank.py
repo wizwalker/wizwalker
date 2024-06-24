@@ -1,4 +1,4 @@
-from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
+from wizwalker.memory.memory_object import Primitive, DynamicMemoryObject, PropertyClass
 
 class SpellRank(PropertyClass):
     async def read_base_address(self) -> int:
@@ -8,7 +8,7 @@ class SpellRank(PropertyClass):
         """
         The number of regular pips this spell costs
         """
-        return await self.read_value_from_offset(80, "unsigned char") 
+        return await self.read_value_from_offset(80, Primitive.uint8)
 
     async def write_spell_rank(self, spell_rank: int):
         """
@@ -17,13 +17,13 @@ class SpellRank(PropertyClass):
         Args:
             spell_rank: The regular pip cost to write
         """
-        await self.write_value_to_offset(80, spell_rank, "unsigned char")
+        await self.write_value_to_offset(80, spell_rank, Primitive.uint8)
 
     async def balance_pips(self) -> int:
         """
         The number of balance pips this spell costs
         """
-        return await self.read_value_from_offset(81, "unsigned char")
+        return await self.read_value_from_offset(81, Primitive.uint8)
 
     async def write_balance_pips(self, balance_pips: int):
         """
@@ -32,13 +32,13 @@ class SpellRank(PropertyClass):
         Args:
             balance_pips: The balance pip cost to write
         """
-        await self.write_value_to_offset(81, balance_pips, "unsigned char")
-    
+        await self.write_value_to_offset(81, balance_pips, Primitive.uint8)
+
     async def death_pips(self) -> int:
         """
         The number of death pips this spell costs
         """
-        return await self.read_value_from_offset(82, "unsigned char")
+        return await self.read_value_from_offset(82, Primitive.uint8)
 
     async def write_death_pips(self, death_pips: int):
         """
@@ -47,13 +47,13 @@ class SpellRank(PropertyClass):
         Args:
             death_pips: The death pip cost to write
         """
-        await self.write_value_to_offset(82, death_pips, "unsigned char")
-    
+        await self.write_value_to_offset(82, death_pips, Primitive.uint8)
+
     async def fire_pips(self) -> int:
         """
         The number of fire pips this spell costs
         """
-        return await self.read_value_from_offset(83, "unsigned char")
+        return await self.read_value_from_offset(83, Primitive.uint8)
 
     async def write_fire_pips(self, fire_pips: int):
         """
@@ -62,14 +62,14 @@ class SpellRank(PropertyClass):
         Args:
             fire_pips: The fire pip cost to write
         """
-        await self.write_value_to_offset(83, fire_pips, "unsigned char")
+        await self.write_value_to_offset(83, fire_pips, Primitive.uint8)
 
-    
+
     async def ice_pips(self) -> int:
         """
         The number of ice pips this spell costs
         """
-        return await self.read_value_from_offset(84, "unsigned char")
+        return await self.read_value_from_offset(84, Primitive.uint8)
 
     async def write_ice_pips(self, ice_pips: int):
         """
@@ -78,13 +78,13 @@ class SpellRank(PropertyClass):
         Args:
             ice_pips: The ice pip cost to write
         """
-        await self.write_value_to_offset(84, ice_pips, "unsigned char")
-    
+        await self.write_value_to_offset(84, ice_pips, Primitive.uint8)
+
     async def life_pips(self) -> int:
         """
         The number of life pips this spell costs
         """
-        return await self.read_value_from_offset(85, "unsigned char")
+        return await self.read_value_from_offset(85, Primitive.uint8)
 
     async def write_life_pips(self, life_pips: int):
         """
@@ -93,13 +93,13 @@ class SpellRank(PropertyClass):
         Args:
             life_pips: The life pip cost to write
         """
-        await self.write_value_to_offset(85, life_pips, "unsigned char")
-    
+        await self.write_value_to_offset(85, life_pips, Primitive.uint8)
+
     async def myth_pips(self) -> int:
         """
         The number of myth pips this spell costs
         """
-        return await self.read_value_from_offset(86, "unsigned char")
+        return await self.read_value_from_offset(86, Primitive.uint8)
 
     async def write_myth_pips(self, myth_pips: int):
         """
@@ -108,13 +108,13 @@ class SpellRank(PropertyClass):
         Args:
             myth_pips: The myth pip cost to write
         """
-        await self.write_value_to_offset(86, myth_pips, "unsigned char")
-    
+        await self.write_value_to_offset(86, myth_pips, Primitive.uint8)
+
     async def storm_pips(self) -> int:
         """
         The number of storm pips this spell costs
         """
-        return await self.read_value_from_offset(87, "unsigned char")
+        return await self.read_value_from_offset(87, Primitive.uint8)
 
     async def write_storm_pips(self, storm_pips: int):
         """
@@ -123,13 +123,13 @@ class SpellRank(PropertyClass):
         Args:
             storm_pips: The storm pip cost to write
         """
-        await self.write_value_to_offset(87, storm_pips, "unsigned char")
-    
+        await self.write_value_to_offset(87, storm_pips, Primitive.uint8)
+
     async def shadow_pips(self) -> int:
         """
         The number of shadow pips this spell costs
         """
-        return await self.read_value_from_offset(88, "unsigned char")
+        return await self.read_value_from_offset(88, Primitive.uint8)
 
     async def write_shadow_pips(self, shadow_pips: int):
         """
@@ -138,13 +138,13 @@ class SpellRank(PropertyClass):
         Args:
             shadow_pips: The shadow pip cost to write
         """
-        await self.write_value_to_offset(88, shadow_pips, "unsigned char")
-    
+        await self.write_value_to_offset(88, shadow_pips, Primitive.uint8)
+
     async def is_xpip_spell(self) -> bool:
         """
         If this spell is a x pip cost spell
         """
-        return await self.read_value_from_offset(90, "bool")
+        return await self.read_value_from_offset(90, Primitive.bool)
 
     async def write_is_xpip_spell(self, is_xpip: bool):
         """
@@ -153,7 +153,7 @@ class SpellRank(PropertyClass):
         Args:
             shadow_pips: write if it is a x pip cost spell; True for it is.
         """
-        await self.write_value_to_offset(90, is_xpip, "bool")
+        await self.write_value_to_offset(90, is_xpip, Primitive.bool)
 
 class DynamicSpellRank(DynamicMemoryObject, SpellRank):
     pass

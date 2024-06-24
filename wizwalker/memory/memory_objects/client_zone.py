@@ -1,4 +1,4 @@
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import Primitive, PropertyClass, DynamicMemoryObject
 
 
 class ClientZone(PropertyClass):
@@ -13,7 +13,7 @@ class ClientZone(PropertyClass):
         """
         This client zone's zone id
         """
-        return await self.read_value_from_offset(72, "long long")
+        return await self.read_value_from_offset(72, Primitive.int64)
 
     async def write_zone_id(self, zone_id: int):
         """
@@ -22,7 +22,7 @@ class ClientZone(PropertyClass):
         Args:
             zone_id: The zone id to write
         """
-        await self.write_value_to_offset(72, zone_id, "long long")
+        await self.write_value_to_offset(72, zone_id, Primitive.int64)
 
     async def zone_name(self) -> str:
         """

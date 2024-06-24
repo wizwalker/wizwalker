@@ -1,5 +1,5 @@
 from wizwalker.utils import XYZ
-from wizwalker.memory.memory_object import MemoryObject
+from wizwalker.memory.memory_object import Primitive, MemoryObject
 
 
 class TeleportHelper(MemoryObject):
@@ -13,13 +13,13 @@ class TeleportHelper(MemoryObject):
         await self.write_xyz(0, xyz)
 
     async def should_update(self) -> bool:
-        return await self.read_value_from_offset(12, "bool")
+        return await self.read_value_from_offset(12, Primitive.bool)
 
     async def write_should_update(self, should_update: bool = True):
-        await self.write_value_to_offset(12, should_update, "bool")
+        await self.write_value_to_offset(12, should_update, Primitive.bool)
 
     async def target_object_address(self) -> int:
-        return await self.read_value_from_offset(13, "unsigned long long")
+        return await self.read_value_from_offset(13, Primitive.uint64)
 
     async def write_target_object_address(self, target_object_address: int):
-        await self.write_value_to_offset(13, target_object_address, "unsigned long long")
+        await self.write_value_to_offset(13, target_object_address, Primitive.uint64)

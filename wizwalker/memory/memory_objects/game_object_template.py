@@ -1,6 +1,6 @@
 from typing import List
 
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import Primitive, PropertyClass, DynamicMemoryObject
 from .enums import ObjectType
 from .behavior_template import DynamicBehaviorTemplate
 
@@ -26,16 +26,16 @@ class WizGameObjectTemplate(PropertyClass):
         await self.write_string_to_offset(96, object_name)
 
     async def template_id(self) -> int:
-        return await self.read_value_from_offset(128, "unsigned int")
+        return await self.read_value_from_offset(128, Primitive.uint32)
 
     async def write_template_id(self, template_id: int):
-        await self.write_value_to_offset(128, template_id, "unsigned int")
+        await self.write_value_to_offset(128, template_id, Primitive.uint32)
 
     async def visual_id(self) -> int:
-        return await self.read_value_from_offset(132, "unsigned int")
+        return await self.read_value_from_offset(132, Primitive.uint32)
 
     async def write_visual_id(self, visual_id: int):
-        await self.write_value_to_offset(132, visual_id, "unsigned int")
+        await self.write_value_to_offset(132, visual_id, Primitive.uint32)
 
     async def adjective_list(self) -> str:
         return await self.read_string_from_offset(248)
@@ -44,10 +44,10 @@ class WizGameObjectTemplate(PropertyClass):
         await self.write_string_to_offset(248, adjective_list)
 
     async def exempt_from_aoi(self) -> bool:
-        return await self.read_value_from_offset(240, "bool")
+        return await self.read_value_from_offset(240, Primitive.bool)
 
     async def write_exempt_from_aoi(self, exempt_from_aoi: bool):
-        await self.write_value_to_offset(240, exempt_from_aoi, "bool")
+        await self.write_value_to_offset(240, exempt_from_aoi, Primitive.bool)
 
     async def display_name(self) -> str:
         return await self.read_string_from_offset(168)

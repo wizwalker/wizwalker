@@ -13,7 +13,7 @@ from . import (
     ReadingEnumFailed,
     utils, ExceptionalTimeout,
 )
-from .constants import WIZARD_SPEED
+from .constants import WIZARD_SPEED, Primitive
 from .errors import PatternMultipleResults
 from .memory import (
     CurrentActorBody,
@@ -279,10 +279,10 @@ class Client:
                 return_multiple=False
             )
             rip_offset = await self.hook_handler.read_typed(
-                mov_instruction_addr + 3, "int"
+                mov_instruction_addr + 3, Primitive.int32
             )
             # 7 is the length of this instruction
-            self._quest_client_manager_addr = await self.hook_handler.read_typed(mov_instruction_addr + 7 + rip_offset, "unsigned long long")
+            self._quest_client_manager_addr = await self.hook_handler.read_typed(mov_instruction_addr + 7 + rip_offset, Primitive.uint64)
         return QuestClientManager(self.hook_handler, self._quest_client_manager_addr)
 
     async def character_registry(self) -> DynamicCharacterRegistry:
@@ -300,10 +300,10 @@ class Client:
                 raise PatternMultipleResults("")
             mov_instruction_addr = mov_instruction_addrs[0]
             rip_offset = await self.hook_handler.read_typed(
-                mov_instruction_addr + 3, "int"
+                mov_instruction_addr + 3, Primitive.int32
             )
             # 7 is the length of this instruction
-            self._character_registry_addr = await self.hook_handler.read_typed(mov_instruction_addr + 7 + rip_offset, "unsigned long long")
+            self._character_registry_addr = await self.hook_handler.read_typed(mov_instruction_addr + 7 + rip_offset, Primitive.uint64)
         return DynamicCharacterRegistry(self.hook_handler, self._character_registry_addr)
 
     async def quest_id(self) -> int:

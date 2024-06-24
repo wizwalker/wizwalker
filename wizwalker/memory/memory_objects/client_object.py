@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from wizwalker import XYZ
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import Primitive, PropertyClass, DynamicMemoryObject
 from wizwalker.memory.memory_objects import DynamicActorBody
 from .game_stats import DynamicGameStats
 from .game_object_template import DynamicWizGameObjectTemplate
@@ -36,7 +36,7 @@ class ClientObject(PropertyClass):
     async def actor_body(self) -> Optional[DynamicActorBody]:
         for behavior in await self.inactive_behaviors():
             if await behavior.behavior_name() == "AnimationBehavior":
-                addr = await behavior.read_value_from_offset(0x70, "unsigned long long")
+                addr = await behavior.read_value_from_offset(0x70, Primitive.uint64)
 
                 if addr == 0:
                     return None
@@ -78,7 +78,7 @@ class ClientObject(PropertyClass):
         Returns:
             DynamicClientObject
         """
-        addr = await self.read_value_from_offset(208, "long long")
+        addr = await self.read_value_from_offset(208, Primitive.int64)
 
         if addr == 0:
             return None
@@ -107,7 +107,7 @@ class ClientObject(PropertyClass):
         Returns:
             DynamicClientZone
         """
-        addr = await self.read_value_from_offset(304, "long long")
+        addr = await self.read_value_from_offset(304, Primitive.int64)
 
         if addr == 0:
             return None
@@ -122,7 +122,7 @@ class ClientObject(PropertyClass):
         Returns:
             DynamicWizGameObjectTemplate
         """
-        addr = await self.read_value_from_offset(88, "long long")
+        addr = await self.read_value_from_offset(88, Primitive.int64)
 
         if addr == 0:
             return None
@@ -133,7 +133,7 @@ class ClientObject(PropertyClass):
         """
         This client object's global id
         """
-        return await self.read_value_from_offset(72, "unsigned long long")
+        return await self.read_value_from_offset(72, Primitive.uint64)
 
     async def write_global_id_full(self, global_id_full: int):
         """
@@ -142,13 +142,13 @@ class ClientObject(PropertyClass):
         Args:
             global_id_full: The global id to write
         """
-        await self.write_value_to_offset(72, global_id_full, "unsigned long long")
+        await self.write_value_to_offset(72, global_id_full, Primitive.uint64)
 
     async def perm_id(self) -> int:
         """
         This client object's perm id
         """
-        return await self.read_value_from_offset(80, "unsigned long long")
+        return await self.read_value_from_offset(80, Primitive.uint64)
 
     async def write_perm_id(self, perm_id: int):
         """
@@ -200,7 +200,7 @@ class ClientObject(PropertyClass):
         """
         This client object's scale
         """
-        return await self.read_value_from_offset(196, "float")
+        return await self.read_value_from_offset(196, Primitive.float32)
 
     async def write_scale(self, scale: float):
         """
@@ -209,13 +209,13 @@ class ClientObject(PropertyClass):
         Args:
             scale: The scale to write
         """
-        await self.write_value_to_offset(196, scale, "float")
+        await self.write_value_to_offset(196, scale, Primitive.float32)
 
     async def template_id_full(self) -> int:
         """
         This client object's template id
         """
-        return await self.read_value_from_offset(96, "unsigned long long")
+        return await self.read_value_from_offset(96, Primitive.uint64)
 
     async def write_template_id_full(self, template_id_full: int):
         """
@@ -224,7 +224,7 @@ class ClientObject(PropertyClass):
         Args:
             template_id_full: The template id to write
         """
-        await self.write_value_to_offset(96, template_id_full, "unsigned long long")
+        await self.write_value_to_offset(96, template_id_full, Primitive.uint64)
 
     async def debug_name(self) -> str:
         """
@@ -263,7 +263,7 @@ class ClientObject(PropertyClass):
         """
         This client object's zone tag id
         """
-        return await self.read_value_from_offset(344, "unsigned int")
+        return await self.read_value_from_offset(344, Primitive.uint32)
 
     async def write_zone_tag_id(self, zone_tag_id: int):
         """
@@ -272,13 +272,13 @@ class ClientObject(PropertyClass):
         Args:
             zone_tag_id: The zone tag id to write
         """
-        await self.write_value_to_offset(344, zone_tag_id, "unsigned int")
+        await self.write_value_to_offset(344, zone_tag_id, Primitive.uint32)
 
     async def speed_multiplier(self) -> int:
         """
         This client object's speed multiplier
         """
-        return await self.read_value_from_offset(192, "short")
+        return await self.read_value_from_offset(192, Primitive.int16)
 
     async def write_speed_multiplier(self, speed_multiplier: int):
         """
@@ -287,13 +287,13 @@ class ClientObject(PropertyClass):
         Args:
             speed_multiplier: The speed multiplier to write
         """
-        await self.write_value_to_offset(192, speed_multiplier, "short")
+        await self.write_value_to_offset(192, speed_multiplier, Primitive.int16)
 
     async def mobile_id(self) -> int:
         """
         This client object's mobile id
         """
-        return await self.read_value_from_offset(194, "unsigned short")
+        return await self.read_value_from_offset(194, Primitive.uint16)
 
     async def write_mobile_id(self, mobile_id: int):
         """
@@ -302,13 +302,13 @@ class ClientObject(PropertyClass):
         Args:
             mobile_id: The mobile id to write
         """
-        await self.write_value_to_offset(194, mobile_id, "unsigned short")
+        await self.write_value_to_offset(194, mobile_id, Primitive.uint16)
 
     async def character_id(self) -> int:
         """
         This client object's character id
         """
-        return await self.read_value_from_offset(440, "unsigned long long")
+        return await self.read_value_from_offset(440, Primitive.uint64)
 
     async def write_character_id(self, character_id: int):
         """
@@ -317,7 +317,7 @@ class ClientObject(PropertyClass):
         Args:
             character_id: The character id to write
         """
-        await self.write_value_to_offset(440, character_id, "unsigned long long")
+        await self.write_value_to_offset(440, character_id, Primitive.uint64)
 
     # Note: not defined
     async def game_stats(self) -> Optional[DynamicGameStats]:
@@ -327,7 +327,7 @@ class ClientObject(PropertyClass):
         Returns:
             DynamicGameStats
         """
-        addr = await self.read_value_from_offset(544, "long long")
+        addr = await self.read_value_from_offset(544, Primitive.int64)
 
         if addr == 0:
             return None

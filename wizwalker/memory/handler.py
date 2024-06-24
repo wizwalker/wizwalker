@@ -19,7 +19,7 @@ from .hooks import (
     MovementTeleportHook,
     MemoryHook
 )
-from .memory_reader import MemoryReader
+from .memory_reader import MemoryReader, Primitive
 
 
 # noinspection PyUnresolvedReferences
@@ -141,7 +141,7 @@ class HookHandler(MemoryReader):
             raise HookNotActive(hook_name)
 
         try:
-            return await self.read_typed(addr, "long long")
+            return await self.read_typed(addr, Primitive.int64)
         except pymem.exception.MemoryReadError:
             raise HookNotReady(hook_name)
 
@@ -150,7 +150,7 @@ class HookHandler(MemoryReader):
         async def _wait_for_value_task():
             while True:
                 try:
-                    value = await self.read_typed(address, "long long")
+                    value = await self.read_typed(address, Primitive.int64)
                     logger.debug(
                         f"Waiting for address {hex(address)}; got value {value}"
                     )

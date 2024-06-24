@@ -2,7 +2,7 @@ import struct
 from enum import Enum
 from typing import Any, List, Type
 
-from wizwalker.constants import type_format_dict
+from wizwalker.constants import Primitive
 from wizwalker.errors import (
     AddressOutOfRange,
     MemoryReadError,
@@ -33,11 +33,11 @@ class MemoryObject(MemoryReader):
     async def read_base_address(self) -> int:
         raise NotImplementedError()
 
-    async def read_value_from_offset(self, offset: int, data_type: str) -> Any:
+    async def read_value_from_offset(self, offset: int, data_type: Primitive) -> Any:
         base_address = await self.read_base_address()
         return await self.read_typed(base_address + offset, data_type)
 
-    async def write_value_to_offset(self, offset: int, value: Any, data_type: str):
+    async def write_value_to_offset(self, offset: int, value: Any, data_type: Primitive):
         base_address = await self.read_base_address()
         await self.write_typed(base_address + offset, value, data_type)
 
@@ -49,7 +49,7 @@ class MemoryObject(MemoryReader):
     ) -> int:
         try:
             addr = await self.pattern_scan(pattern, module="WizardGraphicalClient.exe")
-            return await self.read_typed(addr + instruction_length, "unsigned int")
+            return await self.read_typed(addr + instruction_length, Primitive.uint32)
         except (PatternFailed, PatternMultipleResults) as exc:
             if static_backup is not None:
                 return static_backup
@@ -86,7 +86,7 @@ class MemoryObject(MemoryReader):
         return string_bytes.decode(encoding)
 
     async def read_wide_string(self, address: int, encoding: str = "utf-16") -> str:
-        string_len = await self.read_typed(address + 16, "int")
+        string_len = await self.read_typed(address + 16, Primitive.int32)
         if string_len == 0:
             return ""
 
@@ -95,7 +95,7 @@ class MemoryObject(MemoryReader):
 
         # wide strings larger than 8 bytes are pointers
         if string_len >= 8:
-            string_address = await self.read_typed(address, "long long")
+            string_address = await self.read_typed(address, Primitive.int64)
         else:
             string_address = address
 
@@ -118,7 +118,7 @@ class MemoryObject(MemoryReader):
         # len(encoded) instead of string bc it can be larger in some encodings
         string_len = len(encoded)
 
-        current_string_len = await self.read_typed(address + 16, "int")
+        current_string_len = await self.read_typed(address + 16, Primitive.int32)
 
         # we need to create a pointer to the string data
         if string_len >= 7 > current_string_len:
@@ -127,11 +127,11 @@ class MemoryObject(MemoryReader):
 
             # need 0 byte for some c++ null termination standard
             await self.write_bytes(pointer_address, encoded + b"\x00")
-            await self.write_typed(address, pointer_address, "long long")
+            await self.write_typed(address, pointer_address, Primitive.int64)
 
         # string is already a pointer
         elif string_len >= 7 and current_string_len >= 8:
-            pointer_address = await self.read_typed(address, "long long")
+            pointer_address = await self.read_typed(address, Primitive.int64)
             await self.write_bytes(pointer_address, encoded + b"\x00")
 
         # normal buffer string
@@ -139,7 +139,7 @@ class MemoryObject(MemoryReader):
             await self.write_bytes(address, encoded + b"\x00")
 
         # take 2 bytes
-        await self.write_typed(string_len_addr, string_len // 2, "int")
+        await self.write_typed(string_len_addr, string_len // 2, Primitive.int32)
 
     async def write_wide_string_to_offset(
         self, offset: int, string: str, encoding: str = "utf-16"
@@ -148,14 +148,14 @@ class MemoryObject(MemoryReader):
         await self.write_wide_string(base_address + offset, string, encoding)
 
     async def read_string(self, address: int, encoding: str = "utf-8") -> str:
-        string_len = await self.read_typed(address + 16, "int")
+        string_len = await self.read_typed(address + 16, Primitive.int32)
 
         if not 1 <= string_len <= MAX_STRING:
             return ""
 
         # strings larger than 16 bytes are pointers
         if string_len >= 16:
-            string_address = await self.read_typed(address, "long long")
+            string_address = await self.read_typed(address, Primitive.int64)
         else:
             string_address = address
 
@@ -176,7 +176,7 @@ class MemoryObject(MemoryReader):
         # len(encoded) instead of string bc it can be larger in some encodings
         string_len = len(encoded)
 
-        current_string_len = await self.read_typed(address + 16, "int")
+        current_string_len = await self.read_typed(address + 16, Primitive.int32)
 
         # we need to create a pointer to the string data
         if string_len >= 15 > current_string_len:
@@ -185,18 +185,18 @@ class MemoryObject(MemoryReader):
 
             # need 0 byte for some c++ null termination standard
             await self.write_bytes(pointer_address, encoded + b"\x00")
-            await self.write_typed(address, pointer_address, "long long")
+            await self.write_typed(address, pointer_address, Primitive.int64)
 
         # string is already a pointer
         elif string_len >= 15 and current_string_len >= 15:
-            pointer_address = await self.read_typed(address, "long long")
+            pointer_address = await self.read_typed(address, Primitive.int64)
             await self.write_bytes(pointer_address, encoded + b"\x00")
 
         # normal buffer string
         else:
             await self.write_bytes(address, encoded + b"\x00")
 
-        await self.write_typed(string_len_addr, string_len, "int")
+        await self.write_typed(string_len_addr, string_len, Primitive.int32)
 
     async def write_string_to_offset(
         self, offset: int, string: str, encoding: str = "utf-8"
@@ -205,8 +205,8 @@ class MemoryObject(MemoryReader):
         await self.write_string(base_address + offset, string, encoding)
 
     # todo: rework this into from_offset and add read_vector which takes an address
-    async def read_vector(self, offset: int, size: int = 3, data_type: str = "float"):
-        type_str = type_format_dict[data_type].replace("<", "")
+    async def read_vector(self, offset: int, size: int = 3, data_type: Primitive = Primitive.float32):
+        type_str = data_type.value.format.replace("<", "")
         size_per_type = struct.calcsize(type_str)
 
         base_address = await self.read_base_address()
@@ -217,9 +217,9 @@ class MemoryObject(MemoryReader):
         return struct.unpack("<" + type_str * size, vector_bytes)
 
     async def write_vector(
-        self, offset: int, value: tuple, size: int = 3, data_type: str = "float"
+        self, offset: int, value: tuple, size: int = 3, data_type: Primitive = Primitive.float32
     ):
-        type_str = type_format_dict[data_type].replace("<", "")
+        type_str = data_type.value.format.replace("<", "")
 
         base_address = await self.read_base_address()
         packed_bytes = struct.pack("<" + type_str * size, *value)
@@ -241,7 +241,7 @@ class MemoryObject(MemoryReader):
         await self.write_vector(offset, (orient.pitch, orient.roll, orient.yaw))
 
     async def read_enum(self, offset, enum: Type[Enum]):
-        value = await self.read_value_from_offset(offset, "int")
+        value = await self.read_value_from_offset(offset, Primitive.int32)
         try:
             res = enum(value)
         except ValueError:
@@ -250,13 +250,13 @@ class MemoryObject(MemoryReader):
             return res
 
     async def write_enum(self, offset, value: Enum):
-        await self.write_value_to_offset(offset, value.value, "int")
+        await self.write_value_to_offset(offset, value.value, Primitive.int32)
 
     async def read_shared_vector(
         self, offset: int, *, max_size: int = 1000
     ) -> List[int]:
-        start_address = await self.read_value_from_offset(offset, "long long")
-        end_address = await self.read_value_from_offset(offset + 8, "long long")
+        start_address = await self.read_value_from_offset(offset, Primitive.int64)
+        end_address = await self.read_value_from_offset(offset + 8, Primitive.int64)
         size = end_address - start_address
 
         element_number = size // 16
@@ -292,15 +292,15 @@ class MemoryObject(MemoryReader):
         return pointers
 
     async def read_dynamic_vector(
-        self, offset: int, data_type: str = "long long"
+        self, offset: int, data_type: Primitive = Primitive.int64
     ) -> List[int]:
         """
         Read a vector that changes in size
         """
-        start_address = await self.read_value_from_offset(offset, "long long")
-        end_address = await self.read_value_from_offset(offset + 8, "long long")
+        start_address = await self.read_value_from_offset(offset, Primitive.int64)
+        end_address = await self.read_value_from_offset(offset + 8, Primitive.int64)
 
-        type_str = type_format_dict[data_type].replace("<", "")
+        type_str = data_type.value.format.replace("<", "")
         size_per_type = struct.calcsize(type_str)
 
         size = (end_address - start_address) // size_per_type
@@ -323,8 +323,8 @@ class MemoryObject(MemoryReader):
             object_size: int,
             object_type: type,
     ):
-        start = await self.read_value_from_offset(offset, "unsigned long long")
-        end = await self.read_value_from_offset(offset + 16, "unsigned long long")
+        start = await self.read_value_from_offset(offset, Primitive.uint64)
+        end = await self.read_value_from_offset(offset + 16, Primitive.uint64)
 
         total_size = (end - start) // object_size
 
@@ -338,52 +338,52 @@ class MemoryObject(MemoryReader):
         return res
 
     async def read_shared_linked_list(self, offset: int):
-        list_addr = await self.read_value_from_offset(offset, "long long")
+        list_addr = await self.read_value_from_offset(offset, Primitive.int64)
 
         addrs = []
         # TODO: ensure this is always the case
         # skip first node
-        next_node_addr = await self.read_typed(list_addr, "long long")
-        list_size = await self.read_value_from_offset(offset + 8, "int")
+        next_node_addr = await self.read_typed(list_addr, Primitive.int64)
+        list_size = await self.read_value_from_offset(offset + 8, Primitive.int32)
 
         for i in range(list_size):
-            addr = await self.read_typed(next_node_addr + 16, "long long")
+            addr = await self.read_typed(next_node_addr + 16, Primitive.int64)
             addrs.append(addr)
-            next_node_addr = await self.read_typed(next_node_addr, "long long")
+            next_node_addr = await self.read_typed(next_node_addr, Primitive.int64)
 
         return addrs
 
     async def read_linked_list(self, offset: int) -> List[int]:
-        list_addr = await self.read_value_from_offset(offset, "long long")
-        list_size = await self.read_value_from_offset(offset + 8, "int")
+        list_addr = await self.read_value_from_offset(offset, Primitive.int64)
+        list_size = await self.read_value_from_offset(offset + 8, Primitive.int32)
 
         if list_size < 1:
             return []
 
         addrs = []
-        list_node = await self.read_typed(list_addr, "long long")
+        list_node = await self.read_typed(list_addr, Primitive.int64)
         # object starts +16 from node
         addrs.append(list_node + 16)
         # -1 because we've already read one node
         for _ in range(list_size - 1):
-            list_node = await self.read_typed(list_node, "long long")
+            list_node = await self.read_typed(list_node, Primitive.int64)
             addrs.append(list_node + 16)
 
         return addrs
 
     async def _get_std_map_children(self, node, mapped_type, mapped_return):
         # some keys may be smaller but the entire 8 bytes seemed to always be reserved
-        is_leaf = await self.read_typed(node + 0x19, "bool")
+        is_leaf = await self.read_typed(node + 0x19, Primitive.bool)
         if not is_leaf:
-            key = await self.read_typed(node + 0x20, "unsigned long long")
-            mapped_data = await self.read_typed(node + 0x28, "unsigned long long")
+            key = await self.read_typed(node + 0x20, Primitive.uint64)
+            mapped_data = await self.read_typed(node + 0x28, Primitive.uint64)
 
             mapped_return[key] = mapped_type(self.hook_handler, mapped_data)
 
-            if left_node := await self.read_typed(node, "unsigned long long"):
+            if left_node := await self.read_typed(node, Primitive.uint64):
                 await self._get_std_map_children(left_node, mapped_type, mapped_return)
 
-            if right_node := await self.read_typed(node + 0x10, "unsigned long long"):
+            if right_node := await self.read_typed(node + 0x10, Primitive.uint64):
                 await self._get_std_map_children(right_node, mapped_type, mapped_return)
 
     # TODO: 2.0 replace this with complex memory read type
@@ -394,8 +394,8 @@ class MemoryObject(MemoryReader):
     async def read_std_map(self, offset: int, mapped_type: Type["MemoryObject"]) -> dict:
         mapped_return = {}
 
-        root = await self.read_value_from_offset(offset, "unsigned long long")
-        first_node = await self.read_typed(root + 0x8, "unsigned long long")
+        root = await self.read_value_from_offset(offset, Primitive.uint64)
+        first_node = await self.read_typed(root + 0x8, Primitive.uint64)
         if first_node == root:
           return {}
 
@@ -433,9 +433,9 @@ class PropertyClass(MemoryObject):
             return ""
 
     async def read_type_name(self) -> str:
-        vtable = await self.read_value_from_offset(0, "long long")
+        vtable = await self.read_value_from_offset(0, Primitive.int64)
         # first function
-        get_class_name = await self.read_typed(vtable, "long long")
+        get_class_name = await self.read_typed(vtable, Primitive.int64)
         # sometimes is a function with a jmp, sometimes just a body pointer
         maybe_jmp = await self.read_bytes(get_class_name, 5)
         # 233 is 0xE9 (jmp)
@@ -450,7 +450,7 @@ class PropertyClass(MemoryObject):
         lea_instruction = actual_get_class_name + 63
         # 48 8D 0D (here)
         lea_target = actual_get_class_name + 66
-        rip_offset = await self.read_typed(lea_target, "int")
+        rip_offset = await self.read_typed(lea_target, Primitive.int32)
 
         # 7 is the size of this line (rip is set at the next instruction when this one is executed)
         type_name_addr = lea_instruction + rip_offset + 7

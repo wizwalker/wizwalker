@@ -1,6 +1,6 @@
 from enum import Enum
 
-from wizwalker.memory.memory_object import DynamicMemoryObject
+from wizwalker.memory.memory_object import Primitive, DynamicMemoryObject
 from .actor_body import DynamicActorBody
 from .fish_template import FishTemplate
 
@@ -17,7 +17,7 @@ class FishStatusCode(Enum):
 
 class Fish(DynamicMemoryObject):
     async def body(self) -> DynamicActorBody:
-        addr = await self.read_value_from_offset(0x48, "unsigned long long")
+        addr = await self.read_value_from_offset(0x48, Primitive.uint64)
         return DynamicActorBody(self.hook_handler, addr)
 
     async def status_code(self) -> FishStatusCode:
@@ -27,24 +27,24 @@ class Fish(DynamicMemoryObject):
         await self.write_enum(0xB8, val)
 
     async def template(self) -> FishTemplate:
-        addr = await self.read_value_from_offset(0xD8, "unsigned long long")
+        addr = await self.read_value_from_offset(0xD8, Primitive.uint64)
         return FishTemplate(self.hook_handler, addr)
 
     async def bobber_submerge_ease(self) -> float:
-        return await self.read_value_from_offset(0xE0, "float")
+        return await self.read_value_from_offset(0xE0, Primitive.float32)
 
     async def write_bobber_submerge_ease(self, val: float):
         ## At 1.0 the bobber is guaranteed to go down
-        await self.write_value_to_offset(0xE0, val, "float")
+        await self.write_value_to_offset(0xE0, val, Primitive.float32)
 
     async def fish_id(self) -> int:
-        return await self.read_value_from_offset(0xE4, "int")
+        return await self.read_value_from_offset(0xE4, Primitive.int32)
 
     async def template_id(self) -> int:
-        return await self.read_value_from_offset(0xE8, "int")
+        return await self.read_value_from_offset(0xE8, Primitive.int32)
 
     async def size(self) -> float:
-        return await self.read_value_from_offset(0xEC, "float")
+        return await self.read_value_from_offset(0xEC, Primitive.float32)
 
     async def is_chest(self) -> bool:
-        return await self.read_value_from_offset(0xF0, "bool")
+        return await self.read_value_from_offset(0xF0, Primitive.bool)

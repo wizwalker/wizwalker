@@ -1,5 +1,5 @@
 from wizwalker.memory.memory_objects.enums import SpellEffects, Operator, RequirementTarget, HangingDisposition, MinionType, StatusEffect
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import Primitive, PropertyClass, DynamicMemoryObject
 from typing import Any
 from enum import Enum
 
@@ -169,7 +169,7 @@ class HangingSpellEffect(Enum):
 
 class Requirement(DynamicMemoryObject, PropertyClass):
     async def apply_not(self) -> bool:
-        return await self.read_value_from_offset(72, "bool")
+        return await self.read_value_from_offset(72, Primitive.bool)
 
     async def operator(self) -> Operator:
         return await self.read_enum(76, Operator)
@@ -247,10 +247,10 @@ class ReqHangingCharm(ConditionalSpellEffectRequirement):
         return await self.read_enum(88, HangingDisposition)
 
     async def min_count(self) -> int:
-        return await self.read_value_from_offset(92, "int")
+        return await self.read_value_from_offset(92, Primitive.int32)
 
     async def max_count(self) -> int:
-        return await self.read_value_from_offset(96, "int")
+        return await self.read_value_from_offset(96, Primitive.int32)
 
 
 class ReqCombatHealth(ConditionalSpellEffectRequirement):
@@ -264,10 +264,10 @@ class ReqCombatHealth(ConditionalSpellEffectRequirement):
         )
 
     async def min_percent(self) -> float:
-        return await self.read_value_from_offset(88, "float")
+        return await self.read_value_from_offset(88, Primitive.float32)
 
     async def max_percent(self) -> float:
-        return await self.read_value_from_offset(92, "float")
+        return await self.read_value_from_offset(92, Primitive.float32)
 
 
 class ReqHangingOverTime(ConditionalSpellEffectRequirement):
@@ -290,10 +290,10 @@ class ReqHangingOverTime(ConditionalSpellEffectRequirement):
         return await self.read_enum(88, HangingDisposition)
 
     async def min_count(self) -> int:
-        return await self.read_value_from_offset(92, "int")
+        return await self.read_value_from_offset(92, Primitive.int32)
 
     async def max_count(self) -> int:
-        return await self.read_value_from_offset(96, "int")
+        return await self.read_value_from_offset(96, Primitive.int32)
 
 
 school_id_to_names = {
@@ -348,10 +348,10 @@ class ReqHangingWard(ConditionalSpellEffectRequirement):
         return await self.read_enum(88, HangingDisposition)
 
     async def min_count(self) -> int:
-        return await self.read_value_from_offset(92, "int")
+        return await self.read_value_from_offset(92, Primitive.int32)
 
     async def max_count(self) -> int:
-        return await self.read_value_from_offset(96, "int")
+        return await self.read_value_from_offset(96, Primitive.int32)
 
 
 class ReqHangingEffectType(ConditionalSpellEffectRequirement):
@@ -365,16 +365,16 @@ class ReqHangingEffectType(ConditionalSpellEffectRequirement):
         return await self.read_enum(88, HangingSpellEffect)
 
     async def param_low(self) -> int:
-        return await self.read_value_from_offset(92, "int")
+        return await self.read_value_from_offset(92, Primitive.int32)
 
     async def param_high(self) -> int:
-        return await self.read_value_from_offset(96, "int")
+        return await self.read_value_from_offset(96, Primitive.int32)
 
     async def min_count(self) -> int:
-        return await self.read_value_from_offset(100, "int")
+        return await self.read_value_from_offset(100, Primitive.int32)
 
     async def max_count(self) -> int:
-        return await self.read_value_from_offset(104, "int")
+        return await self.read_value_from_offset(104, Primitive.int32)
 
 
 class ReqPvPCombat(ConditionalSpellEffectRequirement):
@@ -392,10 +392,10 @@ class ReqShadowPipCount(ConditionalSpellEffectRequirement):
         return await self.min_pips() <= num_shadow_pip <= await self.max_pips()
 
     async def min_pips(self) -> int:
-        return await self.read_value_from_offset(88, "int")
+        return await self.read_value_from_offset(88, Primitive.int32)
 
     async def max_pips(self) -> int:
-        return await self.read_value_from_offset(92, "int")
+        return await self.read_value_from_offset(92, Primitive.int32)
 
 
 class ReqPipCount(ConditionalSpellEffectRequirement):
@@ -406,10 +406,10 @@ class ReqPipCount(ConditionalSpellEffectRequirement):
         return await self.min_pips() <= num_power_pip <= await self.max_pips()
 
     async def min_pips(self) -> int:
-        return await self.read_value_from_offset(88, "int")
+        return await self.read_value_from_offset(88, Primitive.int32)
 
     async def max_pips(self) -> int:
-        return await self.read_value_from_offset(92, "int")
+        return await self.read_value_from_offset(92, Primitive.int32)
 
 
 class ReqMinion(ConditionalSpellEffectRequirement):
