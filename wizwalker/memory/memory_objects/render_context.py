@@ -1,4 +1,4 @@
-from wizwalker.memory.memory_object import MemoryObject
+from wizwalker.memory.memory_object import Primitive, MemoryObject
 
 
 class RenderContext(MemoryObject):
@@ -6,7 +6,7 @@ class RenderContext(MemoryObject):
         raise NotImplementedError()
 
     async def ui_scale(self) -> float:
-        return await self.read_value_from_offset(152, "float")
+        return await self.read_value_from_offset(152, Primitive.float32)
 
 
 class CurrentRenderContext(RenderContext):

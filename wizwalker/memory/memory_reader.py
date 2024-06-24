@@ -17,7 +17,7 @@ from wizwalker import (
     MemoryWriteError,
     PatternFailed,
     PatternMultipleResults,
-    type_format_dict,
+    Primitive,
     utils,
 )
 
@@ -305,7 +305,7 @@ class MemoryReader:
             else:
                 raise MemoryWriteError(address)
 
-    async def read_typed(self, address: int, data_type: str) -> Any:
+    async def read_typed(self, address: int, data_type: Primitive) -> Any:
         """
         Read typed bytes from memory
 
@@ -316,14 +316,10 @@ class MemoryReader:
         Returns:
             The converted data type
         """
-        type_format = type_format_dict.get(data_type)
-        if type_format is None:
-            raise ValueError(f"{data_type} is not a valid data type")
+        data = await self.read_bytes(address, data_type.value.size)
+        return data_type.value.unpack(data)[0]
 
-        data = await self.read_bytes(address, struct.calcsize(type_format))
-        return struct.unpack(type_format, data)[0]
-
-    async def write_typed(self, address: int, value: Any, data_type: str):
+    async def write_typed(self, address: int, value: Any, data_type: Primitive):
         """
         Write typed bytes to memory
 
@@ -332,9 +328,5 @@ class MemoryReader:
             value: The value to convert and then write
             data_type: The data type to convert to
         """
-        type_format = type_format_dict.get(data_type)
-        if type_format is None:
-            raise ValueError(f"{data_type} is not a valid data type")
-
-        packed_data = struct.pack(type_format, value)
+        packed_data = data_type.value.pack(value)
         await self.write_bytes(address, packed_data)

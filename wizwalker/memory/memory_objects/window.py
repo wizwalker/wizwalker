@@ -4,11 +4,11 @@ from contextlib import suppress
 
 from loguru import logger
 
-from wizwalker.memory.memory_object import DynamicMemoryObject, PropertyClass
+from wizwalker.memory.memory_object import Primitive, DynamicMemoryObject, PropertyClass
 from .enums import WindowFlags, WindowStyle
 from .spell import DynamicGraphicalSpell
 from .combat_participant import DynamicCombatParticipant
-from wizwalker import AddressOutOfRange, MemoryReadError, Rectangle, utils, type_format_dict
+from wizwalker import AddressOutOfRange, MemoryReadError, Rectangle, utils
 
 
 # TODO: Window.click
@@ -130,7 +130,7 @@ class Window(PropertyClass):
             if type_name != "SpellCheckBox":
                 raise ValueError(f"This object is a {type_name} not a SpellCheckBox.")
 
-        addr = await self.read_value_from_offset(952, "long long")
+        addr = await self.read_value_from_offset(952, Primitive.int64)
 
         if addr == 0:
             return None
@@ -138,7 +138,7 @@ class Window(PropertyClass):
         return DynamicGraphicalSpell(self.hook_handler, addr)
 
     async def maybe_checked(self) -> bool:
-        return await self.read_value_from_offset(884, "bool")
+        return await self.read_value_from_offset(884, Primitive.bool)
 
     # see maybe_graphical_spell
     # note: not defined
@@ -148,7 +148,7 @@ class Window(PropertyClass):
             if type_name != "SpellCheckBox":
                 raise ValueError(f"This object is a {type_name} not a SpellCheckBox")
 
-        return await self.read_value_from_offset(1024, "bool")
+        return await self.read_value_from_offset(1024, Primitive.bool)
 
     # See maybe_graphical_spell
     async def maybe_combat_participant(
@@ -161,7 +161,7 @@ class Window(PropertyClass):
                     f"This object is a {type_name} not a CombatantDataControl."
                 )
 
-        addr = await self.read_value_from_offset(1672, "long long")
+        addr = await self.read_value_from_offset(1672, Primitive.int64)
 
         if addr == 0:
             return None
@@ -204,7 +204,7 @@ class Window(PropertyClass):
         return windows
 
     async def parent(self) -> Optional["DynamicWindow"]:
-        addr = await self.read_value_from_offset(136, "long long")
+        addr = await self.read_value_from_offset(136, Primitive.int64)
         # the root window has no parents
         if addr == 0:
             return None
@@ -212,43 +212,43 @@ class Window(PropertyClass):
         return DynamicWindow(self.hook_handler, addr)
 
     async def style(self) -> WindowStyle:
-        style = await self.read_value_from_offset(152, "long")
+        style = await self.read_value_from_offset(152, Primitive.int32)
         return WindowStyle(style)
 
     async def write_style(self, style: WindowStyle):
-        await self.write_value_to_offset(152, int(style), "long")
+        await self.write_value_to_offset(152, int(style), Primitive.int32)
 
     async def flags(self) -> WindowFlags:
-        flags = await self.read_value_from_offset(156, "unsigned long")
+        flags = await self.read_value_from_offset(156, Primitive.uint32)
         return WindowFlags(flags)
 
     async def write_flags(self, flags: WindowFlags):
-        await self.write_value_to_offset(156, int(flags), "unsigned long")
+        await self.write_value_to_offset(156, int(flags), Primitive.uint32)
 
     async def window_rectangle(self) -> Rectangle:
-        rect = await self.read_vector(160, 4, "int")
+        rect = await self.read_vector(160, 4, Primitive.int32)
         return Rectangle(*rect)
 
     async def write_window_rectangle(self, window_rectangle: Rectangle):
-        await self.write_vector(160, tuple(window_rectangle), 4, "int")
+        await self.write_vector(160, tuple(window_rectangle), 4, Primitive.int32)
 
     async def target_alpha(self) -> float:
-        return await self.read_value_from_offset(212, "float")
+        return await self.read_value_from_offset(212, Primitive.float32)
 
     async def write_target_alpha(self, target_alpha: float):
-        await self.write_value_to_offset(212, target_alpha, "float")
+        await self.write_value_to_offset(212, target_alpha, Primitive.float32)
 
     async def disabled_alpha(self) -> float:
-        return await self.read_value_from_offset(216, "float")
+        return await self.read_value_from_offset(216, Primitive.float32)
 
     async def write_disabled_alpha(self, disabled_alpha: float):
-        await self.write_value_to_offset(216, disabled_alpha, "float")
+        await self.write_value_to_offset(216, disabled_alpha, Primitive.float32)
 
     async def alpha(self) -> float:
-        return await self.read_value_from_offset(208, "float")
+        return await self.read_value_from_offset(208, Primitive.float32)
 
     async def write_alpha(self, alpha: float):
-        await self.write_value_to_offset(208, alpha, "float")
+        await self.write_value_to_offset(208, alpha, Primitive.float32)
 
     # async def window_style(self) -> class SharedPointer<class WindowStyle>:
     #     return await self.read_value_from_offset(232, "class SharedPointer<class WindowStyle>")
@@ -266,10 +266,10 @@ class Window(PropertyClass):
         await self.write_string_to_offset(352, script)
 
     async def offset(self) -> tuple:
-        return await self.read_vector(192, 2, "int")
+        return await self.read_vector(192, 2, Primitive.int32)
 
     async def write_offset(self, offset: tuple):
-        await self.write_vector(192, offset, 2, "int")
+        await self.write_vector(192, offset, 2, Primitive.int32)
 
     async def scale(self) -> tuple:
         return await self.read_vector(200, 2)
@@ -287,15 +287,15 @@ class Window(PropertyClass):
     #     return await self.read_value_from_offset(424, "class WindowBubble")
 
     async def parent_offset(self) -> tuple:
-        return await self.read_vector(176, 4, "int")
+        return await self.read_vector(176, 4, Primitive.int32)
 
     async def write_parent_offset(self, parent_offset: tuple):
-        await self.write_vector(176, parent_offset, 4, "int")
+        await self.write_vector(176, parent_offset, 4, Primitive.int32)
 
 
 class DeckListControlSpellEntry(DynamicMemoryObject):
     async def graphical_spell(self) -> Optional[DynamicGraphicalSpell]:
-        addr = await self.read_value_from_offset(0, "unsigned long long")
+        addr = await self.read_value_from_offset(0, Primitive.uint64)
 
         if addr == 0:
             return None
@@ -305,7 +305,7 @@ class DeckListControlSpellEntry(DynamicMemoryObject):
 
 class SpellListControlSpellEntry(DynamicMemoryObject):
     async def graphical_spell(self) -> Optional[DynamicGraphicalSpell]:
-        addr = await self.read_value_from_offset(0, "unsigned long long")
+        addr = await self.read_value_from_offset(0, Primitive.uint64)
 
         if addr == 0:
             return None
@@ -313,13 +313,13 @@ class SpellListControlSpellEntry(DynamicMemoryObject):
         return DynamicGraphicalSpell(self.hook_handler, addr)
 
     async def max_copies(self) -> int:
-        return await self.read_value_from_offset(0x10, "unsigned int")
+        return await self.read_value_from_offset(0x10, Primitive.uint32)
 
     async def current_copies(self) -> int:
-        return await self.read_value_from_offset(0x14, "unsigned int")
+        return await self.read_value_from_offset(0x14, Primitive.uint32)
 
-    async def _read_vector(self, address: int, size: int = 3, data_type: str = "float"):
-        type_str = type_format_dict[data_type].replace("<", "")
+    async def _read_vector(self, address: int, size: int = 3, data_type: Primitive = Primitive.float32):
+        type_str = data_type.value.format.replace("<", "")
         size_per_type = struct.calcsize(type_str)
 
         vector_bytes = await self.read_bytes(
@@ -329,9 +329,9 @@ class SpellListControlSpellEntry(DynamicMemoryObject):
         return struct.unpack("<" + type_str * size, vector_bytes)
 
     async def window_rectangle(self) -> Rectangle:
-        rect_addr = await self.read_value_from_offset(0x18, "unsigned long long")
+        rect_addr = await self.read_value_from_offset(0x18, Primitive.uint64)
 
-        rect = await self._read_vector(rect_addr, 4, "int")
+        rect = await self._read_vector(rect_addr, 4, Primitive.int32)
         return Rectangle(*rect)
 
 
@@ -343,16 +343,16 @@ class DeckListControl(Window):
         return await self.read_inlined_vector(0x280, 0x28, DeckListControlSpellEntry)
 
     async def card_size_horizontal(self) -> int:
-        return await self.read_value_from_offset(0x2A4, "unsigned int")
+        return await self.read_value_from_offset(0x2A4, Primitive.uint32)
 
     async def card_size_vertical(self) -> int:
-        return await self.read_value_from_offset(0x2A8, "unsigned int")
+        return await self.read_value_from_offset(0x2A8, Primitive.uint32)
 
     async def card_spacing(self) -> int:
-        return await self.read_value_from_offset(0x2AC, "unsigned int")
+        return await self.read_value_from_offset(0x2AC, Primitive.uint32)
 
     async def card_spacing_vertical_adjust(self) -> int:
-        return await self.read_value_from_offset(0x2B0, "unsigned int")
+        return await self.read_value_from_offset(0x2B0, Primitive.uint32)
 
 
 class SpellListControl(Window):
@@ -363,10 +363,10 @@ class SpellListControl(Window):
         return await self.read_inlined_vector(0x278, 0x20, SpellListControlSpellEntry)
 
     async def card_size_horizontal(self) -> int:
-        return await self.read_value_from_offset(0x2C4, "unsigned int")
+        return await self.read_value_from_offset(0x2C4, Primitive.uint32)
 
     async def card_size_vertical(self) -> int:
-        return await self.read_value_from_offset(0x2C8, "unsigned int")
+        return await self.read_value_from_offset(0x2C8, Primitive.uint32)
 
 
 class DynamicWindow(DynamicMemoryObject, Window):

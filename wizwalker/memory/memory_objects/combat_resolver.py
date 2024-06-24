@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import Primitive, PropertyClass, DynamicMemoryObject
 from .spell_effect import DynamicSpellEffect
 
 
@@ -9,13 +9,13 @@ class CombatResolver(PropertyClass):
         raise NotImplementedError()
 
     async def bool_global_effect(self) -> bool:
-        return await self.read_value_from_offset(112, "bool")
+        return await self.read_value_from_offset(112, Primitive.bool)
 
     async def write_bool_global_effect(self, bool_global_effect: bool):
-        await self.write_value_to_offset(112, bool_global_effect, "bool")
+        await self.write_value_to_offset(112, bool_global_effect, Primitive.bool)
 
     async def global_effect(self) -> Optional[DynamicSpellEffect]:
-        addr = await self.read_value_from_offset(120, "long long")
+        addr = await self.read_value_from_offset(120, Primitive.int64)
 
         if addr == 0:
             return None

@@ -136,6 +136,7 @@ cache/*
 
 # ide stuff
 /.vs
+.vscode
 
 # local tests
 tests_local/

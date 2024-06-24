@@ -1,4 +1,5 @@
 import ctypes
+import struct
 from enum import Enum
 
 
@@ -12,22 +13,19 @@ ntdll = ctypes.windll.ntdll
 WIZARD_SPEED = 580
 
 
-type_format_dict = {
-    "char": "<c",
-    "signed char": "<b",
-    "unsigned char": "<B",
-    "bool": "?",
-    "short": "<h",
-    "unsigned short": "<H",
-    "int": "<i",
-    "unsigned int": "<I",
-    "long": "<l",
-    "unsigned long": "<L",
-    "long long": "<q",
-    "unsigned long long": "<Q",
-    "float": "<f",
-    "double": "<d",
-}
+class Primitive(Enum):
+    bool = struct.Struct("?")
+    char = struct.Struct("<c")
+    int8 = struct.Struct("<b")
+    uint8 = struct.Struct("<B")
+    int16 = struct.Struct("<h")
+    uint16 = struct.Struct("<H")
+    int32 = struct.Struct("<i")
+    uint32 = struct.Struct("<I")
+    int64 = struct.Struct("<q")
+    uint64 = struct.Struct("<Q")
+    float32 = struct.Struct("<f")
+    float64 = struct.Struct("<d")
 
 
 # noinspection PyPep8

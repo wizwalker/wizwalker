@@ -1,7 +1,7 @@
 from typing import Optional
 
 from wizwalker.utils import XYZ, Orient
-from wizwalker.memory.memory_object import PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import Primitive, PropertyClass, DynamicMemoryObject
 from wizwalker.memory import memory_objects
 
 
@@ -15,7 +15,7 @@ class ActorBody(PropertyClass):
 
     # note: internal
     async def parent_client_object(self) -> Optional["memory_objects.DynamicClientObject"]:
-        addr = await self.read_value_from_offset(72, "unsigned long long")
+        addr = await self.read_value_from_offset(72, Primitive.uint64)
 
         if addr == 0:
             return None
@@ -53,7 +53,7 @@ class ActorBody(PropertyClass):
         Returns:
             Float representing pitch
         """
-        return await self.read_value_from_offset(100, "float")
+        return await self.read_value_from_offset(100, Primitive.float32)
 
     async def write_pitch(self, pitch: float):
         """
@@ -62,7 +62,7 @@ class ActorBody(PropertyClass):
         Args:
             pitch: The pitch to write
         """
-        await self.write_value_to_offset(100, pitch, "float")
+        await self.write_value_to_offset(100, pitch, Primitive.float32)
 
     async def roll(self) -> float:
         """
@@ -71,7 +71,7 @@ class ActorBody(PropertyClass):
         Returns:
             Float representing roll
         """
-        return await self.read_value_from_offset(104, "float")
+        return await self.read_value_from_offset(104, Primitive.float32)
 
     async def write_roll(self, roll: float):
         """
@@ -80,7 +80,7 @@ class ActorBody(PropertyClass):
         Args:
             roll: The roll to write
         """
-        await self.write_value_to_offset(104, roll, "float")
+        await self.write_value_to_offset(104, roll, Primitive.float32)
 
     async def yaw(self) -> float:
         """
@@ -89,7 +89,7 @@ class ActorBody(PropertyClass):
         Returns:
             Float representing yaw
         """
-        return await self.read_value_from_offset(108, "float")
+        return await self.read_value_from_offset(108, Primitive.float32)
 
     async def write_yaw(self, yaw: float):
         """
@@ -98,7 +98,7 @@ class ActorBody(PropertyClass):
         Args:
             yaw: The yaw to write
         """
-        await self.write_value_to_offset(108, yaw, "float")
+        await self.write_value_to_offset(108, yaw, Primitive.float32)
 
     async def height(self) -> float:
         """
@@ -107,7 +107,7 @@ class ActorBody(PropertyClass):
         Returns:
             Float representing height
         """
-        return await self.read_value_from_offset(132, "float")
+        return await self.read_value_from_offset(132, Primitive.float32)
 
     async def write_height(self, height: float):
         """
@@ -116,7 +116,7 @@ class ActorBody(PropertyClass):
         Args:
             height: The height to write
         """
-        await self.write_value_to_offset(132, height, "float")
+        await self.write_value_to_offset(132, height, Primitive.float32)
 
     async def scale(self) -> float:
         """
@@ -125,7 +125,7 @@ class ActorBody(PropertyClass):
         Returns:
             Float representing scale
         """
-        return await self.read_value_from_offset(112, "float")
+        return await self.read_value_from_offset(112, Primitive.float32)
 
     async def write_scale(self, scale: float):
         """
@@ -134,7 +134,7 @@ class ActorBody(PropertyClass):
         Args:
             scale: The scale to write
         """
-        await self.write_value_to_offset(112, scale, "float")
+        await self.write_value_to_offset(112, scale, Primitive.float32)
 
     # Note: internal offset
     async def model_update_scheduled(self) -> bool:
@@ -144,7 +144,7 @@ class ActorBody(PropertyClass):
         Returns:
             Boolean representing state
         """
-        return await self.read_value_from_offset(136, "bool")
+        return await self.read_value_from_offset(136, Primitive.bool)
 
     async def write_model_update_scheduled(self, state: bool):
         """
@@ -153,7 +153,7 @@ class ActorBody(PropertyClass):
         Args:
             state: The boolean to write
         """
-        await self.write_value_to_offset(136, state, "bool")
+        await self.write_value_to_offset(136, state, Primitive.bool)
 
 
 class CurrentActorBody(ActorBody):

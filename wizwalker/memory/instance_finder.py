@@ -2,7 +2,7 @@ import regex
 import struct
 from collections import defaultdict
 
-from .memory_reader import MemoryReader
+from .memory_reader import MemoryReader, Primitive
 from wizwalker import MemoryReadError, PatternFailed
 
 
@@ -73,7 +73,7 @@ class InstanceFinder(MemoryReader):
         for func in await self.get_all_type_name_functions():
             lea_instruction = func + 63
             lea_target = func + 66
-            rip_offset = await self.read_typed(lea_target, "int")
+            rip_offset = await self.read_typed(lea_target, Primitive.int32)
 
             type_name_addr = lea_instruction + rip_offset + 7
 
@@ -104,7 +104,7 @@ class InstanceFinder(MemoryReader):
             if len(jmp_funcs) == len(type_name_funcs):
                 break
 
-            offset = await self.read_typed(jmp + 1, "int")
+            offset = await self.read_typed(jmp + 1, Primitive.int32)
 
             for poss in type_name_funcs:
                 if (offset + 5) == poss - jmp:

@@ -1,6 +1,6 @@
 from typing import Union, Optional
 
-from wizwalker.memory.memory_object import MemoryObject
+from wizwalker.memory.memory_object import Primitive, MemoryObject
 from .camera_controller import (
     DynamicCameraController,
     CameraController,
@@ -29,7 +29,7 @@ class GameClient(MemoryObject):
             0x21fd8
         )
 
-        addr = await self.read_value_from_offset(offset, "unsigned long long")
+        addr = await self.read_value_from_offset(offset, Primitive.uint64)
 
         if addr == 0:
             return None
@@ -45,7 +45,7 @@ class GameClient(MemoryObject):
             0x21fe8
         )
 
-        addr = await self.read_value_from_offset(offset, "unsigned long long")
+        addr = await self.read_value_from_offset(offset, Primitive.uint64)
 
         if addr == 0:
             return None
@@ -65,7 +65,7 @@ class GameClient(MemoryObject):
             0x22008
         )
 
-        addr = await self.read_value_from_offset(offset, "unsigned long long")
+        addr = await self.read_value_from_offset(offset, Primitive.uint64)
 
         if addr == 0:
             return None
@@ -88,7 +88,7 @@ class GameClient(MemoryObject):
             0x22008
         )
 
-        await self.write_value_to_offset(offset, selected_camera_controller, "unsigned long long")
+        await self.write_value_to_offset(offset, selected_camera_controller, Primitive.uint64)
 
     async def is_freecam(self) -> bool:
         """
@@ -102,7 +102,7 @@ class GameClient(MemoryObject):
             "is_freecam",
             0x22020
         )
-        return await self.read_value_from_offset(offset, "bool")
+        return await self.read_value_from_offset(offset, Primitive.bool)
 
     async def write_is_freecam(self, is_freecam: bool):
         """
@@ -116,7 +116,7 @@ class GameClient(MemoryObject):
             "is_freecam",
             0x22020
         )
-        await self.write_value_to_offset(offset, is_freecam, "bool")
+        await self.write_value_to_offset(offset, is_freecam, Primitive.bool)
 
     async def root_client_object(self) -> Optional[DynamicClientObject]:
         """
@@ -131,7 +131,7 @@ class GameClient(MemoryObject):
             0x21318
         )
 
-        addr = await self.read_value_from_offset(offset, "unsigned long long")
+        addr = await self.read_value_from_offset(offset, Primitive.uint64)
 
         if addr == 0:
             return None
@@ -149,7 +149,7 @@ class GameClient(MemoryObject):
             "frames_per_second",
             0x219FC
         )
-        return await self.read_value_from_offset(offset, "float")
+        return await self.read_value_from_offset(offset, Primitive.float32)
 
     async def shutdown_signal(self) -> int:
         """
@@ -161,7 +161,7 @@ class GameClient(MemoryObject):
             "shutdown_signal",
             0x211B8
         )
-        return await self.read_value_from_offset(offset, "int")
+        return await self.read_value_from_offset(offset, Primitive.int32)
 
     async def write_shutdown_signal(self, shutdown_signal: int):
         """
@@ -173,14 +173,14 @@ class GameClient(MemoryObject):
             "shutdown_signal",
             0x211B8
         )
-        await self.write_value_to_offset(offset, shutdown_signal, "int")
+        await self.write_value_to_offset(offset, shutdown_signal, Primitive.int32)
 
     async def character_registry(self) -> Optional[DynamicCharacterRegistry]:
         """
         Get the character registry
         """
         # TODO: find where this loaded in for offset pattern
-        addr = await self.read_value_from_offset(0x22488, "unsigned long long")
+        addr = await self.read_value_from_offset(0x22488, Primitive.uint64)
 
         if addr == 0:
             return None
@@ -216,7 +216,7 @@ class GameClient(MemoryObject):
             "has_membership",
             0x21D40
         )
-        return await self.read_value_from_offset(offset, "bool")
+        return await self.read_value_from_offset(offset, Primitive.bool)
 
     # no, this doesn't let you go in membership areas
     async def write_has_membership(self, has_membership: bool):
@@ -226,7 +226,7 @@ class GameClient(MemoryObject):
             "has_membership",
             0x21D40
         )
-        await self.write_value_to_offset(offset, has_membership, "bool")
+        await self.write_value_to_offset(offset, has_membership, Primitive.bool)
 
     async def gamebryo_presenter(self) -> DynamicGamebryoPresenter:
         """
@@ -239,7 +239,7 @@ class GameClient(MemoryObject):
             0x21FB8
         )
 
-        addr = await self.read_value_from_offset(offset, "unsigned long long")
+        addr = await self.read_value_from_offset(offset, Primitive.uint64)
 
         if addr == 0:
             return None
@@ -247,7 +247,7 @@ class GameClient(MemoryObject):
         return DynamicGamebryoPresenter(self.hook_handler, addr)
 
     async def fishing_manager(self) -> FishingManager:
-        addr = await self.read_value_from_offset(0x22ec8, "unsigned long long")
+        addr = await self.read_value_from_offset(0x22ec8, Primitive.uint64)
         return FishingManager(self.hook_handler, addr)
 
 class CurrentGameClient(GameClient):
@@ -258,7 +258,7 @@ class CurrentGameClient(GameClient):
             return self._base_address
 
         addr = await self.pattern_scan(rb"\x48\x8B.....\x48\x8B\xD9\x80\xB8\x45")
-        offset = await self.read_typed(addr + 3, "int")
+        offset = await self.read_typed(addr + 3, Primitive.int32)
 
-        self._base_address = await self.read_typed(addr + 7 + offset, "unsigned long long")
+        self._base_address = await self.read_typed(addr + 7 + offset, Primitive.uint64)
         return self._base_address
