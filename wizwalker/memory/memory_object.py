@@ -331,7 +331,7 @@ class MemoryObject(MemoryReader):
         current_addr = start
 
         res = []
-        for _ in total_size:
+        for _ in range(total_size):
             res.append(object_type(self.hook_handler, current_addr))
             current_addr += object_size
 
