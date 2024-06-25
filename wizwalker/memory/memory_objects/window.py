@@ -388,7 +388,7 @@ class SpellListControl(Window):
         return await self.read_value_from_offset(0x2C0, Primitive.uint32)
 
     async def write_card_page(self, page: int):
-        return await self.write_value_to_offset(0x2C0, (page * 6), Primitive.uint32)
+        return await self.write_value_to_offset(0x2C0, page, Primitive.uint32)
 
 
 class DynamicWindow(DynamicMemoryObject, Window):
