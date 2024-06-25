@@ -384,10 +384,10 @@ class SpellListControl(Window):
     async def card_size_vertical(self) -> int:
         return await self.read_value_from_offset(0x2C8, Primitive.uint32)
 
-    async def card_page(self) -> int:
+    async def start_index(self) -> int:
         return await self.read_value_from_offset(0x2C0, Primitive.uint32)
 
-    async def write_card_page(self, start_index: int):
+    async def write_start_index(self, start_index: int):
         return await self.write_value_to_offset(0x2C0, start_index, Primitive.uint32)
 
 
