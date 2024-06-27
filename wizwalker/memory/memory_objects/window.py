@@ -291,6 +291,10 @@ class Window(PropertyClass):
 
     async def write_parent_offset(self, parent_offset: tuple):
         await self.write_vector(176, parent_offset, 4, Primitive.int32)
+        
+    async def is_control_grayed(self):
+        # Note this is from "class ControlButton", base class is window so it works. Likely should have its own class - Click
+        return await self.read_value_from_offset(688, Primitive.bool)
 
 
 class DeckListControlSpellEntry(DynamicMemoryObject):
@@ -301,6 +305,9 @@ class DeckListControlSpellEntry(DynamicMemoryObject):
             return None
 
         return DynamicGraphicalSpell(self.hook_handler, addr)
+    
+    async def valid_graphical_spell(self) -> int:
+        return await self.read_value_from_offset(0x10, Primitive.int32)
 
 
 class SpellListControlSpellEntry(DynamicMemoryObject):
@@ -335,6 +342,15 @@ class SpellListControlSpellEntry(DynamicMemoryObject):
         return Rectangle(*rect)
 
 
+class GraphicalSpellWindow(Window):
+    async def graphical_spell(self) -> Optional[DynamicGraphicalSpell]:
+        addr = await self.read_value_from_offset(584, Primitive.uint64)
+
+        if addr == 0:
+            return None
+
+        return DynamicGraphicalSpell(self.hook_handler, addr)
+
 class DeckListControl(Window):
     async def read_base_address(self) -> int:
         raise NotImplementedError()
@@ -368,6 +384,12 @@ class SpellListControl(Window):
     async def card_size_vertical(self) -> int:
         return await self.read_value_from_offset(0x2C8, Primitive.uint32)
 
+    async def start_index(self) -> int:
+        return await self.read_value_from_offset(0x2C0, Primitive.uint32)
+
+    async def write_start_index(self, start_index: int):
+        return await self.write_value_to_offset(0x2C0, start_index, Primitive.uint32)
+
 
 class DynamicWindow(DynamicMemoryObject, Window):
     pass
@@ -378,6 +400,10 @@ class DynamicDeckListControl(DynamicWindow, DeckListControl):
 
 
 class DynamicSpellListControl(DynamicWindow, SpellListControl):
+    pass
+
+
+class DynamicGraphicalSpellWindow(DynamicWindow, GraphicalSpellWindow):
     pass
 
 
