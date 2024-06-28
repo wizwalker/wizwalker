@@ -26,12 +26,6 @@ class SpellTemplate(PropertyClass):
     async def write_description(self, description: str):
         await self.write_string_to_offset(168, description)
 
-    async def advanced_description(self) -> str:
-        return await self.read_string_from_offset(200)
-
-    async def write_advanced_description(self, advanced_description: str):
-        await self.write_string_to_offset(200, advanced_description)
-
     async def display_name(self) -> str:
         return await self.read_string_from_offset(136)
 
@@ -87,12 +81,6 @@ class SpellTemplate(PropertyClass):
         return await self.read_value_from_offset(240, Primitive.int32)
 
     async def write_pvp_currency_cost(self, cost: int):
-        await self.write_value_to_offset(240, cost, Primitive.int32)
-
-    async def pvp_tourney_currency_cost(self) -> int:
-        return await self.read_value_from_offset(240, Primitive.int32)
-
-    async def write_pvp_tourney_currency_cost(self, cost: int):
         await self.write_value_to_offset(240, cost, Primitive.int32)
 
     async def booster_pack_icon(self) -> str:
@@ -198,7 +186,7 @@ class SpellTemplate(PropertyClass):
         await self.write_string_to_offset(536, cloaked_name)
 
     # async def purchase_requirements(self) -> class RequirementList*:
-    #     return await self.read_value_from_offset(608, "class RequirementList*")
+    #     return await self.read_value_from_offset(576, "class RequirementList*")
 
     async def description_trainer(self) -> str:
         return await self.read_string_from_offset(616)
