@@ -105,7 +105,7 @@ class GameStats(PropertyClass):
         return await self.read_value_from_offset(132, Primitive.int32)
 
     async def write_current_pvp_tourney_currency(self, current_pvp_currency: int):
-        await self.write_value_to_offset(128, current_pvp_currency, Primitive.int32)
+        await self.write_value_to_offset(132, current_pvp_currency, Primitive.int32)
     
     async def current_mana(self) -> int:
         return await self.read_value_from_offset(136, Primitive.int32)
