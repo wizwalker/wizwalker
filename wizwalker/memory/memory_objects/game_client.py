@@ -247,7 +247,7 @@ class GameClient(MemoryObject):
         return DynamicGamebryoPresenter(self.hook_handler, addr)
 
     async def fishing_manager(self) -> FishingManager:
-        addr = await self.read_value_from_offset(0x22ec8, Primitive.uint64)
+        addr = await self.read_value_from_offset(0x22ed8, Primitive.uint64)
         return FishingManager(self.hook_handler, addr)
 
 class CurrentGameClient(GameClient):
