@@ -180,7 +180,7 @@ class GameClient(MemoryObject):
         Get the character registry
         """
         # TODO: find where this loaded in for offset pattern
-        addr = await self.read_value_from_offset(0x22488, Primitive.uint64)
+        addr = await self.read_value_from_offset(0x224A8, Primitive.uint64)
 
         if addr == 0:
             return None
