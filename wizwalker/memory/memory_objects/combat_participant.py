@@ -315,10 +315,10 @@ class CombatParticipant(PropertyClass):
 
     # TODO: figure out what color is
     # async def color(self) -> class Color:
-    #     return await self.read_value_from_offset(328, "class Color")
+    #     return await self.read_value_from_offset(336, "class Color")
     #
     # async def write_color(self, color: class Color):
-    #     await self.write_value_to_offset(328, color, "class Color")
+    #     await self.write_value_to_offset(328, 336, "class Color")
 
     async def rotation(self) -> float:
         return await self.read_value_from_offset(340, Primitive.float32)
@@ -371,6 +371,12 @@ class CombatParticipant(PropertyClass):
 
     async def write_is_minion(self, is_minion: bool):
         await self.write_value_to_offset(404, is_minion, Primitive.bool)
+
+    async def is_accompany_npc(self) -> bool:
+        return await self.read_value_from_offset(412, Primitive.bool)
+
+    async def write_is_accompany_npc(self, is_accompany_npc:bool) -> bool:
+        await self.write_value_to_offset(412, is_accompany_npc, Primitive.bool)
 
     async def hanging_effects(self) -> List[DynamicSpellEffect]:
         hanging_effects = []
@@ -437,17 +443,29 @@ class CombatParticipant(PropertyClass):
     async def write_shadow_spells_disabled(self, shadow_spells_disabled: bool):
         await self.write_value_to_offset(672, shadow_spells_disabled, Primitive.bool)
 
-    async def boss_mob(self) -> bool:
+    async def ignore_spells_pvp_only_flag(self) -> bool:
         return await self.read_value_from_offset(673, Primitive.bool)
 
-    async def write_boss_mob(self, boss_mob: bool):
-        await self.write_value_to_offset(673, boss_mob, Primitive.bool)
+    async def write_ignore_spells_pvp_only_flag(self, ignore_spells_pvp_only_flag: bool):
+        await self.write_value_to_offset(673, ignore_spells_pvp_only_flag, Primitive.bool)
 
-    async def hide_pvp_enemy_chat(self) -> bool:
+    async def ignore_spells_pve_only_flag(self) -> bool:
         return await self.read_value_from_offset(674, Primitive.bool)
 
+    async def write_ignore_spells_pve_only_flag(self, ignore_spells_pvp_only_flag: bool):
+        await self.write_value_to_offset(674, ignore_spells_pvp_only_flag, Primitive.bool)
+
+    async def boss_mob(self) -> bool:
+        return await self.read_value_from_offset(675, Primitive.bool)
+
+    async def write_boss_mob(self, boss_mob: bool):
+        await self.write_value_to_offset(675, boss_mob, Primitive.bool)
+
+    async def hide_pvp_enemy_chat(self) -> bool:
+        return await self.read_value_from_offset(676, Primitive.bool)
+
     async def write_hide_pvp_enemy_chat(self, hide_pvp_enemy_chat: bool):
-        await self.write_value_to_offset(674, hide_pvp_enemy_chat, Primitive.bool)
+        await self.write_value_to_offset(676, hide_pvp_enemy_chat, Primitive.bool)
 
     async def combat_trigger_ids(self) -> int:
         return await self.read_value_from_offset(696, Primitive.int32)
