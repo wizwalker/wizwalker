@@ -72,9 +72,7 @@ class Window(PropertyClass):
 
                 await child._recursive_get_windows_by_predicate(predicate, windows)
 
-    async def get_windows_with_predicate(
-        self, predicate: Callable
-    ) -> List["DynamicWindow"]:
+    async def get_windows_with_predicate(self, predicate: Callable) -> List["DynamicWindow"]:
         """
         async def my_pred(window) -> bool:
             if await window.name() == "friend's list":
@@ -122,9 +120,7 @@ class Window(PropertyClass):
         return WindowFlags.visible in await self.flags()
 
     # This is here because checking in .children slows down window filtering majorly
-    async def maybe_graphical_spell(
-        self, *, check_type: bool = False
-    ) -> Optional[DynamicGraphicalSpell]:
+    async def maybe_graphical_spell(self, *, check_type: bool = False) -> Optional[DynamicGraphicalSpell]:
         if check_type:
             type_name = await self.maybe_read_type_name()
             if type_name != "SpellCheckBox":
@@ -151,9 +147,7 @@ class Window(PropertyClass):
         return await self.read_value_from_offset(1024, Primitive.bool)
 
     # See maybe_graphical_spell
-    async def maybe_combat_participant(
-        self, *, check_type: bool = False
-    ) -> Optional[DynamicCombatParticipant]:
+    async def maybe_combat_participant(self, *, check_type: bool = False) -> Optional[DynamicCombatParticipant]:
         if check_type:
             type_name = await self.maybe_read_type_name()
             if type_name != "CombatantDataControl":
@@ -291,7 +285,7 @@ class Window(PropertyClass):
 
     async def write_parent_offset(self, parent_offset: tuple):
         await self.write_vector(176, parent_offset, 4, Primitive.int32)
-        
+
     async def is_control_grayed(self):
         # Note this is from "class ControlButton", base class is window so it works. Likely should have its own class - Click
         return await self.read_value_from_offset(688, Primitive.bool)
@@ -305,7 +299,7 @@ class DeckListControlSpellEntry(DynamicMemoryObject):
             return None
 
         return DynamicGraphicalSpell(self.hook_handler, addr)
-    
+
     async def valid_graphical_spell(self) -> int:
         return await self.read_value_from_offset(0x10, Primitive.int32)
 

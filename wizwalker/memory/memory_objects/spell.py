@@ -128,9 +128,7 @@ class Spell(PropertyClass):
     async def leaves_play_when_cast_override(self) -> bool:
         return await self.read_value_from_offset(216, Primitive.bool)
 
-    async def write_leaves_play_when_cast_override(
-        self, leaves_play_when_cast_override: bool
-    ):
+    async def write_leaves_play_when_cast_override(self, leaves_play_when_cast_override: bool):
         await self.write_value_to_offset(216, leaves_play_when_cast_override, Primitive.bool)
 
     async def cloaked(self) -> bool:
@@ -142,9 +140,7 @@ class Spell(PropertyClass):
     async def enchantment_spell_is_item_card(self) -> bool:
         return await self.read_value_from_offset(76, Primitive.bool)
 
-    async def write_enchantment_spell_is_item_card(
-        self, enchantment_spell_is_item_card: bool
-    ):
+    async def write_enchantment_spell_is_item_card(self, enchantment_spell_is_item_card: bool):
         await self.write_value_to_offset(76, enchantment_spell_is_item_card, Primitive.bool)
 
     async def premutation_spell_id(self) -> int:

@@ -116,19 +116,13 @@ class CombatAction(MemoryObject):
     async def random_spell_effect_per_target_rolls(self) -> int:
         return await self.read_value_from_offset(128, Primitive.int32)
 
-    async def write_random_spell_effect_per_target_rolls(
-        self, random_spell_effect_per_target_rolls: int
-    ):
-        await self.write_value_to_offset(
-            128, random_spell_effect_per_target_rolls, Primitive.int32
-        )
+    async def write_random_spell_effect_per_target_rolls(self, random_spell_effect_per_target_rolls: int):
+        await self.write_value_to_offset(128, random_spell_effect_per_target_rolls, Primitive.int32)
 
     async def handled_random_spell_per_target(self) -> bool:
         return await self.read_value_from_offset(124, Primitive.bool)
 
-    async def write_handled_random_spell_per_target(
-        self, handled_random_spell_per_target: bool
-    ):
+    async def write_handled_random_spell_per_target(self, handled_random_spell_per_target: bool):
         await self.write_value_to_offset(124, handled_random_spell_per_target, Primitive.bool)
 
     async def confused_target(self) -> bool:
