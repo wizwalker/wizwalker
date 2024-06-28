@@ -376,7 +376,7 @@ class CombatParticipant(PropertyClass):
         return await self.read_value_from_offset(412, Primitive.bool)
 
     async def write_is_accompany_npc(self, is_accompany_npc:bool) -> bool:
-        await self.write_value_to_offset(404, is_accompany_npc, Primitive.bool)
+        await self.write_value_to_offset(412, is_accompany_npc, Primitive.bool)
 
     async def hanging_effects(self) -> List[DynamicSpellEffect]:
         hanging_effects = []
