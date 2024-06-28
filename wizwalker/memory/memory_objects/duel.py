@@ -231,8 +231,14 @@ class Duel(PropertyClass):
     async def write_shadow_pip_threshold_team1(self, shadow_pip_threshold_team1: float):
         await self.write_value_to_offset(564, shadow_pip_threshold_team1, Primitive.float32)
 
+    async def duel(self) -> bool:
+        return await self.read_value_from_offset(568, Primitive.bool)
+
+    async def write_duel(self, duel: bool):
+        await self.write_value_to_offset(568, duel, Primitive.bool)
+
     #async def max_archmastery(self) -> float:
-    #   return await self.read_value_from_offset(568, Primitive.float32)
+    #   return await self.read_value_from_offset(572, Primitive.float32)
 
     async def scalar_damage(self) -> float:
         return await self.read_value_from_offset(600, Primitive.float32)

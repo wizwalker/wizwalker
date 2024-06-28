@@ -28,17 +28,17 @@ class SpellEffect(PropertyClass):
     async def write_effect_param(self, effect_param: int):
         await self.write_value_to_offset(76, effect_param, Primitive.int32)
 
-    async def string_damage_type(self) -> str:
-        return await self.read_string_from_offset(88)
-
-    async def write_string_damage_type(self, string_damage_type: str):
-        await self.write_string_to_offset(88, string_damage_type)
-
     async def disposition(self) -> HangingDisposition:
         return await self.read_enum(80, HangingDisposition)
 
     async def write_disposition(self, disposition: HangingDisposition):
         await self.write_enum(80, disposition)
+
+    async def string_damage_type(self) -> str:
+        return await self.read_string_from_offset(88)
+
+    async def write_string_damage_type(self, string_damage_type: str):
+        await self.write_string_to_offset(88, string_damage_type)
 
     async def damage_type(self) -> int:
         return await self.read_value_from_offset(84, Primitive.uint32)
@@ -106,6 +106,12 @@ class SpellEffect(PropertyClass):
     async def write_cloaked(self, cloaked: bool):
         await self.write_value_to_offset(157, cloaked, Primitive.bool)
 
+    async def bypass_protection(self) -> bool:
+        return await self.read_value_from_offset(159, Primitive.bool)
+
+    async def write_bypass_protection(self, cloaked: bool):
+        await self.write_value_to_offset(159, cloaked, Primitive.bool)
+        
     async def armor_piercing_param(self) -> int:
         return await self.read_value_from_offset(160, Primitive.int32)
 
