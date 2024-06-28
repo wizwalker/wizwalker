@@ -14,9 +14,7 @@ class Duel(PropertyClass):
     async def read_base_address(self) -> int:
         raise NotImplementedError()
 
-    async def participant_list(
-        self,
-    ) -> List[DynamicCombatParticipant]:
+    async def participant_list(self,) -> List[DynamicCombatParticipant]:
         pointers = await self.read_shared_vector(80)
 
         participants = []
@@ -152,9 +150,7 @@ class Duel(PropertyClass):
     async def initiative_switch_mode(self) -> SigilInitiativeSwitchMode:
         return await self.read_enum(384, SigilInitiativeSwitchMode)
 
-    async def write_initiative_switch_mode(
-        self, initiative_switch_mode: SigilInitiativeSwitchMode
-    ):
+    async def write_initiative_switch_mode(self, initiative_switch_mode: SigilInitiativeSwitchMode):
         await self.write_enum(384, initiative_switch_mode)
 
     async def initiative_switch_rounds(self) -> int:

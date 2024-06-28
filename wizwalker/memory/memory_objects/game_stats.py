@@ -198,9 +198,7 @@ class GameStats(PropertyClass):
     async def highest_character_level_on_account(self) -> int:
         return await self.read_value_from_offset(336, Primitive.int32)
 
-    async def write_highest_character_level_on_account(
-        self, highest_character_level_on_account: int
-    ):
+    async def write_highest_character_level_on_account(self, highest_character_level_on_account: int):
         await self.write_value_to_offset(336, highest_character_level_on_account, Primitive.int32)
 
     async def pet_act_chance(self) -> int:
@@ -338,9 +336,7 @@ class GameStats(PropertyClass):
     async def power_pip_bonus_percent_all(self) -> float:
         return await self.read_value_from_offset(792, Primitive.float32)
 
-    async def write_power_pip_bonus_percent_all(
-        self, power_pip_bonus_percent_all: float
-    ):
+    async def write_power_pip_bonus_percent_all(self, power_pip_bonus_percent_all: float):
         await self.write_value_to_offset(792, power_pip_bonus_percent_all, Primitive.float32)
 
     async def xp_percent_increase(self) -> float:
@@ -352,9 +348,7 @@ class GameStats(PropertyClass):
     async def critical_hit_percent_by_school(self) -> List[float]:
         return await self.read_dynamic_vector(616, Primitive.float32)
 
-    async def write_critical_hit_percent_by_school(
-        self, critical_hit_percent_by_school: float
-    ):
+    async def write_critical_hit_percent_by_school(self, critical_hit_percent_by_school: float):
         await self.write_value_to_offset(616, critical_hit_percent_by_school, Primitive.float32)
 
     async def block_percent_by_school(self) -> List[float]:
@@ -366,9 +360,7 @@ class GameStats(PropertyClass):
     async def critical_hit_rating_by_school(self) -> List[float]:
         return await self.read_dynamic_vector(664, Primitive.float32)
 
-    async def write_critical_hit_rating_by_school(
-        self, critical_hit_rating_by_school: float
-    ):
+    async def write_critical_hit_rating_by_school(self, critical_hit_rating_by_school: float):
         await self.write_value_to_offset(664, critical_hit_rating_by_school, Primitive.float32)
 
     async def block_rating_by_school(self) -> List[float]:
@@ -464,9 +456,7 @@ class GameStats(PropertyClass):
     async def dont_allow_friend_finder_codes(self) -> bool:
         return await self.read_value_from_offset(884, Primitive.bool)
 
-    async def write_dont_allow_friend_finder_codes(
-        self, dont_allow_friend_finder_codes: bool
-    ):
+    async def write_dont_allow_friend_finder_codes(self, dont_allow_friend_finder_codes: bool):
         await self.write_value_to_offset(884, dont_allow_friend_finder_codes, Primitive.bool)
 
     async def stun_resistance_percent(self) -> float:
@@ -508,9 +498,7 @@ class GameStats(PropertyClass):
     async def fishing_luck_bonus_percent_all(self) -> float:
         return await self.read_value_from_offset(748, Primitive.float32)
 
-    async def write_fishing_luck_bonus_percent_all(
-        self, fishing_luck_bonus_percent_all: float
-    ):
+    async def write_fishing_luck_bonus_percent_all(self, fishing_luck_bonus_percent_all: float):
         await self.write_value_to_offset(748, fishing_luck_bonus_percent_all, Primitive.float32)
 
     async def subscriber_benefit_flags(self) -> int:
@@ -546,9 +534,7 @@ class GameStats(PropertyClass):
     async def pip_conversion_rating_per_school(self) -> List[float]:
         return await self.read_dynamic_vector(264, Primitive.float32)
 
-    async def write_pip_conversion_rating_per_school(
-        self, pip_conversion_rating_per_school: float
-    ):
+    async def write_pip_conversion_rating_per_school(self, pip_conversion_rating_per_school: float):
         await self.write_value_to_offset(264, pip_conversion_rating_per_school, Primitive.float32)
 
     async def pip_conversion_percent_all(self) -> float:
@@ -560,12 +546,8 @@ class GameStats(PropertyClass):
     async def pip_conversion_percent_per_school(self) -> List[float]:
         return await self.read_dynamic_vector(296, Primitive.float32)
 
-    async def write_pip_conversion_percent_per_school(
-        self, pip_conversion_percent_per_school: float
-    ):
-        await self.write_value_to_offset(
-            296, pip_conversion_percent_per_school, Primitive.float32
-        )
+    async def write_pip_conversion_percent_per_school(self, pip_conversion_percent_per_school: float):
+        await self.write_value_to_offset(296, pip_conversion_percent_per_school, Primitive.float32)
 
     async def monster_magic_level(self) -> int:
         return await self.read_value_from_offset(908, Primitive.uint8)
@@ -582,9 +564,7 @@ class GameStats(PropertyClass):
     async def player_chat_channel_is_public(self) -> bool:
         return await self.read_value_from_offset(916, Primitive.bool)
 
-    async def write_player_chat_channel_is_public(
-        self, player_chat_channel_is_public: bool
-    ):
+    async def write_player_chat_channel_is_public(self, player_chat_channel_is_public: bool):
         await self.write_value_to_offset(916, player_chat_channel_is_public, Primitive.bool)
 
     async def extra_inventory_space(self) -> int:
@@ -602,25 +582,19 @@ class GameStats(PropertyClass):
     async def new_spellbook_layout_warning(self) -> bool:
         return await self.read_value_from_offset(925, Primitive.bool)
 
-    async def write_new_spellbook_layout_warning(
-        self, new_spellbook_layout_warning: bool
-    ):
+    async def write_new_spellbook_layout_warning(self, new_spellbook_layout_warning: bool):
         await self.write_value_to_offset(925, new_spellbook_layout_warning, Primitive.bool)
 
     async def pip_conversion_base_all_schools(self) -> int:
         return await self.read_value_from_offset(760, Primitive.int32)
 
-    async def write_pip_conversion_base_all_schools(
-        self, pip_conversion_base_all_schools: int
-    ):
+    async def write_pip_conversion_base_all_schools(self, pip_conversion_base_all_schools: int):
         await self.write_value_to_offset(760, pip_conversion_base_all_schools, Primitive.int32)
 
     async def pip_conversion_base_per_school(self) -> List[int]:
         return await self.read_dynamic_vector(768, Primitive.int32)
 
-    async def write_pip_conversion_base_per_school(
-        self, pip_conversion_base_per_school: int
-    ):
+    async def write_pip_conversion_base_per_school(self, pip_conversion_base_per_school: int):
         await self.write_value_to_offset(768, pip_conversion_base_per_school, Primitive.int32)
 
     async def purchased_custom_emotes1(self) -> int:
@@ -632,12 +606,8 @@ class GameStats(PropertyClass):
     async def purchased_custom_teleport_effects1(self) -> int:
         return await self.read_value_from_offset(932, Primitive.uint32)
 
-    async def write_purchased_custom_teleport_effects1(
-        self, purchased_custom_teleport_effects1: int
-    ):
-        await self.write_value_to_offset(
-            932, purchased_custom_teleport_effects1, Primitive.uint32
-        )
+    async def write_purchased_custom_teleport_effects1(self, purchased_custom_teleport_effects1: int):
+        await self.write_value_to_offset(932, purchased_custom_teleport_effects1, Primitive.uint32)
 
     async def equipped_teleport_effect(self) -> int:
         return await self.read_value_from_offset(936, Primitive.uint32)
@@ -661,9 +631,7 @@ class GameStats(PropertyClass):
         return await self.read_value_from_offset(968, Primitive.uint32)
 
     async def write_active_class_projects_list(self, active_class_projects_list: int):
-        await self.write_value_to_offset(
-            968, active_class_projects_list, Primitive.uint32
-        )
+        await self.write_value_to_offset(968, active_class_projects_list, Primitive.uint32)
 
     async def disabled_item_slot_ids(self) -> int:
         return await self.read_value_from_offset(984, Primitive.uint32)
@@ -674,12 +642,8 @@ class GameStats(PropertyClass):
     async def adventure_power_cooldown_time(self) -> int:
         return await self.read_value_from_offset(1000, Primitive.uint32)
 
-    async def write_adventure_power_cooldown_time(
-        self, adventure_power_cooldown_time: int
-    ):
-        await self.write_value_to_offset(
-            1000, adventure_power_cooldown_time, Primitive.uint32
-        )
+    async def write_adventure_power_cooldown_time(self, adventure_power_cooldown_time: int):
+        await self.write_value_to_offset(1000, adventure_power_cooldown_time, Primitive.uint32)
 
     async def purchased_custom_emotes2(self) -> int:
         return await self.read_value_from_offset(940, Primitive.uint32)
@@ -690,12 +654,8 @@ class GameStats(PropertyClass):
     async def purchased_custom_teleport_effects2(self) -> int:
         return await self.read_value_from_offset(944, Primitive.uint32)
 
-    async def write_purchased_custom_teleport_effects2(
-        self, purchased_custom_teleport_effects2: int
-    ):
-        await self.write_value_to_offset(
-            944, purchased_custom_teleport_effects2, Primitive.uint32
-        )
+    async def write_purchased_custom_teleport_effects2(self, purchased_custom_teleport_effects2: int):
+        await self.write_value_to_offset(944, purchased_custom_teleport_effects2, Primitive.uint32)
 
     async def purchased_custom_emotes3(self) -> int:
         return await self.read_value_from_offset(948, Primitive.uint32)
@@ -706,12 +666,8 @@ class GameStats(PropertyClass):
     async def purchased_custom_teleport_effects3(self) -> int:
         return await self.read_value_from_offset(952, Primitive.uint32)
 
-    async def write_purchased_custom_teleport_effects3(
-        self, purchased_custom_teleport_effects3: int
-    ):
-        await self.write_value_to_offset(
-            952, purchased_custom_teleport_effects3, Primitive.uint32
-        )
+    async def write_purchased_custom_teleport_effects3(self, purchased_custom_teleport_effects3: int):
+        await self.write_value_to_offset(952, purchased_custom_teleport_effects3, Primitive.uint32)
 
     async def shadow_pip_rating(self) -> float:
         return await self.read_value_from_offset(1004, Primitive.float32)
@@ -728,9 +684,7 @@ class GameStats(PropertyClass):
     async def shadow_pip_rate_accumulated(self) -> float:
         return await self.read_value_from_offset(1012, Primitive.float32)
 
-    async def write_shadow_pip_rate_accumulated(
-        self, shadow_pip_rate_accumulated: float
-    ):
+    async def write_shadow_pip_rate_accumulated(self, shadow_pip_rate_accumulated: float):
         await self.write_value_to_offset(1012, shadow_pip_rate_accumulated, Primitive.float32)
 
     async def shadow_pip_rate_threshold(self) -> float:

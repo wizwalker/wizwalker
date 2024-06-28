@@ -91,12 +91,8 @@ class SpellEffect(PropertyClass):
     async def enchantment_spell_template_id(self) -> int:
         return await self.read_value_from_offset(124, Primitive.uint32)
 
-    async def write_enchantment_spell_template_id(
-        self, enchantment_spell_template_id: int
-    ):
-        await self.write_value_to_offset(
-            124, enchantment_spell_template_id, Primitive.uint32
-        )
+    async def write_enchantment_spell_template_id(self, enchantment_spell_template_id: int):
+        await self.write_value_to_offset(124, enchantment_spell_template_id, Primitive.uint32)
 
     async def act(self) -> bool:
         return await self.read_value_from_offset(136, Primitive.bool)
@@ -146,9 +142,7 @@ class SpellEffect(PropertyClass):
     async def write_rank(self, rank: int):
         await self.write_value_to_offset(208, rank, Primitive.int32)
 
-    async def maybe_effect_list(
-        self, *, check_type: bool = False
-    ) -> List["DynamicSpellEffect"]:
+    async def maybe_effect_list(self, *, check_type: bool = False) -> List["DynamicSpellEffect"]:
         if check_type:
             type_name = await self.maybe_read_type_name()
             if type_name not in (
@@ -181,7 +175,7 @@ class HangingConversionSpellEffect(DynamicSpellEffect):
         return await self.read_enum(224, HangingEffectType)
 
     async def write_hanging_effect_type(self, hanging_effect_type: HangingEffectType):
-        await self.write_enum(self, hanging_effect_type)
+        await self.write_enum(224, hanging_effect_type)
 
     async def specific_effect_types(self) -> list[SpellEffects]: #TODO: missing a write function, doesn't really matter -slack
         results = []

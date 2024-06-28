@@ -300,9 +300,7 @@ class CombatParticipant(PropertyClass):
     async def saved_primary_magic_school_id(self) -> int:
         return await self.read_value_from_offset(312, Primitive.int32)
 
-    async def write_saved_primary_magic_school_id(
-        self, saved_primary_magic_school_id: int
-    ):
+    async def write_saved_primary_magic_school_id(self, saved_primary_magic_school_id: int):
         await self.write_value_to_offset(312, saved_primary_magic_school_id, Primitive.int32)
 
     async def game_stats(self) -> Optional[DynamicGameStats]:
@@ -606,9 +604,7 @@ class CombatParticipant(PropertyClass):
     async def planning_phase_pip_aquired_type(self) -> PipAquiredByEnum:
         return await self.read_enum(816, PipAquiredByEnum)
 
-    async def write_planning_phase_pip_aquired_type(
-        self, planning_phase_pip_aquired_type: PipAquiredByEnum
-    ):
+    async def write_planning_phase_pip_aquired_type(self, planning_phase_pip_aquired_type: PipAquiredByEnum):
         await self.write_enum(816, planning_phase_pip_aquired_type)
 
     # async def cheat_settings(self) -> class SharedPointer<class CombatCheatSettings>:
