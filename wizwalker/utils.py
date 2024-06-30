@@ -38,6 +38,16 @@ async def async_sorted(iterable, /, *, key=None, reverse=False):
     ]
 
 
+class Color:
+    def __init__(self, r: int, g: int, b: int):
+        self.r = r
+        self.g = g
+        self.b = b
+
+    def __iter__(self):
+        return iter((self.r, self.g, self.b))
+
+
 class XYZ:
     def __init__(self, x: float, y: float, z: float):
         self.x = x

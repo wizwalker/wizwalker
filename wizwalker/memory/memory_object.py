@@ -10,7 +10,7 @@ from wizwalker.errors import (
     PatternFailed,
     PatternMultipleResults
 )
-from wizwalker.utils import XYZ, Orient
+from wizwalker.utils import XYZ, Orient, Color
 from .handler import HookHandler
 from .memory_reader import MemoryReader
 
@@ -225,6 +225,13 @@ class MemoryObject(MemoryReader):
         packed_bytes = struct.pack("<" + type_str * size, *value)
 
         await self.write_bytes(base_address + offset, packed_bytes)
+
+    async def read_color(self, offset: int) -> Color:
+        r, g, b = await self.read_vector(offset, 3, Primitive.uint8)
+        return Color(r, g, b)
+
+    async def write_color(self, offset: int, val: Color):
+        await self.write_vector(offset, (val.r, val.g, val.b), 3, Primitive.uint8)
 
     async def read_xyz(self, offset: int) -> XYZ:
         x, y, z = await self.read_vector(offset)
