@@ -8,6 +8,8 @@ from .pip_count import DynamicPipCount
 from .play_deck import DynamicPlayDeck
 from .spell import DynamicHand
 from .spell_effect import DynamicSpellEffect
+from .behavior_template import NPCBehaviorTemplate, NpcBehaviorTemplateTitleType
+from .client_object import DynamicClientObject
 
 
 class CombatParticipant(PropertyClass):
@@ -17,6 +19,24 @@ class CombatParticipant(PropertyClass):
 
     def read_base_address(self) -> int:
         raise NotImplementedError()
+
+    async def fetch_entity(self) -> DynamicClientObject | None:
+        client = self.hook_handler.client
+        for ent in await client.get_base_entity_list():
+            if await ent.global_id_full() == await self.owner_id_full():
+                return ent
+        return None
+
+    async def fetch_npc_behavior_template(self) -> NPCBehaviorTemplate | None:
+        ent = await self.fetch_entity()
+        if ent is None:
+            return None
+        for behavior in await ent.inactive_behaviors():
+            if await behavior.behavior_name() == "NPCBehavior":
+                templ = await behavior.behavior_template()
+                return NPCBehaviorTemplate(templ.hook_handler, await templ.read_base_address())
+        return None
+
 
     async def owner_id_full(self) -> int:
         """
@@ -454,10 +474,12 @@ class CombatParticipant(PropertyClass):
         await self.write_value_to_offset(674, ignore_spells_pvp_only_flag, Primitive.bool)
 
     async def boss_mob(self) -> bool:
-        return await self.read_value_from_offset(675, Primitive.bool)
-
-    async def write_boss_mob(self, boss_mob: bool):
-        await self.write_value_to_offset(675, boss_mob, Primitive.bool)
+        # we use the npc template instead if possible
+        templ = await self.fetch_npc_behavior_template()
+        if templ is None:
+            # The offset isn't accurate enough for our purposes, but we can fall back to it
+            return await self.read_value_from_offset(675, Primitive.bool)
+        return await templ.mob_title() == NpcBehaviorTemplateTitleType.boss
 
     async def hide_pvp_enemy_chat(self) -> bool:
         return await self.read_value_from_offset(676, Primitive.bool)
