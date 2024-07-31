@@ -39,8 +39,9 @@ class MouseHandler:
             self._ref_count -= 1
             if self._ref_count == 0 and self.client.hook_handler._check_if_hook_active(MouselessCursorMoveHook):
                 await self._deactivate_mouseless()
-    
+
     async def _activate_mouseless(self):
+        await self.client._patch_setcursorpos() # Don't need to unpatch. It's benign
         await self.client.hook_handler.activate_mouseless_cursor_hook()
 
     async def _deactivate_mouseless(self):

@@ -34,7 +34,7 @@ class MemoryHook(MemoryReader):
         if type(self) not in self._hook_cache:
             self._hook_cache[type(self)] = {}
         return self._hook_cache[type(self)]
-    
+
     def _is_cached(self, name):
         return name in self._get_my_cache()
 
@@ -259,7 +259,7 @@ class QuestHook(SimpleHook):
 
                 b"\x48\xA3" + packed_exports[0][1] +  # mov [export],rax
                 b"\x58"  # pop rax
-                b"\xF3\x41\x0F\x10\x87\xFC\x0C\x00\x00"  # original code 
+                b"\xF3\x41\x0F\x10\x87\xFC\x0C\x00\x00"  # original code
         )
         # fmt: on
         return bytecode
@@ -541,12 +541,12 @@ class User32GetClassInfoBaseHook(AutoBotBaseHook):
     )
     # rounded down
     AUTOBOT_SIZE = 1200
-    
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._hooked_instances = 0
         # How far into the function we are
-        self._autobot_bytes_offset = 0 
+        self._autobot_bytes_offset = 0
         self._autobot_addr = None
         self._autobot_original_bytes = None
 
