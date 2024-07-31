@@ -77,6 +77,10 @@ class Client:
         self._character_registry_addr = None
         self._quest_client_manager_addr = None
 
+        self._setcursorpos_address = None
+        self._setcursorpos_original_bytes = None
+        self._setcursorpos_patched = False
+
         self._movement_update_address = None
         self._movement_update_original_bytes = None
         self._movement_update_patched = False
@@ -257,6 +261,7 @@ class Client:
         if not self.is_running():
             return
 
+        await self._unpatch_setcursorpos()
         await self._unpatch_movement_update()
         await self.hook_handler.close()
 
@@ -621,6 +626,20 @@ class Client:
         free_address = await free.read_base_address()
 
         await self._switch_camera(elastic_address, free_address)
+
+    async def _patch_setcursorpos(self):
+        if self._setcursorpos_patched:
+            return
+        self._setcursorpos_patched = True
+        self._setcursorpos_address = await self.hook_handler.get_address_from_symbol("user32.dll", "SetCursorPos")
+        self._setcursorpos_original_bytes = await self.hook_handler.read_bytes(self._setcursorpos_address, 1)
+        await self.hook_handler.write_bytes(self._setcursorpos_address, b"\xC3") # ret
+
+    async def _unpatch_setcursorpos(self):
+        if not self._setcursorpos_patched:
+            return
+        await self.hook_handler.write_bytes(self._setcursorpos_address, self._setcursorpos_original_bytes)
+        self._setcursorpos_patched = False
 
     async def _patch_movement_update(self):
         """
