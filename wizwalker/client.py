@@ -346,7 +346,12 @@ class Client:
             # if this window exists we are loading
             await view.get_child_by_name("TransitionWindow")
         except ValueError:
-            return False
+            try:
+                await self.root_window.get_child_by_name("PageFlip")
+            except ValueError:
+                return False
+            else:
+                return False
         else:
             return True
 
