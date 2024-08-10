@@ -351,7 +351,7 @@ class Client:
             except ValueError:
                 return False
             else:
-                return False
+                return True
         else:
             return True
 
