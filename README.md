@@ -1,4 +1,4 @@
-moved to https://github.com/wizwalker/wizwalker
+moved to https://codeberg.org/wizwalker/wizwalker/
 
 # WizWalker
 
