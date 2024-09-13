@@ -1,24 +1,11 @@
 from typing import List
 
-from wizwalker.memory.memory_object import Primitive, PropertyClass, DynamicMemoryObject
+from wizwalker.memory.memory_object import Primitive
 from .enums import ObjectType
-from .behavior_template import DynamicBehaviorTemplate
+from .core_template import CoreTemplate
 
 
-class WizGameObjectTemplate(PropertyClass):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
-    # TODO: add all behavior template types
-    async def behaviors(self) -> List[DynamicBehaviorTemplate]:
-        behaviors = []
-        for addr in await self.read_dynamic_vector(72):
-            # they sometimes set these to 0
-            if addr != 0:
-                behaviors.append(DynamicBehaviorTemplate(self.hook_handler, addr))
-
-        return behaviors
-
+class WizGameObjectTemplate(CoreTemplate):
     async def object_name(self) -> str:
         return await self.read_string_from_offset(96)
 
@@ -69,6 +56,12 @@ class WizGameObjectTemplate(PropertyClass):
 
     async def write_icon(self, icon: str):
         await self.write_string_to_offset(208, icon)
+
+    async def object_property_hashset(self) -> list[int]:
+        """
+        Not defined in type dumps. Used to filter items to calculate a proper count in backpack
+        """
+        return await self.read_hashset_basic(264, Primitive.uint32)
 
     async def loot_table(self) -> str:
         return await self.read_string_from_offset(280)
@@ -122,5 +115,5 @@ class WizGameObjectTemplate(PropertyClass):
     #     return await self.read_value_from_offset(528, "class SharedPointer<class LeashOffsetOverride>")
 
 
-class DynamicWizGameObjectTemplate(DynamicMemoryObject, WizGameObjectTemplate):
+class DynamicWizGameObjectTemplate(WizGameObjectTemplate):
     pass

@@ -5,15 +5,10 @@ from .enums import DelayOrder, SpellSourceType
 
 from .spell_effect import DynamicSpellEffect, get_spell_effects
 from .spell_rank import DynamicSpellRank
+from .core_template import CoreTemplate
 
 
-class SpellTemplate(PropertyClass):
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
-    # async def behaviors(self) -> class BehaviorTemplate*:
-    #     return await self.read_value_from_offset(72, "class BehaviorTemplate*")
-
+class SpellTemplate(CoreTemplate):
     async def name(self) -> str:
         return await self.read_string_from_offset(96)
 
@@ -315,5 +310,5 @@ class SpellTemplate(PropertyClass):
 
         return DynamicSpellRank(self.hook_handler, addr)
 
-class DynamicSpellTemplate(DynamicMemoryObject, SpellTemplate):
+class DynamicSpellTemplate(SpellTemplate):
     pass

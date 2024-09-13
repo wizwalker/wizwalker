@@ -409,6 +409,21 @@ class MemoryObject(MemoryReader):
         await self._get_std_map_children(first_node, mapped_type, mapped_return)
         return mapped_return
 
+    async def read_hashset_basic(self, offset: int, primitive_type: Primitive) -> set[int]:
+        result = set()
+        root = DynamicMemoryObject(self.hook_handler, await self.read_value_from_offset(offset, Primitive.uint64))
+        stack = [DynamicMemoryObject(self.hook_handler, await root.read_value_from_offset(8, Primitive.uint64))]
+        while len(stack) > 0:
+            node = stack.pop()
+            is_leaf = await node.read_value_from_offset(0x19, Primitive.bool)
+            if is_leaf:
+                continue
+            stack.extend([
+                DynamicMemoryObject(self.hook_handler, await node.read_value_from_offset(0x00, Primitive.uint64)),
+                DynamicMemoryObject(self.hook_handler, await node.read_value_from_offset(0x10, Primitive.uint64)),
+            ])
+            result.add(await node.read_value_from_offset(0x1C, primitive_type))
+        return result
 
 class DynamicMemoryObject(MemoryObject):
     def __init__(self, hook_handler: HookHandler, base_address: int):

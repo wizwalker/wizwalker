@@ -31,6 +31,9 @@ from .memory import (
 )
 from .memory.memory_objects.character_registry import DynamicCharacterRegistry
 from .memory.memory_objects.quest_client_manager import QuestClientManager
+from .memory.memory_objects.core_object import CoreObject
+from .memory.memory_objects.game_object_template import WizGameObjectTemplate
+from .memory.memory_objects.enums import ObjectType
 from .mouse_handler import MouseHandler
 from .utils import (
     XYZ,
@@ -40,6 +43,7 @@ from .utils import (
     get_window_rectangle,
     wait_for_value,
     maybe_wait_for_any_value_with_timeout, maybe_wait_for_value_with_timeout,
+    make_string_id,
 )
 
 
@@ -381,23 +385,37 @@ class Client:
 
         return False
 
-    async def backpack_space(self) -> tuple:
+    async def backpack_space(self) -> tuple[int, int]:
         """
         This client's backpack space used and max
-        must be on inventory page to use
         """
-        maybe_space_window = await self.root_window.get_windows_with_name(
-            "inventorySpace"
-        )
+        async def should_count_item(obj: CoreObject) -> bool:
+            template = await obj.object_template()
+            template = WizGameObjectTemplate(self.hook_handler, await template.read_base_address())
+            if await template.object_type() in [ObjectType.deed, ObjectType.structure]:
+                return False
+            exclusion_set = set([make_string_id(x) for x in ["NotCounted", "Jewel", "Emote"]])
+            propset = await template.object_property_hashset()
+            if len(exclusion_set.intersection(propset)) > 0:
+                return False
+            return True
 
-        if not maybe_space_window:
-            # TODO: replace error
-            raise ValueError("must open inventory screen to get")
+        item_count = 0
 
-        text = await maybe_space_window[0].maybe_text()
-        text = text.replace("<center>", "")
-        used, total = text.split("/")
-        return int(used), int(total)
+        inventory_behavior = await self.client_object.try_get_inventory_behavior()
+        if inventory_behavior:
+            for item in await inventory_behavior.item_list():
+                if await should_count_item(item):
+                    item_count += 1
+
+        equipment_behavior = await self.client_object.try_get_equipment_behavior()
+        if equipment_behavior:
+            for item in await equipment_behavior.item_list():
+                if await should_count_item(item):
+                    item_count += 1
+
+        backpack_capacity = await inventory_behavior.num_items_allowed()
+        return item_count, backpack_capacity
 
     async def wait_for_zone_change(
             self, name: Optional[str] = None, *, sleep_time: Optional[float] = 0.5

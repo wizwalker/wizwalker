@@ -1,47 +1,37 @@
 from typing import List, Optional
 
-from wizwalker import XYZ
-from wizwalker.memory.memory_object import Primitive, PropertyClass, DynamicMemoryObject
+from wizwalker.memory.handler import HookHandler
+from wizwalker.memory.memory_object import Primitive, DynamicMemoryObject
 from wizwalker.memory.memory_objects import DynamicActorBody
 from .game_stats import DynamicGameStats
 from .game_object_template import DynamicWizGameObjectTemplate
-from .behavior_instance import DynamicBehaviorInstance
 from .client_zone import DynamicClientZone
+from .core_object import CoreObject
+from .inventory_behavior import ClientWizInventoryBehavior
+from .equipment_behavior import ClientWizEquipmentBehavior
 
 
-class ClientObject(PropertyClass):
+class ClientObject(CoreObject):
     """
     Base class for ClientObjects
     """
+    async def try_get_inventory_behavior(self) -> ClientWizInventoryBehavior | None:
+        base = await self.search_behavior_by_name("WizardInventoryBehavior")
+        if base:
+            return ClientWizInventoryBehavior(self.hook_handler, await base.read_base_address())
+        return None
 
-    async def read_base_address(self) -> int:
-        raise NotImplementedError()
-
-    # TODO: test if this is actually active behaviors
-    async def inactive_behaviors(self) -> List[DynamicBehaviorInstance]:
-        """
-        This client object's inactive behaviors
-
-        Returns:
-            List of DynamicBehaviorInstace
-        """
-        behaviors = []
-        for addr in await self.read_shared_vector(224):
-            if addr != 0:
-                behaviors.append(DynamicBehaviorInstance(self.hook_handler, addr))
-
-        return behaviors
+    async def try_get_equipment_behavior(self) -> ClientWizEquipmentBehavior | None:
+        base = await self.search_behavior_by_name("WizardEquipmentBehavior")
+        if base:
+            return ClientWizEquipmentBehavior(self.hook_handler, await base.read_base_address())
+        return None
 
     # helper method
     async def actor_body(self) -> Optional[DynamicActorBody]:
-        for behavior in await self.inactive_behaviors():
-            if await behavior.behavior_name() == "AnimationBehavior":
-                addr = await behavior.read_value_from_offset(0x70, Primitive.uint64)
-
-                if addr == 0:
-                    return None
-
-                return DynamicActorBody(self.hook_handler, addr)
+        if behavior := await self.search_behavior_by_name("AnimationBehavior"):
+            return DynamicActorBody(self.hook_handler, await behavior.read_base_address())
+        return None
 
     # helper method
     async def object_name(self) -> Optional[str]:
@@ -78,12 +68,10 @@ class ClientObject(PropertyClass):
         Returns:
             DynamicClientObject
         """
-        addr = await self.read_value_from_offset(208, Primitive.int64)
-
-        if addr == 0:
+        core_object = await super().parent()
+        if not core_object:
             return None
-
-        return DynamicClientObject(self.hook_handler, addr)
+        return DynamicClientObject(self.hook_handler, await core_object.read_base_address())
 
     # note: not defined
     async def children(self) -> List["DynamicClientObject"]:
@@ -122,187 +110,10 @@ class ClientObject(PropertyClass):
         Returns:
             DynamicWizGameObjectTemplate
         """
-        addr = await self.read_value_from_offset(88, Primitive.int64)
-
-        if addr == 0:
+        core_template = await super().object_template()
+        if not core_template:
             return None
-
-        return DynamicWizGameObjectTemplate(self.hook_handler, addr)
-
-    async def global_id_full(self) -> int:
-        """
-        This client object's global id
-        """
-        return await self.read_value_from_offset(72, Primitive.uint64)
-
-    async def write_global_id_full(self, global_id_full: int):
-        """
-        Write this client object's global id
-
-        Args:
-            global_id_full: The global id to write
-        """
-        await self.write_value_to_offset(72, global_id_full, Primitive.uint64)
-
-    async def perm_id(self) -> int:
-        """
-        This client object's perm id
-        """
-        return await self.read_value_from_offset(80, Primitive.uint64)
-
-    async def write_perm_id(self, perm_id: int):
-        """
-        Write this client object's perm id
-
-        Args:
-            perm_id: The perm id to write
-        """
-        await self.write_value_to_offset(80, perm_id, "unsigned __int64")
-
-    async def location(self) -> XYZ:
-        """
-        This client object's location
-
-        Returns:
-            An XYZ representing the client object's location
-        """
-        return await self.read_xyz(168)
-
-    async def write_location(self, location: XYZ):
-        """
-        Write this client object's location
-
-        Notes:
-            This seems to have no effect
-
-        Args:
-            location: The location to write
-        """
-        await self.write_xyz(168, location)
-
-    # TODO: check what order these are in and document it
-    async def orientation(self) -> tuple:
-        """
-        This client object's orientation
-        """
-        return await self.read_vector(180)
-
-    async def write_orientation(self, orientation: tuple):
-        """
-        Write this client object's orientation
-
-        Args:
-            orientation: The orientation to write
-        """
-        await self.write_vector(180, orientation)
-
-    async def scale(self) -> float:
-        """
-        This client object's scale
-        """
-        return await self.read_value_from_offset(196, Primitive.float32)
-
-    async def write_scale(self, scale: float):
-        """
-        Write this client object's scale
-
-        Args:
-            scale: The scale to write
-        """
-        await self.write_value_to_offset(196, scale, Primitive.float32)
-
-    async def template_id_full(self) -> int:
-        """
-        This client object's template id
-        """
-        return await self.read_value_from_offset(96, Primitive.uint64)
-
-    async def write_template_id_full(self, template_id_full: int):
-        """
-        Write this client object's template id
-
-        Args:
-            template_id_full: The template id to write
-        """
-        await self.write_value_to_offset(96, template_id_full, Primitive.uint64)
-
-    async def debug_name(self) -> str:
-        """
-        This client object's debug name
-
-        Notes:
-            This seems to always be empty; object_name is more reliable
-        """
-        return await self.read_string_from_offset(104)
-
-    async def write_debug_name(self, debug_name: str):
-        """
-        Write this client's debug name
-
-        Args:
-            debug_name: The debug name to write
-        """
-        await self.write_string_to_offset(104, debug_name)
-
-    async def display_key(self) -> str:
-        """
-        This client's display key
-        """
-        return await self.read_string_from_offset(136)
-
-    async def write_display_key(self, display_key: str):
-        """
-        Write this client's display key
-
-        Args:
-            display_key: The display key to write
-        """
-        await self.write_string_to_offset(136, display_key)
-
-    async def zone_tag_id(self) -> int:
-        """
-        This client object's zone tag id
-        """
-        return await self.read_value_from_offset(344, Primitive.uint32)
-
-    async def write_zone_tag_id(self, zone_tag_id: int):
-        """
-        Write this client object's zone tag id
-
-        Args:
-            zone_tag_id: The zone tag id to write
-        """
-        await self.write_value_to_offset(344, zone_tag_id, Primitive.uint32)
-
-    async def speed_multiplier(self) -> int:
-        """
-        This client object's speed multiplier
-        """
-        return await self.read_value_from_offset(192, Primitive.int16)
-
-    async def write_speed_multiplier(self, speed_multiplier: int):
-        """
-        Write this client object's speed multiplier
-
-        Args:
-            speed_multiplier: The speed multiplier to write
-        """
-        await self.write_value_to_offset(192, speed_multiplier, Primitive.int16)
-
-    async def mobile_id(self) -> int:
-        """
-        This client object's mobile id
-        """
-        return await self.read_value_from_offset(194, Primitive.uint16)
-
-    async def write_mobile_id(self, mobile_id: int):
-        """
-        Write this client object's mobile id
-
-        Args:
-            mobile_id: The mobile id to write
-        """
-        await self.write_value_to_offset(194, mobile_id, Primitive.uint16)
+        return DynamicWizGameObjectTemplate(core_template.hook_handler, await core_template.read_base_address())
 
     async def character_id(self) -> int:
         """
@@ -339,12 +150,14 @@ class CurrentClientObject(ClientObject):
     """
     Client object tied to the client hook
     """
+    def __init__(self, hook_handler: HookHandler):
+        super(DynamicMemoryObject, self).__init__(hook_handler)
 
     async def read_base_address(self) -> int:
         return await self.hook_handler.read_current_client_base()
 
 
-class DynamicClientObject(DynamicMemoryObject, ClientObject):
+class DynamicClientObject(ClientObject):
     """
     Dynamic client object that can take an address
     """

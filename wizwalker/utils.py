@@ -923,3 +923,19 @@ def make_ypr_matrix(base, orientation: Orient):
     base = multiply3x3matrices(base, pitch_matrix(orientation.pitch))
     base = multiply3x3matrices(base, roll_matrix(orientation.roll))
     return base
+
+
+def sign_extend(val: int) -> int:
+    return (val & 0x7FFFFFFF) - (val & 0x80000000)
+
+def make_string_id(x: str) -> int:
+    # https://kronos-project.github.io/grimoire/internals/string-id.html
+    hash = 0
+    for idx, c in enumerate(x):
+        val = ord(c) - 32
+        shift = 5 * idx % 32
+
+        hash ^= sign_extend(val << shift)
+        if shift > 24:
+            hash ^= sign_extend(val >> (32 - shift))
+    return hash & 0xFFFF_FFFF

@@ -31,10 +31,9 @@ class CombatParticipant(PropertyClass):
         ent = await self.fetch_entity()
         if ent is None:
             return None
-        for behavior in await ent.inactive_behaviors():
-            if await behavior.behavior_name() == "NPCBehavior":
-                templ = await behavior.behavior_template()
-                return NPCBehaviorTemplate(templ.hook_handler, await templ.read_base_address())
+        if behavior := await ent.search_behavior_by_name("NPCBehavior"):
+            templ = await behavior.behavior_template()
+            return NPCBehaviorTemplate(templ.hook_handler, await templ.read_base_address())
         return None
 
 
