@@ -30,8 +30,13 @@ class ClientObject(CoreObject):
     # helper method
     async def actor_body(self) -> Optional[DynamicActorBody]:
         if behavior := await self.search_behavior_by_name("AnimationBehavior"):
-            return DynamicActorBody(self.hook_handler, await behavior.read_base_address())
-        return None
+            addr = await behavior.read_value_from_offset(0x70, Primitive.uint64)
+
+            if addr == 0:
+                return None
+
+            return DynamicActorBody(self.hook_handler, addr)
+
 
     # helper method
     async def object_name(self) -> Optional[str]:
